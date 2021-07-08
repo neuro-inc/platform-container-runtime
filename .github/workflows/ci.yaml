@@ -1,0 +1,183 @@
+
+name: Continuous Integration
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [master]
+  pull_request_target:
+    branches: [master]
+
+env:
+  PIP_EXTRA_INDEX_URL: ${{ format('https://{0}:{1}@{2}/{0}/{3}', secrets.DEVPI_USER, secrets.DEVPI_PASS, secrets.DEVPI_HOST, secrets.DEVPI_INDEX) }}
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]') ||
+      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
+    env:
+      CLOUD_PROVIDER: ${{ secrets.CLOUD_PROVIDER_DEV }}
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Cache packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-py-3.8-${{ hashFiles('requirements/*.txt') }}-${{ hashFiles('setup.py') }}
+      - name: Install dependencies
+        run: make setup
+      - name: Lint
+        run: make lint
+      - name: Run unit tests
+        run: make test_unit
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: .coverage-unit.xml
+          flags: unit
+          name: codecov-unit
+      - name: Run integration tests
+        run: make test_integration
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: .coverage-integration.xml
+          flags: integration
+          name: codecov-integration
+
+  deploy_dev:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+    needs: test
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: ${{ false }}
+    env:
+      ARTIFACTORY_HELM_VIRTUAL_REPO: ${{ secrets.ARTIFACTORY_HELM_VIRTUAL_REPO }}
+      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AZURE_ACR_NAME: ${{ secrets.AZURE_DEV_ACR_NAME }}
+      AZURE_REGION: ${{ secrets.AZURE_DEV_REGION }}
+      AZURE_RG_NAME: ${{ secrets.AZURE_DEV_RG_NAME }}
+      CLUSTER_NAME: dev
+      HELM_ENV: dev
+      HELM_VERSION: ${{ secrets.HELM_VERSION }}
+      CLOUD_PROVIDER: ${{ secrets.CLOUD_PROVIDER_DEV }}
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Configure AWS credentials
+        if: env.CLOUD_PROVIDER == 'aws'
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to AWS ECR
+        if: env.CLOUD_PROVIDER == 'aws'
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Configure Azure credentials
+        if: env.CLOUD_PROVIDER == 'azure'
+        uses: azure/login@v1
+        with:
+          creds: ${{secrets.AZURE_CREDENTIALS}}
+      - name: Login to Azure ACR
+        if: env.CLOUD_PROVIDER == 'azure'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_DEV_ACR_SERVER }}
+          username: ${{ secrets.AZURE_DEV_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_DEV_ACR_PASSWORD }}
+      - name: Set tag
+        run: echo "TAG=$GITHUB_SHA" >> $GITHUB_ENV
+      - name: Push image to registry
+        run: make docker_push
+      - name: Update kube config
+        run: make ${{ env.CLOUD_PROVIDER }}_k8s_login
+      - name: Install helm
+        run: make helm_install
+      - name: Deploy to kubernetes
+        run: make helm_deploy
+
+  parse_version:
+    name: Parse version using python
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    outputs:
+      is_prerelease: ${{ steps.parse-version.outputs.is_prerelease }}
+    steps:
+    - name: Install python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install packaging
+      run: pip install packaging
+    - name: Parse version
+      id: parse-version
+      run: |
+        python -c '\
+        from packaging import version;\
+        version_str = "${{ github.ref }}"[len("refs/tags/"):];\
+        print(f"::set-output name=is_prerelease::{version.parse(version_str).is_prerelease}")'
+
+  release:
+    name: Create release packages
+    defaults:
+      run:
+        working-directory: server
+    runs-on: ubuntu-latest
+    needs:
+    - test
+    - parse_version
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    env:
+      ARTIFACTORY_DOCKER_REPO: ${{ secrets.ARTIFACTORY_DOCKER_REPO }}
+      ARTIFACTORY_HELM_REPO: ${{ secrets.ARTIFACTORY_HELM_REPO }}
+      ARTIFACTORY_HELM_VIRTUAL_REPO: ${{ secrets.ARTIFACTORY_HELM_VIRTUAL_REPO }}
+      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+      HELM_VERSION: ${{ secrets.HELM_VERSION }}
+    steps:
+    - name: Checkout commit
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Login to Artifactory docker registry
+      uses: docker/login-action@v1
+      with:
+        registry: ${{ secrets.ARTIFACTORY_DOCKER_REPO }}
+        username: ${{ secrets.ARTIFACTORY_USERNAME }}
+        password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+    - name: Set tag
+      run: echo "TAG=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+    - name: Push image
+      run: make docker_push
+    - name: Install helm
+      run: make helm_install
+    - name: Push helm chart
+      run: make artifactory_helm_push
