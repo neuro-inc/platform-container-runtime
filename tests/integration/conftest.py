@@ -1,0 +1,61 @@
+import logging
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from typing import Any, AsyncIterator, Callable
+
+import aiohttp
+import aiohttp.web
+import pytest
+
+from platform_container_runtime.config import Config, ServerConfig
+
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class ApiAddress:
+    host: str
+    port: int
+
+
+@pytest.fixture
+async def client() -> AsyncIterator[aiohttp.ClientSession]:
+    async with aiohttp.ClientSession() as session:
+        yield session
+
+
+@pytest.fixture
+def config_factory() -> Callable[..., Config]:
+    def _f(**kwargs: Any) -> Config:
+        defaults = dict(
+            server=ServerConfig(host="0.0.0.0", port=8080),
+            sentry=None,
+        )
+        kwargs = {**defaults, **kwargs}
+        return Config(**kwargs)
+
+    return _f
+
+
+@pytest.fixture
+def config(
+    config_factory: Callable[..., Config],
+) -> Config:
+    return config_factory()
+
+
+@asynccontextmanager
+async def create_local_app_server(
+    app: aiohttp.web.Application, port: int = 8080
+) -> AsyncIterator[ApiAddress]:
+    runner = aiohttp.web.AppRunner(app)
+    try:
+        await runner.setup()
+        api_address = ApiAddress("0.0.0.0", port)
+        site = aiohttp.web.TCPSite(runner, api_address.host, api_address.port)
+        await site.start()
+        yield api_address
+    finally:
+        await runner.shutdown()
+        await runner.cleanup()

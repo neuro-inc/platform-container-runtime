@@ -1,0 +1,8 @@
+[tool.black]
+exclude = '''
+/(
+      \.git
+    | venv
+    | __pycache__
+)/
+'''

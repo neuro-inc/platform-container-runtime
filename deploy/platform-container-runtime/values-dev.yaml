@@ -1,0 +1,54 @@
+ingress:
+  enabled: true
+
+  extraAnnotations:
+    external-dns.platform.neuromation.io: 'true'
+  hosts: [dev.neu.ro]
+
+sentry:
+  dsn: https://432bc48cd2444be7afec5efeb1fc03a6@o489136.ingest.sentry.io/5530426
+  clusterName: dev
+  sampleRate: 0.01
+
+platform:
+  token:
+    valueFrom:
+      secretKeyRef:
+        name: platformservices-secret
+        key: compute_token
+
+postgres:
+  dsn:
+    valueFrom:
+      secretKeyRef:
+        name: platform-container-runtime-postgres
+        key: platform-container-runtime-service-dsn
+
+postgres-db-init:
+  adminDsn:
+    valueFrom:
+      secretKeyRef:
+        name: postgres
+        key: admin-dsn
+  migrationsRunnerDsn:
+    valueFrom:
+      secretKeyRef:
+        name: platform-container-runtime-postgres
+        key: platform-container-runtime-migrations-dsn
+  serviceDsn:
+    valueFrom:
+      secretKeyRef:
+        name: platform-container-runtime-postgres
+        key: platform-container-runtime-service-dsn
+
+  migrations:
+    env:
+      - name: NP_DB_POSTGRES_DSN
+        valueFrom:
+          secretKeyRef:
+            name: platform-container-runtime-postgres
+            key: platform-container-runtime-migrations-dsn
+
+corsOrigins: https://neu.ro,https://master--neuro-web.netlify.com,http://localhost:8000
+
+enableDocs: true
