@@ -1,4 +1,4 @@
-FROM python:3.7.8-stretch AS installer
+FROM python:3.8-buster AS installer
 
 ARG PIP_EXTRA_INDEX_URL
 
@@ -16,7 +16,7 @@ ARG DIST_FILENAME
 COPY dist/${DIST_FILENAME} ${DIST_FILENAME}
 RUN pip install --user $DIST_FILENAME
 
-FROM python:3.7.8-stretch as service
+FROM python:3.8-buster as service
 
 WORKDIR /app
 
