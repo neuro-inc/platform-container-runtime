@@ -24,6 +24,9 @@ TAG ?= latest
 
 GOPATH ?= $(HOME)/go
 
+WAIT_FOR_IT_URL = https://raw.githubusercontent.com/eficode/wait-for/master/wait-for
+WAIT_FOR_IT = curl -s $(WAIT_FOR_IT_URL) | bash -s --
+
 export PIP_EXTRA_INDEX_URL ?= $(shell python pip_extra_index_url.py)
 
 setup:
@@ -78,8 +81,11 @@ else
 	eval $$(minikube -p minikube docker-env); make docker_build
 endif
 	kubectl --context minikube apply -f tests/integration/k8s/*
-	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration -m "not minikube"
-	pytest -vv tests/integration -m minikube
+	export CRI_ADDRESS=$$(minikube service cri --url | sed -e "s/^http:\/\///"); \
+	export SVC_ADDRESS=$$(minikube service platform-container-runtime --url | sed -e "s/^http:\/\///"); \
+	$(WAIT_FOR_IT) $$CRI_ADDRESS -- echo "cri is up"; \
+	$(WAIT_FOR_IT) $$SVC_ADDRESS -- echo "service is up"; \
+	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration
 
 docker_build:
 	python setup.py sdist
