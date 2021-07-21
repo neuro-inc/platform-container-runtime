@@ -1,10 +1,12 @@
 import functools
 import logging
 import shlex
-from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
+from types import TracebackType
+from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, cast
 
 import grpc
 import grpc.aio
+from platform_logging import trace
 from yarl import URL
 
 
@@ -58,9 +60,15 @@ class RuntimeService:
             logging.info("Using CRI v1alpha2 gRPC API")
         return self
 
-    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
         pass
 
+    @trace
     @_handle_errors
     async def attach(
         self,
@@ -81,6 +89,7 @@ class RuntimeService:
             stderr=stderr,
         )
 
+    @trace
     @_handle_errors
     async def exec(
         self,
@@ -103,6 +112,7 @@ class RuntimeService:
             stderr=stderr,
         )
 
+    @trace
     @_handle_errors
     async def stop_container(self, container_id: str, timeout_s: int = 0) -> None:
         assert self._runtime_service

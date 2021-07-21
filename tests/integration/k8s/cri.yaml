@@ -96,16 +96,25 @@ spec:
           value: INFO
         - name: NP_PORT
           value: "9000"
-        - name: NP_CRI_ADDRESS
-          value: unix:/var/run/dockershim.sock
+        - name: NP_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: NP_KUBE_URL
+          value: https://kubernetes.default.svc
+        - name: NP_KUBE_AUTH_TYPE
+          value: token
+        - name: NP_KUBE_CERT_AUTHORITY_PATH
+          value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        - name: NP_KUBE_TOKEN_PATH
+          value: /var/run/secrets/kubernetes.io/serviceaccount/token
         volumeMounts:
-        - name: cri-sock
-          mountPath: /var/run/dockershim.sock
+        - name: host-run
+          mountPath: /hrun
       volumes:
-      - name: cri-sock
+      - name: host-run
         hostPath:
-          type: Socket
-          path: /var/run/dockershim.sock
+          path: /var/run
 ---
 apiVersion: v1
 kind: Service
@@ -118,3 +127,16 @@ spec:
     targetPort: 9000
   selector:
     service: platform-container-runtime
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default

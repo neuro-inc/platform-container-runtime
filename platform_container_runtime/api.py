@@ -1,6 +1,6 @@
 import logging
 from contextlib import AsyncExitStack
-from typing import AsyncIterator, Awaitable, Callable
+from typing import AsyncIterator, Awaitable, Callable, List, Optional
 
 import aiohttp
 import aiohttp.web
@@ -16,11 +16,20 @@ from aiohttp.web import (
     json_response,
     middleware,
 )
-from platform_logging import init_logging, notrace, setup_sentry, setup_zipkin_tracer
+from platform_logging import (
+    init_logging,
+    make_request_logging_trace_config,
+    make_sentry_trace_config,
+    make_zipkin_trace_config,
+    notrace,
+    setup_sentry,
+    setup_zipkin_tracer,
+)
 
-from .config import Config
+from .config import Config, SentryConfig, ZipkinConfig
 from .config_factory import EnvironConfigFactory
 from .cri import ContainerNotFoundError, RuntimeService
+from .kube_client import KubeClient
 from .service import Service
 
 
@@ -154,6 +163,42 @@ async def handle_exceptions(
         return json_response(payload, status=HTTPInternalServerError.status_code)
 
 
+def make_logging_trace_configs() -> List[aiohttp.TraceConfig]:
+    return [make_request_logging_trace_config()]
+
+
+def make_tracing_trace_configs(
+    zipkin: Optional[ZipkinConfig], sentry: Optional[SentryConfig]
+) -> List[aiohttp.TraceConfig]:
+    trace_configs = []
+
+    if zipkin:
+        trace_configs.append(make_zipkin_trace_config())
+
+    if sentry:
+        trace_configs.append(make_sentry_trace_config())
+
+    return trace_configs
+
+
+async def create_cri_address(config: Config, kube_client: KubeClient) -> str:
+    if config.cri_address:
+        return config.cri_address
+
+    node = await kube_client.get_node(config.node_name)
+
+    logger.info("Container runtime version: %s", node.container_runtime_version)
+
+    if node.container_runtime_version.startswith("docker://"):
+        return "unix:/hrun/dockershim.sock"
+    elif node.container_runtime_version.startswith("containerd://"):
+        return "unix:/hrun/containerd/containerd.sock"
+    else:
+        raise ValueError(
+            f"Container runtime {node.container_runtime_version!r} is not supported"
+        )
+
+
 async def create_api_v1_app() -> aiohttp.web.Application:
     app = aiohttp.web.Application()
     handler = ApiHandler()
@@ -173,17 +218,31 @@ async def create_platform_container_runtime_app(
 async def create_app(config: Config) -> aiohttp.web.Application:
     app = aiohttp.web.Application(middlewares=[handle_exceptions])
 
+    trace_configs = make_logging_trace_configs() + make_tracing_trace_configs(
+        config.zipkin, config.sentry
+    )
+
     async def _init_app(app: aiohttp.web.Application) -> AsyncIterator[None]:
         async with AsyncExitStack() as exit_stack:
             logger.info("Initializing Service")
+
+            logger.info("Initializing kube client")
+            kube_client = await exit_stack.enter_async_context(
+                KubeClient(config.kube, trace_configs=trace_configs)
+            )
+
+            logger.info("Initializing CRI address")
+            cri_address = await create_cri_address(config, kube_client)
+
+            logger.info("Initializing gRPC channel")
             channel = await exit_stack.enter_async_context(
-                grpc.aio.insecure_channel(config.cri_address)
+                grpc.aio.insecure_channel(cri_address)
             )
             runtime_service = await exit_stack.enter_async_context(
                 RuntimeService(channel)
             )
             streaming_client = await exit_stack.enter_async_context(
-                aiohttp.ClientSession()
+                aiohttp.ClientSession(trace_configs=trace_configs)
             )
 
             app["platform_container_runtime_app"]["config"] = config

@@ -6,8 +6,9 @@ from typing import Any, AsyncIterator, Callable
 import aiohttp
 import aiohttp.web
 import pytest
+from yarl import URL
 
-from platform_container_runtime.config import Config, ServerConfig
+from platform_container_runtime.config import Config, KubeConfig, ServerConfig
 
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,9 @@ def config_factory(cri_address: str) -> Callable[..., Config]:
     def _f(**kwargs: Any) -> Config:
         defaults = dict(
             server=ServerConfig(host="0.0.0.0", port=8080),
+            node_name="minikube",
             cri_address=cri_address,
+            kube=KubeConfig(url=URL("https://kubernetes.default.svc")),
         )
         kwargs = {**defaults, **kwargs}
         return Config(**kwargs)
