@@ -53,6 +53,8 @@ jobs:
       - name: Start minikube
         run: |
           curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo apt-get update
+          sudo apt-get install conntrack
           sudo install minikube-linux-amd64 /usr/local/bin/minikube
           sudo minikube start --kubernetes-version="1.20.4" --driver="$MINIKUBE_DRIVER"
           sudo mv /root/.kube /root/.minikube $HOME

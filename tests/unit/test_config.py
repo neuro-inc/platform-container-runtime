@@ -4,11 +4,11 @@ from yarl import URL
 
 from platform_container_runtime.config import (
     Config,
-    EnvironConfigFactory,
     SentryConfig,
     ServerConfig,
     ZipkinConfig,
 )
+from platform_container_runtime.config_factory import EnvironConfigFactory
 
 
 def test_create() -> None:

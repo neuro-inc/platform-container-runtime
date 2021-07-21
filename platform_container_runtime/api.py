@@ -18,7 +18,8 @@ from aiohttp.web import (
 )
 from platform_logging import init_logging, notrace, setup_sentry, setup_zipkin_tracer
 
-from .config import Config, EnvironConfigFactory
+from .config import Config
+from .config_factory import EnvironConfigFactory
 from .cri import ContainerNotFoundError, RuntimeService
 from .service import Service
 
