@@ -91,6 +91,7 @@ spec:
         imagePullPolicy: Never
         ports:
         - containerPort: 9000
+          hostPort: 9000
         env:
         - name: NP_LOG_LEVEL
           value: INFO
