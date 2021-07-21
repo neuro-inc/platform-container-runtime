@@ -39,7 +39,6 @@ spec:
       labels:
         service: cri
     spec:
-      hostNetwork: true
       containers:
       - name: cri
         image: nginx
@@ -85,6 +84,7 @@ spec:
         service: platform-container-runtime
     spec:
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: platform-container-runtime
         image: platformcontainerruntime:latest

@@ -22,8 +22,10 @@ def _handle_errors(func: T) -> T:
 
             return await func(self, *args, **kwargs)
         except grpc.aio.AioRpcError as ex:
-            if ex.code() == grpc.StatusCode.UNKNOWN:
+            status = ex.code()
+            if status == grpc.StatusCode.NOT_FOUND:
                 container_id = kwargs.get("container_id") or args[0]
+                logging.warning("Container '%s' not found", container_id)
                 raise ContainerNotFoundError(container_id)
             raise
 
