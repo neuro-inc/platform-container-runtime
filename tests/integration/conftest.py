@@ -26,11 +26,11 @@ async def client() -> AsyncIterator[aiohttp.ClientSession]:
 
 
 @pytest.fixture
-def config_factory() -> Callable[..., Config]:
+def config_factory(cri_address: str) -> Callable[..., Config]:
     def _f(**kwargs: Any) -> Config:
         defaults = dict(
             server=ServerConfig(host="0.0.0.0", port=8080),
-            sentry=None,
+            cri_address=cri_address,
         )
         kwargs = {**defaults, **kwargs}
         return Config(**kwargs)

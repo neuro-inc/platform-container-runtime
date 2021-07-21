@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cri
+data:
+  nginx.conf: |-
+    user root root;
+
+    events {}
+
+    http {
+        access_log /dev/stdout;
+        error_log /dev/stderr;
+
+        server {
+            listen 9001 http2;
+
+            location / {
+                grpc_pass unix:/var/run/dockershim.sock;
+            }
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cri
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      service: cri
+  template:
+    metadata:
+      labels:
+        service: cri
+    spec:
+      hostNetwork: true
+      containers:
+      - name: cri
+        image: nginx
+        ports:
+        - containerPort: 9001
+        volumeMounts:
+        - name: nginx-conf
+          subPath: nginx.conf
+          mountPath: /etc/nginx/nginx.conf
+        - name: cri-sock
+          mountPath: /var/run/dockershim.sock
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: cri
+      - name: cri-sock
+        hostPath:
+          path: /var/run/dockershim.sock
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cri
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 9001
+    targetPort: 9001
+  selector:
+    service: cri
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: platform-container-runtime
+spec:
+  selector:
+    matchLabels:
+      service: platform-container-runtime
+  template:
+    metadata:
+      labels:
+        service: platform-container-runtime
+    spec:
+      hostNetwork: true
+      containers:
+      - name: platform-container-runtime
+        image: platformcontainerruntime:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 9000
+        env:
+        - name: NP_LOG_LEVEL
+          value: INFO
+        - name: NP_PORT
+          value: "9000"
+        - name: NP_CRI_ADDRESS
+          value: unix:/var/run/dockershim.sock
+        volumeMounts:
+        - name: cri-sock
+          mountPath: /var/run/dockershim.sock
+      volumes:
+      - name: cri-sock
+        hostPath:
+          type: Socket
+          path: /var/run/dockershim.sock
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-container-runtime
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 9000
+    targetPort: 9000
+  selector:
+    service: platform-container-runtime

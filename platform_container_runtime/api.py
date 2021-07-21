@@ -4,20 +4,22 @@ from typing import AsyncIterator, Awaitable, Callable
 
 import aiohttp
 import aiohttp.web
+import grpc.aio
 from aiohttp.web import (
     HTTPBadRequest,
     HTTPInternalServerError,
+    HTTPNoContent,
+    HTTPNotFound,
     Request,
     Response,
     StreamResponse,
     json_response,
     middleware,
 )
-from aiohttp.web_exceptions import HTTPCreated
 from platform_logging import init_logging, notrace, setup_sentry, setup_zipkin_tracer
 
-from .config import Config
-from .config_factory import EnvironConfigFactory
+from .config import Config, EnvironConfigFactory
+from .cri import ContainerNotFoundError, RuntimeService
 from .service import Service
 
 
@@ -33,7 +35,7 @@ class ApiHandler:
         )
 
     @notrace
-    async def handle_ping(self, request: Request) -> Response:
+    async def handle_ping(self, req: Request) -> Response:
         return Response(text="Pong")
 
 
@@ -45,39 +47,117 @@ class PlatformContainerRuntimeApiHandler:
     def register(self, app: aiohttp.web.Application) -> None:
         app.add_routes(
             [
-                aiohttp.web.post("", self.sample_request),
+                aiohttp.web.get("/{id}/attach", self.ws_attach),
+                aiohttp.web.post("/{id}/attach", self.ws_attach),
+                aiohttp.web.get("/{id}/exec", self.ws_exec),
+                aiohttp.web.post("/{id}/exec", self.ws_exec),
+                aiohttp.web.post("/{id}/kill", self.kill),
             ]
         )
 
-    async def sample_request(
-        self, request: aiohttp.web.Request
-    ) -> aiohttp.web.Response:
-        return aiohttp.web.json_response({}, status=HTTPCreated.status_code)
+    @property
+    def _service(self) -> Service:
+        return self._app["service"]
+
+    async def ws_attach(self, req: Request) -> StreamResponse:
+        container_id = self._get_container_id(req)
+        tty = _parse_bool(req.query.get("tty", "false"))
+        stdin = _parse_bool(req.query.get("stdin", "false"))
+        stdout = _parse_bool(req.query.get("stdout", "true"))
+        stderr = _parse_bool(req.query.get("stderr", "true"))
+
+        if not (stdin or stdout or stderr):
+            raise ValueError("Required at least one of stdin, stdout or stderr")
+
+        if tty and stderr:
+            raise ValueError("Stdout and stderr cannot be multiplexed in tty mode")
+
+        stream = await self._service.attach(
+            container_id,
+            tty=tty,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        resp = aiohttp.web.WebSocketResponse()
+        await resp.prepare(req)
+        await stream.copy(resp)
+
+        return resp
+
+    async def ws_exec(self, req: Request) -> StreamResponse:
+        container_id = self._get_container_id(req)
+        cmd = req.query.get("cmd")
+        tty = _parse_bool(req.query.get("tty", "false"))
+        stdin = _parse_bool(req.query.get("stdin", "false"))
+        stdout = _parse_bool(req.query.get("stdout", "true"))
+        stderr = _parse_bool(req.query.get("stderr", "true"))
+
+        if not cmd:
+            raise ValueError("Command is required")
+
+        if not (stdin or stdout or stderr):
+            raise ValueError("Required at least one of stdin, stdout or stderr")
+
+        if tty and stderr:
+            raise ValueError("Stdout and stderr cannot be multiplexed in tty mode")
+
+        stream = await self._service.exec(
+            container_id,
+            cmd=cmd,
+            tty=tty,
+            stdin=stdin,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        resp = aiohttp.web.WebSocketResponse()
+        await resp.prepare(req)
+        await stream.copy(resp)
+
+        return resp
+
+    async def kill(self, req: Request) -> StreamResponse:
+        container_id = self._get_container_id(req)
+        timeout_s = int(req.query.get("timeout_s", "0"))
+
+        await self._service.kill(container_id, timeout_s)
+
+        return HTTPNoContent()
+
+    def _get_container_id(self, req: Request) -> str:
+        return req.match_info["id"].replace("%2F", "/")
+
+
+def _parse_bool(value: str) -> bool:
+    return value.lower() in ("1", "true", "yes")
 
 
 @middleware
 async def handle_exceptions(
-    request: Request, handler: Callable[[Request], Awaitable[StreamResponse]]
+    req: Request, handler: Callable[[Request], Awaitable[StreamResponse]]
 ) -> StreamResponse:
     try:
-        return await handler(request)
+        return await handler(req)
+    except ContainerNotFoundError as e:
+        payload = {"error": str(e)}
+        return json_response(payload, status=HTTPNotFound.status_code)
     except ValueError as e:
         payload = {"error": str(e)}
         return json_response(payload, status=HTTPBadRequest.status_code)
     except aiohttp.web.HTTPException:
         raise
     except Exception as e:
-        msg_str = f"Unexpected exception: {str(e)}. Path with query: {request.path_qs}."
+        msg_str = f"Unexpected exception: {str(e)}. Path with query: {req.path_qs}."
         logging.exception(msg_str)
         payload = {"error": msg_str}
         return json_response(payload, status=HTTPInternalServerError.status_code)
 
 
 async def create_api_v1_app() -> aiohttp.web.Application:
-    api_v1_app = aiohttp.web.Application()
-    api_v1_handler = ApiHandler()
-    api_v1_handler.register(api_v1_app)
-    return api_v1_app
+    app = aiohttp.web.Application()
+    handler = ApiHandler()
+    handler.register(app)
+    return app
 
 
 async def create_platform_container_runtime_app(
@@ -91,12 +171,24 @@ async def create_platform_container_runtime_app(
 
 async def create_app(config: Config) -> aiohttp.web.Application:
     app = aiohttp.web.Application(middlewares=[handle_exceptions])
-    app["config"] = config
 
     async def _init_app(app: aiohttp.web.Application) -> AsyncIterator[None]:
-        async with AsyncExitStack():
+        async with AsyncExitStack() as exit_stack:
             logger.info("Initializing Service")
-            app["platform_container_runtime_app"]["service"] = Service()
+            channel = await exit_stack.enter_async_context(
+                grpc.aio.insecure_channel(config.cri_address)
+            )
+            runtime_service = await exit_stack.enter_async_context(
+                RuntimeService(channel)
+            )
+            streaming_client = await exit_stack.enter_async_context(
+                aiohttp.ClientSession()
+            )
+
+            app["platform_container_runtime_app"]["config"] = config
+            app["platform_container_runtime_app"]["service"] = Service(
+                runtime_service, streaming_client
+            )
 
             yield
 
@@ -107,7 +199,7 @@ async def create_app(config: Config) -> aiohttp.web.Application:
 
     platform_container_runtime_app = await create_platform_container_runtime_app(config)
     app["platform_container_runtime_app"] = platform_container_runtime_app
-    api_v1_app.add_subapp("/platform_container_runtime", platform_container_runtime_app)
+    api_v1_app.add_subapp("/containers", platform_container_runtime_app)
 
     app.add_subapp("/api/v1", api_v1_app)
 

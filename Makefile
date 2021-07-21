@@ -22,12 +22,41 @@ HELM_CHART = platform-container-runtime
 
 TAG ?= latest
 
+GOPATH ?= $(HOME)/go
+
 export PIP_EXTRA_INDEX_URL ?= $(shell python pip_extra_index_url.py)
 
 setup:
 	pip install -U pip
 	pip install -r requirements/dev.txt
 	pre-commit install
+
+setup_cri_grpc:
+	go get -d github.com/gogo/protobuf/gogoproto
+	go get -d k8s.io/cri-api/pkg/apis/runtime/v1
+
+	rm -rf k8s github
+
+	python -m grpc_tools.protoc \
+		--proto_path=$(GOPATH)/src \
+		--python_out=. \
+		--grpc_python_out=. \
+		--mypy_out=. \
+		github.com/gogo/protobuf/gogoproto/gogo.proto \
+		k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto \
+		k8s.io/cri-api/pkg/apis/runtime/v1/api.proto
+
+	# Fix folder structure after generation
+	mv github.com/gogo/protobuf/gogoproto/*.py github/com/gogo/protobuf/gogoproto
+	mv k8s.io/cri_api/pkg/apis/runtime/v1alpha2/*.py k8s/io/cri_api/pkg/apis/runtime/v1alpha2
+	mv k8s.io/cri_api/pkg/apis/runtime/v1/*.py k8s/io/cri_api/pkg/apis/runtime/v1
+
+	touch github/com/gogo/protobuf/gogoproto/__init__.py
+	touch k8s/io/cri_api/pkg/apis/runtime/v1/__init__.py
+	touch k8s/io/cri_api/pkg/apis/runtime/v1alpha2/__init__.py
+
+	rm -rf github.com
+	rm -rf k8s.io
 
 lint: format
 	mypy platform_container_runtime tests setup.py
@@ -43,7 +72,14 @@ test_unit:
 	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-unit.xml tests/unit
 
 test_integration:
-	pytest -vv --maxfail=3 --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration
+ifeq ($(MINIKUBE_DRIVER),none)
+	make docker_build
+else
+	eval $$(minikube -p minikube docker-env); make docker_build
+endif
+	kubectl --context minikube apply -f tests/integration/k8s/*
+	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration -m "not minikube"
+	pytest -vv tests/integration -m minikube
 
 docker_build:
 	python setup.py sdist

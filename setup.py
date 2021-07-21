@@ -1,4 +1,4 @@
-from setuptools import find_packages, setup
+from setuptools import find_namespace_packages, setup
 
 
 setup_requires = ("setuptools_scm",)
@@ -9,6 +9,8 @@ install_requires = (
     "platform-logging==21.5.13",
     "aiozipkin==1.1.0",
     "sentry-sdk==1.3.0",
+    "grpcio==1.38.1",
+    "protobuf==3.17.3",
 )
 
 setup(
@@ -17,7 +19,7 @@ setup(
         "git_describe_command": "git describe --dirty --tags --long --match v*.*.*",
     },
     url="https://github.com/neuro-inc/platform-container-runtime",
-    packages=find_packages(),
+    packages=find_namespace_packages(exclude=("tests",)),
     install_requires=install_requires,
     setup_requires=setup_requires,
     python_requires=">=3.8",

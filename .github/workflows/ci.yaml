@@ -22,6 +22,7 @@ jobs:
       (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
     env:
       CLOUD_PROVIDER: ${{ secrets.CLOUD_PROVIDER_DEV }}
+      MINIKUBE_DRIVER: none
     steps:
       - name: Checkout commit
         uses: actions/checkout@v2
@@ -49,6 +50,14 @@ jobs:
           file: .coverage-unit.xml
           flags: unit
           name: codecov-unit
+      - name: Start minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          sudo minikube start --kubernetes-version="1.20.4" --driver="$MINIKUBE_DRIVER"
+          sudo mv /root/.kube /root/.minikube $HOME
+          sudo chown -R $USER $HOME/.kube $HOME/.minikube
+          sed -i "s/root/home\/$USER/g" $HOME/.kube/config
       - name: Run integration tests
         run: make test_integration
       - name: Upload coverage to Codecov

@@ -23,8 +23,8 @@ WORKDIR /app
 COPY --from=installer /root/.local/ /root/.local/
 
 ENV PATH=/root/.local/bin:$PATH
+ENV NP_PORT=8080
 
-ENV NP_NP_PORT=8080
-EXPOSE $NP_NP_PORT
+EXPOSE $NP_PORT
 
 CMD platform-container-runtime
