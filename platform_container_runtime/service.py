@@ -69,7 +69,7 @@ class Stream:
                 else:
                     raise ValueError(f"Unsupported WS message type {msg.type}")
         except StopAsyncIteration:
-            pass
+            self._closing = True
 
     async def _do_output(
         self, ws: aiohttp.ClientWebSocketResponse, resp: aiohttp.web.WebSocketResponse
@@ -89,7 +89,7 @@ class Stream:
                 else:
                     raise ValueError(f"Unsupported WS message type {msg.type}")
         except StopAsyncIteration:
-            pass
+            self._closing = True
 
 
 class Service:
