@@ -6,7 +6,7 @@ from typing import AsyncIterator
 import aiohttp
 import async_timeout
 import pytest
-from aiohttp.web import HTTPNoContent, HTTPNotFound, HTTPOk
+from aiohttp.web import HTTPBadRequest, HTTPNoContent, HTTPNotFound, HTTPOk
 from yarl import URL
 
 from platform_container_runtime.api import create_app
@@ -173,6 +173,24 @@ class TestApi:
         async with client.post(api.attach("unknown")) as resp:
             assert resp.status == HTTPNotFound.status_code, await resp.text()
 
+    async def test_attach_tty_and_stderr(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with client.post(
+            api.attach("unknown").with_query(tty="true", stderr="true")
+        ) as resp:
+            assert resp.status == HTTPBadRequest.status_code, await resp.text()
+
+    async def test_attach_no_stdin_stdout_stderr(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with client.post(
+            api.attach("unknown").with_query(
+                stdin="false", stdout="false", stderr="false"
+            )
+        ) as resp:
+            assert resp.status == HTTPBadRequest.status_code, await resp.text()
+
     @pytest.mark.minikube
     async def test_exec_non_tty(
         self, api_minikube: ApiEndpoints, client: aiohttp.ClientSession
@@ -241,6 +259,30 @@ class TestApi:
     ) -> None:
         async with client.post(api.exec("unknown").with_query(cmd="bash")) as resp:
             assert resp.status == HTTPNotFound.status_code, await resp.text()
+
+    async def test_exec_no_cmd(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with client.post(api.exec("unknown")) as resp:
+            assert resp.status == HTTPBadRequest.status_code, await resp.text()
+
+    async def test_exec_tty_and_stderr(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with client.post(
+            api.exec("unknown").with_query(cmd="bash", tty="true", stderr="true")
+        ) as resp:
+            assert resp.status == HTTPBadRequest.status_code, await resp.text()
+
+    async def test_exec_no_stdin_stdout_stderr(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with client.post(
+            api.exec("unknown").with_query(
+                cmd="bash", stdin="false", stdout="false", stderr="false"
+            )
+        ) as resp:
+            assert resp.status == HTTPBadRequest.status_code, await resp.text()
 
     async def test_kill(self, api: ApiEndpoints, client: aiohttp.ClientSession) -> None:
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
