@@ -3,7 +3,7 @@ import ssl
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Sequence, Type
 
 import aiohttp
 
@@ -99,6 +99,14 @@ class KubeClient:
     async def aclose(self) -> None:
         assert self._client
         await self._client.close()
+
+    async def get_nodes(self) -> Sequence[Node]:
+        assert self._client
+        async with self._client.get(self._config.url / "api/v1/nodes") as response:
+            response.raise_for_status()
+            payload = await response.json()
+            assert payload["kind"] == "NodeList"
+            return [Node.from_payload(p) for p in payload["items"]]
 
     async def get_node(self, name: str) -> Node:
         assert self._client

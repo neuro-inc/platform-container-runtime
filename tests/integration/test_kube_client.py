@@ -8,8 +8,11 @@ pytestmark = pytest.mark.asyncio
 
 class TestKubeClient:
     async def test_get_node(self, kube_client: KubeClient) -> None:
-        node = await kube_client.get_node("minikube")
+        nodes = await kube_client.get_nodes()
 
-        assert node.metadata.name == "minikube"
+        assert nodes
+
+        node = await kube_client.get_node(nodes[0].metadata.name)
+
         assert node.metadata.labels
         assert node.container_runtime_version.startswith("docker://")
