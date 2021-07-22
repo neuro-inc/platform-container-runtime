@@ -79,8 +79,6 @@ class Stream:
                 if self._closing:
                     break
 
-                print(msg)
-
                 if msg.type == aiohttp.WSMsgType.BINARY:
                     await resp.send_bytes(msg.data)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
