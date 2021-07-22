@@ -10,6 +10,8 @@ from yarl import URL
 
 from platform_container_runtime.config import Config, KubeConfig, ServerConfig
 
+from .conftest_kube import get_service_url
+
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,12 @@ class ApiAddress:
 async def client() -> AsyncIterator[aiohttp.ClientSession]:
     async with aiohttp.ClientSession() as session:
         yield session
+
+
+@pytest.fixture
+async def cri_address() -> str:
+    url = URL(await get_service_url("cri"))
+    return f"{url.host}:{url.port}"
 
 
 @pytest.fixture

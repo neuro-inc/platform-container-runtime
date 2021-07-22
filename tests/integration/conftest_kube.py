@@ -1,26 +1,29 @@
 import asyncio
 import json
+import os
 import subprocess
 import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Dict
+from pathlib import Path
+from typing import Any, AsyncIterator, Dict, Optional
 
 import pytest
+import yaml
 from yarl import URL
+
+from platform_container_runtime.kube_client import (
+    KubeClient,
+    KubeClientAuthType,
+    KubeConfig,
+)
 
 
 @dataclass(frozen=True)
 class Pod:
     name: str
     container_id: str
-
-
-@pytest.fixture
-async def cri_address() -> str:
-    url = URL(await get_service_url("cri"))
-    return f"{url.host}:{url.port}"
 
 
 async def get_pod(
@@ -118,3 +121,58 @@ async def get_service_url(service_name: str, namespace: str = "default") -> str:
         timeout_s -= interval_s
 
     pytest.fail(f"Service {service_name} is unavailable.")
+
+
+@pytest.fixture(scope="session")
+def _kube_config_payload() -> Dict[str, Any]:
+    kube_config_path = os.path.expanduser("~/.kube/config")
+    with open(kube_config_path) as kube_config:
+        return yaml.safe_load(kube_config)
+
+
+@pytest.fixture(scope="session")
+def _kube_config_cluster_payload(_kube_config_payload: Dict[str, Any]) -> Any:
+    cluster_name = "minikube"
+    clusters = {
+        cluster["name"]: cluster["cluster"]
+        for cluster in _kube_config_payload["clusters"]
+    }
+    return clusters[cluster_name]
+
+
+@pytest.fixture(scope="session")
+def _cert_authority_data_pem(
+    _kube_config_cluster_payload: Dict[str, Any]
+) -> Optional[str]:
+    ca_path = _kube_config_cluster_payload["certificate-authority"]
+    if ca_path:
+        return Path(ca_path).read_text()
+    return None
+
+
+@pytest.fixture(scope="session")
+def _kube_config_user_payload(_kube_config_payload: Dict[str, Any]) -> Any:
+    user_name = "minikube"
+    users = {user["name"]: user["user"] for user in _kube_config_payload["users"]}
+    return users[user_name]
+
+
+@pytest.fixture
+async def kube_client(
+    _kube_config_cluster_payload: Dict[str, Any],
+    _kube_config_user_payload: Dict[str, Any],
+    _cert_authority_data_pem: Optional[str],
+) -> AsyncIterator[KubeClient]:
+    cluster = _kube_config_cluster_payload
+    user = _kube_config_user_payload
+    client = KubeClient(
+        KubeConfig(
+            url=URL(cluster["server"]),
+            auth_type=KubeClientAuthType.CERTIFICATE,
+            cert_authority_data_pem=_cert_authority_data_pem,
+            client_cert_path=user["client-certificate"],
+            client_key_path=user["client-key"],
+        )
+    )
+    async with client:
+        yield client
