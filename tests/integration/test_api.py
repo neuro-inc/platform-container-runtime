@@ -132,7 +132,7 @@ class TestApi:
                         stdout_received = True
                         assert data[1:].decode() == "hello stdout\n"
 
-                    if data[0] == 2:  # stdout channel
+                    if data[0] == 2:  # stderr channel
                         stderr_received = True
                         assert data[1:].decode() == "hello stderr\n"
 
