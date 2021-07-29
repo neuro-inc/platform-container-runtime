@@ -37,7 +37,7 @@ spec:
         ports:
           - name: tcp-web
             containerPort: {{ .Values.port }}
-            hostPort: 2375
+            hostPort: {{ .Values.port }}
             protocol: TCP
         {{- if .Values.resources }}
         resources: {{ toYaml .Values.resources | nindent 10 }}
