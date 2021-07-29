@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from contextlib import suppress
+from typing import Union
 
 import aiohttp
 import aiohttp.web
@@ -33,9 +34,9 @@ class Stream:
         async with self._client.ws_connect(self._url) as ws:
             try:
                 if self._handle_input:
-                    tasks.append(asyncio.create_task(self._do_input(ws, resp)))
+                    tasks.append(asyncio.create_task(self._proxy_ws(resp, ws)))
                 if self._handle_output:
-                    tasks.append(asyncio.create_task(self._do_output(ws, resp)))
+                    tasks.append(asyncio.create_task(self._proxy_ws(ws, resp)))
 
                 if tasks:
                     await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -51,38 +52,20 @@ class Stream:
                     with suppress(asyncio.CancelledError):
                         await task
 
-    async def _do_input(
-        self, ws: aiohttp.ClientWebSocketResponse, resp: aiohttp.web.WebSocketResponse
+    async def _proxy_ws(
+        self,
+        src: Union[aiohttp.ClientWebSocketResponse, aiohttp.web.WebSocketResponse],
+        dst: Union[aiohttp.ClientWebSocketResponse, aiohttp.web.WebSocketResponse],
     ) -> None:
         try:
-            async for msg in resp:
+            async for msg in src:
                 if self._closing:
                     break
 
                 if msg.type == aiohttp.WSMsgType.BINARY:
-                    await ws.send_bytes(msg.data)
+                    await dst.send_bytes(msg.data)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
-                    exc = resp.exception()
-                    logger.error(
-                        "WS connection closed with exception %s", exc, exc_info=exc
-                    )
-                else:
-                    raise ValueError(f"Unsupported WS message type {msg.type}")
-        except StopAsyncIteration:
-            self._closing = True
-
-    async def _do_output(
-        self, ws: aiohttp.ClientWebSocketResponse, resp: aiohttp.web.WebSocketResponse
-    ) -> None:
-        try:
-            async for msg in ws:
-                if self._closing:
-                    break
-
-                if msg.type == aiohttp.WSMsgType.BINARY:
-                    await resp.send_bytes(msg.data)
-                elif msg.type == aiohttp.WSMsgType.ERROR:
-                    exc = ws.exception()
+                    exc = src.exception()
                     logger.error(
                         "WS connection closed with exception %s", exc, exc_info=exc
                     )
