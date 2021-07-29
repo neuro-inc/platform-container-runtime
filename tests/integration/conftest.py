@@ -6,8 +6,11 @@ from typing import Any, AsyncIterator, Callable
 import aiohttp
 import aiohttp.web
 import pytest
+from yarl import URL
 
-from platform_container_runtime.config import Config, ServerConfig
+from platform_container_runtime.config import Config, KubeConfig, ServerConfig
+
+from .conftest_kube import get_service_url
 
 
 logger = logging.getLogger(__name__)
@@ -26,11 +29,19 @@ async def client() -> AsyncIterator[aiohttp.ClientSession]:
 
 
 @pytest.fixture
-def config_factory() -> Callable[..., Config]:
+async def cri_address() -> str:
+    url = URL(await get_service_url("cri"))
+    return f"{url.host}:{url.port}"
+
+
+@pytest.fixture
+def config_factory(cri_address: str) -> Callable[..., Config]:
     def _f(**kwargs: Any) -> Config:
         defaults = dict(
             server=ServerConfig(host="0.0.0.0", port=8080),
-            sentry=None,
+            node_name="minikube",
+            cri_address=cri_address,
+            kube=KubeConfig(url=URL("https://kubernetes.default.svc")),
         )
         kwargs = {**defaults, **kwargs}
         return Config(**kwargs)

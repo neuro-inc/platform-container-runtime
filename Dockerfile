@@ -1,4 +1,4 @@
-FROM python:3.8-buster AS installer
+FROM python:3.8-slim-buster AS installer
 
 ARG PIP_EXTRA_INDEX_URL
 
@@ -16,15 +16,15 @@ ARG DIST_FILENAME
 COPY dist/${DIST_FILENAME} ${DIST_FILENAME}
 RUN pip install --user $DIST_FILENAME
 
-FROM python:3.8-buster as service
+FROM python:3.8-slim-buster as service
 
 WORKDIR /app
 
 COPY --from=installer /root/.local/ /root/.local/
 
 ENV PATH=/root/.local/bin:$PATH
+ENV NP_PORT=8080
 
-ENV NP_NP_PORT=8080
-EXPOSE $NP_NP_PORT
+EXPOSE $NP_PORT
 
 CMD platform-container-runtime
