@@ -1,12 +1,14 @@
 image:
   repository: $IMAGE_REPO
   tag: $IMAGE_TAG
+
 imagePullSecrets: []
+
 command: []
 args: []
-port: 8080
 
-replicas: 2
+port: 9000
+
 resources:
   requests:
     cpu: '0.1'
@@ -15,39 +17,10 @@ resources:
     cpu: '0.2'
     memory: 600Mi
 
-ingress:
-  enabled: false
-
-postgres-db-init:
-  image:
-    repository: $DOCKER_SERVER/bitnami/postgresql
-
-  adminDsn: {}
-  migrationsRunnerDsn: {}
-  serviceDsn: {}
-
-  migrations:
-    enabled: true
-
-    image:
-      repository: "$IMAGE_REPO"
-      tag: "$IMAGE_TAG"
-
-    command: ["alembic", "upgrade", "head"]
+logLevel: ERROR
 
 secrets: []
 
 zipkin: {}
 
 sentry: {}
-
-authUrl: http://platformauthapi:8080
-
-platform:
-  token: {}
-
-postgres:
-  dsn: {}
-
-corsOrigins:
-enableDocs: false
