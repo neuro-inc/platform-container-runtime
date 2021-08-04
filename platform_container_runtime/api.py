@@ -16,7 +16,7 @@ from aiohttp.web import (
     json_response,
     middleware,
 )
-from platform_logging import (
+from neuro_logging import (
     init_logging,
     make_request_logging_trace_config,
     make_sentry_trace_config,

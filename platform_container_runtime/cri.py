@@ -6,7 +6,7 @@ from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, cast
 
 import grpc
 import grpc.aio
-from platform_logging import trace
+from neuro_logging import trace
 from yarl import URL
 
 
