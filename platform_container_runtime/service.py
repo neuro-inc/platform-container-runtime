@@ -1,7 +1,8 @@
 import asyncio
+import json
 import logging
 from contextlib import suppress
-from typing import Union
+from typing import Any, Dict, Iterable, Union
 
 import aiohttp
 import aiohttp.web
@@ -13,30 +14,28 @@ from .cri import RuntimeService
 logger = logging.getLogger()
 
 
+STREAM_PROTOCOLS = ("v4.channel.k8s.io", "channel.k8s.io")
+
+
 class Stream:
     def __init__(
         self,
         client: aiohttp.ClientSession,
         url: URL,
-        *,
-        handle_input: bool = False,
-        handle_output: bool = False,
+        protocols: Iterable[str] = STREAM_PROTOCOLS,
     ) -> None:
         self._client = client
         self._url = url
-        self._handle_input = handle_input
-        self._handle_output = handle_output
+        self._protocols = protocols
         self._closing = False
 
     async def copy(self, resp: aiohttp.web.WebSocketResponse) -> None:
         tasks = []
 
-        async with self._client.ws_connect(self._url) as ws:
+        async with self._client.ws_connect(self._url, protocols=self._protocols) as ws:
             try:
-                if self._handle_input:
-                    tasks.append(asyncio.create_task(self._proxy_ws(resp, ws)))
-                if self._handle_output:
-                    tasks.append(asyncio.create_task(self._proxy_ws(ws, resp)))
+                tasks.append(asyncio.create_task(self._proxy_ws(resp, ws)))
+                tasks.append(asyncio.create_task(self._proxy_ws(ws, resp)))
 
                 if tasks:
                     await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -63,7 +62,12 @@ class Stream:
                     break
 
                 if msg.type == aiohttp.WSMsgType.BINARY:
-                    await dst.send_bytes(msg.data)
+                    data = msg.data
+
+                    if data[0] == 3:
+                        data = json.dumps(self.parse_error_channel(data)).encode()
+
+                    await dst.send_bytes(data)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     exc = src.exception()
                     logger.error(
@@ -72,7 +76,34 @@ class Stream:
                 else:
                     raise ValueError(f"Unsupported WS message type {msg.type}")
         except StopAsyncIteration:
+            pass
+        finally:
             self._closing = True
+
+    @classmethod
+    def parse_error_channel(cls, channel: bytes) -> Dict[str, Any]:
+        assert channel[0] == 3, "Non error channel received"
+
+        data = channel[1:]
+
+        try:
+            channel_payload = json.loads(data)
+        except Exception:
+            return {"exit_code": 1, "message": data.decode()}
+        else:
+            if channel_payload["status"].lower() == "success":
+                return {"exit_code": 0}
+            else:
+                exit_code = 1
+
+                for cause in channel_payload.get("details", {}).get("causes", ()):
+                    if cause["reason"] == "ExitCode":
+                        exit_code = int(cause["message"])
+
+                return {
+                    "exit_code": exit_code,
+                    "message": channel_payload["message"],
+                }
 
 
 class Service:
@@ -100,12 +131,7 @@ class Service:
             stdout=stdout,
             stderr=stderr,
         )
-        return Stream(
-            self._streaming_client,
-            url,
-            handle_input=stdin,
-            handle_output=stdout or stderr,
-        )
+        return Stream(self._streaming_client, url=url)
 
     async def exec(
         self,
@@ -125,12 +151,7 @@ class Service:
             stdout=stdout,
             stderr=stderr,
         )
-        return Stream(
-            self._streaming_client,
-            url,
-            handle_input=stdin,
-            handle_output=stdout or stderr,
-        )
+        return Stream(self._streaming_client, url=url)
 
     async def kill(self, container_id: str, timeout_s: int = 0) -> None:
         await self._runtime_service.stop_container(
