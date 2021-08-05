@@ -75,7 +75,7 @@ async def run(
     opts = f" --attach={str(attach).lower()}"
 
     if stdin:
-        opts += " -i"
+        opts += " -i --leave-stdin-open=true"
 
     if tty:
         opts += " -t"

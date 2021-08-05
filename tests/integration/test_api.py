@@ -1,4 +1,5 @@
 import asyncio
+import json
 import re
 from dataclasses import dataclass
 from typing import AsyncIterator
@@ -101,23 +102,15 @@ class TestApi:
             assert text == "Pong"
 
     @pytest.mark.minikube
-    async def test_attach_non_tty(
+    async def test_attach_non_tty_stdout(
         self, api_minikube: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
         async with run(
             "ubuntu:20.10",
-            (
-                'bash -c "'
-                "sleep 5;"
-                "echo 'hello stdout';"
-                "echo 'hello stderr' >&2;"
-                "sleep infinity"
-                '"'
-            ),
+            'bash -c "while true; do echo hello; sleep 1; done"',
         ) as pod:
             async with client.ws_connect(api_minikube.attach(pod.container_id)) as ws:
                 stdout_received = False
-                stderr_received = False
 
                 while True:
                     data = await ws.receive_bytes(timeout=10)
@@ -130,13 +123,36 @@ class TestApi:
 
                     if data[0] == 1:  # stdout channel
                         stdout_received = True
-                        assert data[1:].decode() == "hello stdout\n"
+                        assert data[1:].decode() == "hello\n"
+
+                    if stdout_received:
+                        break
+
+    @pytest.mark.minikube
+    async def test_attach_non_tty_stderr(
+        self, api_minikube: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with run(
+            "ubuntu:20.10",
+            'bash -c "while true; do echo hello >&2; sleep 1; done"',
+        ) as pod:
+            async with client.ws_connect(api_minikube.attach(pod.container_id)) as ws:
+                stderr_received = False
+
+                while True:
+                    data = await ws.receive_bytes(timeout=10)
+
+                    if len(data) == 1:
+                        # empty message is sent to the lowest output channel
+                        # after connection is established
+                        assert data[0] == 1
+                        continue
 
                     if data[0] == 2:  # stderr channel
                         stderr_received = True
-                        assert data[1:].decode() == "hello stderr\n"
+                        assert data[1:].decode() == "hello\n"
 
-                    if stdout_received and stderr_received:
+                    if stderr_received:
                         break
 
     @pytest.mark.minikube
@@ -153,7 +169,7 @@ class TestApi:
                 output = b""
 
                 await ws.send_bytes(b'\x04{"Width":100,"Height":100}')
-                await ws.send_bytes(b"\n")
+                await ws.send_bytes(b"\x00\n")
                 await receive_tty_prompt(ws)
 
                 await ws.send_bytes(b"\x00echo hello\n")
@@ -240,7 +256,7 @@ class TestApi:
                 output = b""
 
                 await ws.send_bytes(b'\x04{"Width":100,"Height":100}')
-                await ws.send_bytes(b"\n")
+                await ws.send_bytes(b"\x00\n")
                 await receive_tty_prompt(ws)
 
                 await ws.send_bytes(b"\x00echo hello\n")
@@ -253,6 +269,39 @@ class TestApi:
 
                     if expected_output in output:
                         break
+
+    @pytest.mark.minikube
+    async def test_exec_tty_exit_code(
+        self, api_minikube: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
+            async with client.ws_connect(
+                api_minikube.exec(pod.container_id).with_query(
+                    cmd="bash", stdin="true", tty="true", stdout="true", stderr="false"
+                )
+            ) as ws:
+                await ws.send_bytes(b"\x00\n")
+                await receive_tty_prompt(ws)
+
+                await ws.send_bytes(b"\x00exit 42\n")
+
+                while True:
+                    msg = await ws.receive(timeout=5)
+
+                    if msg.type in (
+                        aiohttp.WSMsgType.CLOSE,
+                        aiohttp.WSMsgType.CLOSING,
+                        aiohttp.WSMsgType.CLOSED,
+                    ):
+                        break
+
+                    data = msg.data
+
+                    print(data)
+
+                    if data[0] == 3:
+                        payload = json.loads(data[1:])
+                        assert payload["exit_code"] == 42
 
     async def test_exec_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
