@@ -103,10 +103,14 @@ class Stream:
                     if cause.get("reason") == "ExitCode":
                         exit_code = int(cause.get("message", 1))
 
-                return {
-                    "exit_code": exit_code,
-                    "message": channel_payload["message"],
-                }
+                message = channel_payload.get("message")
+
+                result = {"exit_code": exit_code}
+
+                if message:
+                    result["message"] = message
+
+                return result
 
 
 class Service:
