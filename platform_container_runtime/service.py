@@ -101,7 +101,7 @@ class Stream:
 
                 for cause in channel_payload.get("details", {}).get("causes", ()):
                     if cause.get("reason") == "ExitCode":
-                        exit_code = int(cause["message"])
+                        exit_code = int(cause.get("message", 1))
 
                 return {
                     "exit_code": exit_code,
