@@ -65,7 +65,10 @@ class Stream:
                     data = msg.data
 
                     if data[0] == 3:
-                        data = json.dumps(self.parse_error_channel(data)).encode()
+                        data = (
+                            b"\x03"
+                            + json.dumps(self.parse_error_channel(data)).encode()
+                        )
 
                     await dst.send_bytes(data)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
