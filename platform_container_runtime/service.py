@@ -94,7 +94,7 @@ class Stream:
         except Exception:
             return {"exit_code": 1, "message": data.decode()}
         else:
-            if channel_payload["status"].lower() == "success":
+            if channel_payload.get("status", "success").lower() == "success":
                 return {"exit_code": 0}
             else:
                 exit_code = 1
