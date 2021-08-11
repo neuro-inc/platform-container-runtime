@@ -17,6 +17,14 @@ resources:
     cpu: '0.2'
     memory: 600Mi
 
+affinity: {}
+
+tolerations:
+- effect: NoExecute
+  operator: Exists
+- effect: NoSchedule
+  operator: Exists
+
 logLevel: ERROR
 
 secrets: []

@@ -13,6 +13,19 @@ spec:
     spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      {{- if .Values.affinity }}
+      affinity: {{ toYaml .Values.affinity | nindent 6 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations: {{ toYaml .Values.tolerations | nindent 6 }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml .Values.imagePullSecrets | nindent 6 }}
+      {{- end }}
+      volumes:
+      - name: host-run
+        hostPath:
+          path: /var/run
       containers:
       - name: platform-container-runtime
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -76,10 +89,3 @@ spec:
         volumeMounts:
         - name: host-run
           mountPath: /hrun
-      {{- if .Values.imagePullSecrets }}
-      imagePullSecrets: {{ toYaml .Values.imagePullSecrets | nindent 6 }}
-      {{- end }}
-      volumes:
-      - name: host-run
-        hostPath:
-          path: /var/run
