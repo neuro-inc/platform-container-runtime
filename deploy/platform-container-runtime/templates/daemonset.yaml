@@ -6,6 +6,10 @@ spec:
   selector:
     matchLabels:
       service: platform-container-runtime
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 100%
   template:
     metadata:
       labels:
