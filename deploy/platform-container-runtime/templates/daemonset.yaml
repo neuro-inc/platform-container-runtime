@@ -18,7 +18,7 @@ spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       {{- if .Values.affinity }}
-      affinity: {{ toYaml .Values.affinity | nindent 6 }}
+      affinity: {{ toYaml .Values.affinity | nindent 8 }}
       {{- end }}
       {{- if .Values.tolerations }}
       tolerations: {{ toYaml .Values.tolerations | nindent 6 }}
