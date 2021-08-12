@@ -133,27 +133,6 @@ jobs:
       - name: Deploy to kubernetes
         run: make helm_deploy
 
-  parse_version:
-    name: Parse version using python
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    outputs:
-      is_prerelease: ${{ steps.parse-version.outputs.is_prerelease }}
-    steps:
-    - name: Install python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Install packaging
-      run: pip install packaging
-    - name: Parse version
-      id: parse-version
-      run: |
-        python -c '\
-        from packaging import version;\
-        version_str = "${{ github.ref }}"[len("refs/tags/"):];\
-        print(f"::set-output name=is_prerelease::{version.parse(version_str).is_prerelease}")'
-
   release:
     name: Create release packages
     defaults:
@@ -162,7 +141,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
     - test
-    - parse_version
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     env:
       ARTIFACTORY_DOCKER_REPO: ${{ secrets.ARTIFACTORY_DOCKER_REPO }}
