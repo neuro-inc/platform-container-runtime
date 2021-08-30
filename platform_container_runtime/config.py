@@ -27,6 +27,7 @@ class KubeConfig:
     client_key_path: Optional[str] = None
     token: Optional[str] = None
     token_path: Optional[str] = None
+    conn_force_close: bool = False
     conn_timeout_s: int = 300
     read_timeout_s: int = 100
     conn_pool_size: int = 100

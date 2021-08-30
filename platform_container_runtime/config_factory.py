@@ -44,6 +44,9 @@ class EnvironConfigFactory:
             cert_authority_path=self._environ.get("NP_KUBE_CERT_AUTHORITY_PATH"),
             client_cert_path=self._environ.get("NP_KUBE_CLIENT_CERT_PATH"),
             client_key_path=self._environ.get("NP_KUBE_CLIENT_KEY_PATH"),
+            conn_force_close=_parse_bool(
+                self._environ.get("NP_KUBE_CONN_FORCE_CLOSE", "0")
+            ),
             conn_timeout_s=int(
                 self._environ.get("NP_KUBE_CONN_TIMEOUT", KubeConfig.conn_timeout_s)
             ),
@@ -84,3 +87,7 @@ class EnvironConfigFactory:
                 self._environ.get("NP_SENTRY_SAMPLE_RATE", SentryConfig.sample_rate)
             ),
         )
+
+
+def _parse_bool(value: str) -> bool:
+    return value.lower() in ("1", "true", "yes")

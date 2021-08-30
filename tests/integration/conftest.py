@@ -35,13 +35,13 @@ async def cri_address() -> str:
 
 
 @pytest.fixture
-def config_factory(cri_address: str) -> Callable[..., Config]:
+def config_factory(cri_address: str, kube_config: KubeConfig) -> Callable[..., Config]:
     def _f(**kwargs: Any) -> Config:
         defaults = dict(
             server=ServerConfig(host="0.0.0.0", port=8080),
             node_name="minikube",
             cri_address=cri_address,
-            kube=KubeConfig(url=URL("https://kubernetes.default.svc")),
+            kube=kube_config,
         )
         kwargs = {**defaults, **kwargs}
         return Config(**kwargs)
