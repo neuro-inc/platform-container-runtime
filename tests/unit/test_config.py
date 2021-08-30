@@ -60,7 +60,7 @@ class TestEnvironConfigFactory:
             "NP_KUBE_CERT_AUTHORITY_PATH": "k8s-ca-path",
             "NP_KUBE_CLIENT_CERT_PATH": "k8s-client-cert-path",
             "NP_KUBE_CLIENT_KEY_PATH": "k8s-client-key-path",
-            "NP_KUBE_CONN_FoRCE_CLOSE": "1",
+            "NP_KUBE_CONN_FORCE_CLOSE": "1",
             "NP_KUBE_CONN_TIMEOUT": "100",
             "NP_KUBE_READ_TIMEOUT": "200",
             "NP_KUBE_CONN_POOL_SIZE": "300",
