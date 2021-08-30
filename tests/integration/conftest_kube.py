@@ -180,3 +180,10 @@ def kube_config(
 async def kube_client(kube_config: KubeConfig) -> AsyncIterator[KubeClient]:
     async with KubeClient(kube_config) as client:
         yield client
+
+
+@pytest.fixture
+async def kube_node(kube_client: KubeClient) -> str:
+    nodes = await kube_client.get_nodes()
+    assert len(nodes) == 1, "Should be exactly one minikube node"
+    return nodes[0].metadata.name
