@@ -60,7 +60,8 @@ jobs:
             --kubernetes-version="1.20.9" \
             --driver="$MINIKUBE_DRIVER" \
             --install-addons=true \
-            --addons=registry
+            --addons=registry \
+            --wait
           sudo mv /root/.kube /root/.minikube $HOME
           sudo chown -R $USER $HOME/.kube $HOME/.minikube
           sed -i "s/root/home\/$USER/g" $HOME/.kube/config
