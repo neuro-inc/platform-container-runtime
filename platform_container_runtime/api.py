@@ -28,7 +28,7 @@ from neuro_logging import (
 
 from .config import Config, SentryConfig, ZipkinConfig
 from .config_factory import EnvironConfigFactory
-from .cri import ContainerNotFoundError, RuntimeService
+from .cri_client import ContainerNotFoundError, CriClient
 from .kube_client import KubeClient
 from .service import Service
 
@@ -135,7 +135,14 @@ class PlatformContainerRuntimeApiHandler:
         return HTTPNoContent()
 
     def _get_container_id(self, req: Request) -> str:
-        return req.match_info["id"].replace("%2F", "/")
+        return _strip_scheme(req.match_info["id"].replace("%2F", "/"))
+
+
+def _strip_scheme(value: str) -> str:
+    start = value.find("://")
+    if start > 0:
+        start += 3
+    return value[start:] if start > 0 else value
 
 
 def _parse_bool(value: str) -> bool:
@@ -181,21 +188,17 @@ def make_tracing_trace_configs(
     return trace_configs
 
 
-async def create_cri_address(config: Config, kube_client: KubeClient) -> str:
+def create_cri_address(config: Config, container_runtime_version: str) -> str:
     if config.cri_address:
         return config.cri_address
 
-    node = await kube_client.get_node(config.node_name)
-
-    logger.info("Container runtime version: %s", node.container_runtime_version)
-
-    if node.container_runtime_version.startswith("docker://"):
+    if container_runtime_version.startswith("docker://"):
         return "unix:/hrun/dockershim.sock"
-    elif node.container_runtime_version.startswith("containerd://"):
+    elif container_runtime_version.startswith("containerd://"):
         return "unix:/hrun/containerd/containerd.sock"
     else:
         raise ValueError(
-            f"Container runtime {node.container_runtime_version!r} is not supported"
+            f"Container runtime {container_runtime_version!r} is not supported"
         )
 
 
@@ -231,23 +234,25 @@ async def create_app(config: Config) -> aiohttp.web.Application:
                 KubeClient(config.kube, trace_configs=trace_configs)
             )
 
-            logger.info("Initializing CRI address")
-            cri_address = await create_cri_address(config, kube_client)
+            node = await kube_client.get_node(config.node_name)
+            logger.info("Container runtime version: %s", node.container_runtime_version)
+
+            cri_address = create_cri_address(config, node.container_runtime_version)
+            logger.info("CRI address: %s", cri_address)
 
             logger.info("Initializing gRPC channel")
             channel = await exit_stack.enter_async_context(
                 grpc.aio.insecure_channel(cri_address)
             )
-            runtime_service = await exit_stack.enter_async_context(
-                RuntimeService(channel)
-            )
+            cri_client = await exit_stack.enter_async_context(CriClient(channel))
             streaming_client = await exit_stack.enter_async_context(
                 aiohttp.ClientSession(trace_configs=trace_configs)
             )
 
             app["platform_container_runtime_app"]["config"] = config
             app["platform_container_runtime_app"]["service"] = Service(
-                runtime_service, streaming_client
+                cri_client=cri_client,
+                streaming_client=streaming_client,
             )
 
             yield

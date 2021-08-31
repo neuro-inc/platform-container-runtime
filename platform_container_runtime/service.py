@@ -8,7 +8,7 @@ import aiohttp
 import aiohttp.web
 from yarl import URL
 
-from .cri import RuntimeService
+from .cri_client import CriClient
 
 
 logger = logging.getLogger()
@@ -116,10 +116,10 @@ class Stream:
 class Service:
     def __init__(
         self,
-        runtime_service: RuntimeService,
+        cri_client: CriClient,
         streaming_client: aiohttp.ClientSession,
     ) -> None:
-        self._runtime_service = runtime_service
+        self._cri_client = cri_client
         self._streaming_client = streaming_client
 
     async def attach(
@@ -131,7 +131,7 @@ class Service:
         stderr: bool = False,
         tty: bool = False,
     ) -> Stream:
-        url = await self._runtime_service.attach(
+        url = await self._cri_client.attach(
             container_id=container_id,
             tty=tty,
             stdin=stdin,
@@ -150,7 +150,7 @@ class Service:
         stdout: bool = False,
         stderr: bool = False,
     ) -> Stream:
-        url = await self._runtime_service.exec(
+        url = await self._cri_client.exec(
             container_id=container_id,
             cmd=cmd,
             tty=tty,
@@ -161,7 +161,7 @@ class Service:
         return Stream(self._streaming_client, url=url)
 
     async def kill(self, container_id: str, timeout_s: int = 0) -> None:
-        await self._runtime_service.stop_container(
+        await self._cri_client.stop_container(
             container_id=container_id,
             timeout_s=timeout_s,
         )

@@ -15,9 +15,9 @@ T = TypeVar("T", bound=Callable[..., Awaitable[Any]])
 
 def _handle_errors(func: T) -> T:
     @functools.wraps(func)
-    async def new_func(self: "RuntimeService", *args: Any, **kwargs: Any) -> Any:
+    async def new_func(self: "CriClient", *args: Any, **kwargs: Any) -> Any:
         try:
-            if not self._runtime_service:
+            if not self._cri_client:
                 raise RuntimeNotAvailableError()
 
             return await func(self, *args, **kwargs)
@@ -44,21 +44,21 @@ class ContainerNotFoundError(Exception):
         super().__init__(f"Container {container_id!r} not found")
 
 
-class RuntimeService:
+class CriClient:
     def __init__(self, channel: grpc.aio.Channel) -> None:
         self._channel = channel
-        self._runtime_service: Optional["RuntimeService"] = None
+        self._cri_client: Optional["CriClient"] = None
 
-    async def __aenter__(self) -> "RuntimeService":
+    async def __aenter__(self) -> "CriClient":
         try:
-            runtime_service_v1 = _RuntimeServiceV1(self._channel)
-            await runtime_service_v1.version()
-            self._runtime_service = runtime_service_v1
+            cri_client_v1 = _CriClientV1(self._channel)
+            await cri_client_v1.version()
+            self._cri_client = cri_client_v1
             logging.info("Using CRI v1 gRPC API")
         except Exception:
-            runtime_service_v1alpha2 = _RuntimeServiceV1Alpha2(self._channel)
-            await runtime_service_v1alpha2.version()
-            self._runtime_service = runtime_service_v1alpha2
+            cri_client_v1alpha2 = _CriClientV1Alpha2(self._channel)
+            await cri_client_v1alpha2.version()
+            self._cri_client = cri_client_v1alpha2
             logging.info("Using CRI v1alpha2 gRPC API")
         return self
 
@@ -81,10 +81,10 @@ class RuntimeService:
         stdout: bool = False,
         stderr: bool = False,
     ) -> URL:
-        assert self._runtime_service
+        assert self._cri_client
 
-        return await self._runtime_service.attach(
-            self._strip_scheme(container_id),
+        return await self._cri_client.attach(
+            container_id,
             tty=tty,
             stdin=stdin,
             stdout=stdout,
@@ -103,10 +103,10 @@ class RuntimeService:
         stdout: bool = False,
         stderr: bool = False,
     ) -> URL:
-        assert self._runtime_service
+        assert self._cri_client
 
-        return await self._runtime_service.exec(
-            self._strip_scheme(container_id),
+        return await self._cri_client.exec(
+            container_id,
             cmd,
             tty=tty,
             stdin=stdin,
@@ -117,17 +117,12 @@ class RuntimeService:
     @trace
     @_handle_errors
     async def stop_container(self, container_id: str, timeout_s: int = 0) -> None:
-        assert self._runtime_service
+        assert self._cri_client
 
-        await self._runtime_service.stop_container(
-            self._strip_scheme(container_id), timeout_s
-        )
-
-    def _strip_scheme(self, value: str) -> str:
-        return value.replace("docker://", "").replace("containerd://", "")
+        await self._cri_client.stop_container(container_id, timeout_s)
 
 
-class _RuntimeServiceV1(RuntimeService):
+class _CriClientV1(CriClient):
     from k8s.io.cri_api.pkg.apis.runtime.v1.api_pb2 import (
         AttachRequest,
         ExecRequest,
@@ -194,7 +189,7 @@ class _RuntimeServiceV1(RuntimeService):
         )
 
 
-class _RuntimeServiceV1Alpha2(RuntimeService):
+class _CriClientV1Alpha2(CriClient):
     from k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2 import (
         AttachRequest,
         ExecRequest,

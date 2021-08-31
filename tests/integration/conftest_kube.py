@@ -158,21 +158,32 @@ def _kube_config_user_payload(_kube_config_payload: Dict[str, Any]) -> Any:
 
 
 @pytest.fixture
-async def kube_client(
+def kube_config(
     _kube_config_cluster_payload: Dict[str, Any],
     _kube_config_user_payload: Dict[str, Any],
     _cert_authority_data_pem: Optional[str],
-) -> AsyncIterator[KubeClient]:
+) -> KubeConfig:
     cluster = _kube_config_cluster_payload
     user = _kube_config_user_payload
-    client = KubeClient(
-        KubeConfig(
-            url=URL(cluster["server"]),
-            auth_type=KubeClientAuthType.CERTIFICATE,
-            cert_authority_data_pem=_cert_authority_data_pem,
-            client_cert_path=user["client-certificate"],
-            client_key_path=user["client-key"],
-        )
+    return KubeConfig(
+        url=URL(cluster["server"]),
+        auth_type=KubeClientAuthType.CERTIFICATE,
+        cert_authority_data_pem=_cert_authority_data_pem,
+        client_cert_path=user["client-certificate"],
+        client_key_path=user["client-key"],
+        # https://docs.aiohttp.org/en/stable/client_advanced.html#graceful-shutdown
+        conn_force_close=True,
     )
-    async with client:
+
+
+@pytest.fixture
+async def kube_client(kube_config: KubeConfig) -> AsyncIterator[KubeClient]:
+    async with KubeClient(kube_config) as client:
         yield client
+
+
+@pytest.fixture
+async def kube_node(kube_client: KubeClient) -> str:
+    nodes = await kube_client.get_nodes()
+    assert len(nodes) == 1, "Should be exactly one minikube node"
+    return nodes[0].metadata.name
