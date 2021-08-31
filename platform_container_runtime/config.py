@@ -55,5 +55,6 @@ class Config:
     node_name: str
     kube: KubeConfig
     cri_address: Optional[str] = None
+    runtime_address: Optional[str] = None
     zipkin: Optional[ZipkinConfig] = None
     sentry: Optional[SentryConfig] = None

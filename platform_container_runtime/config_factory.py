@@ -23,6 +23,9 @@ class EnvironConfigFactory:
             node_name=self._environ["NP_NODE_NAME"],
             kube=self.create_kube(),
             cri_address=self._environ.get("NP_CRI_ADDRESS", Config.cri_address),
+            runtime_address=self._environ.get(
+                "NP_RUNTIME_ADDRESS", Config.runtime_address
+            ),
             zipkin=self.create_zipkin(),
             sentry=self.create_sentry(),
         )

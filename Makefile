@@ -80,8 +80,9 @@ ifeq ($(MINIKUBE_DRIVER),none)
 else
 	eval $$(minikube -p minikube docker-env); make docker_build
 endif
-	kubectl --context minikube apply -f tests/integration/k8s/*
+	echo tests/integration/k8s/* | xargs -n 1 kubectl --context minikube apply -f
 	export CRI_ADDRESS=$$(minikube service cri --url | sed -e "s/^http:\/\///"); \
+	export RUNTIME_ADDRESS=$$(minikube service runtime --url | sed -e "s/^http:\/\///"); \
 	export SVC_ADDRESS=$$(minikube service platform-container-runtime --url | sed -e "s/^http:\/\///"); \
 	$(WAIT_FOR_IT) $$CRI_ADDRESS -- echo "cri is up"; \
 	$(WAIT_FOR_IT) $$SVC_ADDRESS -- echo "service is up"; \
