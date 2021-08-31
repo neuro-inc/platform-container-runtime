@@ -437,7 +437,18 @@ class TestApi:
 
                 assert chunks[1] == {"status": "CommitFinished"}, debug
 
-    async def test_commit_unknown(
+    async def test_commit_invalid_image(
+        self,
+        api: ApiEndpoints,
+        client: aiohttp.ClientSession,
+        registry_address: str,
+    ) -> None:
+        async with client.post(
+            api.commit("unknown"), json={"image": f"_{registry_address}/ubuntu:latest"}
+        ) as resp:
+            assert resp.status == HTTPBadRequest.status_code, await resp.text()
+
+    async def test_commit_unknown_container(
         self,
         api: ApiEndpoints,
         client: aiohttp.ClientSession,
