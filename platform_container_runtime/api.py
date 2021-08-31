@@ -277,6 +277,8 @@ async def create_cri_client(
         cri_address = "unix:/hrun/dockershim.sock"
     elif container_runtime_version.startswith("containerd://"):
         cri_address = "unix:/hrun/containerd/containerd.sock"
+    elif container_runtime_version.startswith("cri-o://"):
+        cri_address = "unix:/hrun/crio/crio.sock"
     else:
         raise ValueError(
             f"Container runtime {container_runtime_version!r} is not supported"
