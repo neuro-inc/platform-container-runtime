@@ -123,18 +123,6 @@ async def get_service_url(service_name: str, namespace: str = "default") -> str:
     pytest.fail(f"Service {service_name} is unavailable.")
 
 
-async def get_service_cluster_ip(service_name: str, namespace: str = "default") -> str:
-    process = await asyncio.create_subprocess_shell(
-        f"kubectl --context minikube -n {namespace} get svc {service_name} -o json",
-        stdout=subprocess.PIPE,
-    )
-    stdout, _ = await process.communicate()
-    if process.returncode and process.returncode > 0:
-        pytest.fail(f"Service {service_name} is unavailable.")
-    payload = json.loads(stdout)
-    return payload["spec"]["clusterIP"]
-
-
 @pytest.fixture(scope="session")
 def _kube_config_payload() -> Dict[str, Any]:
     kube_config_path = os.path.expanduser("~/.kube/config")

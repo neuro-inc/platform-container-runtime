@@ -10,7 +10,7 @@ from yarl import URL
 
 from platform_container_runtime.config import Config, KubeConfig, ServerConfig
 
-from .conftest_kube import get_service_cluster_ip, get_service_url
+from .conftest_kube import get_service_url
 
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,11 @@ async def cri_address() -> str:
 @pytest.fixture
 async def runtime_address() -> str:
     return await get_service_url("runtime")
+
+
+@pytest.fixture
+def registry_address() -> str:
+    return "localhost:5000"
 
 
 @pytest.fixture
@@ -78,10 +83,3 @@ async def create_local_app_server(
     finally:
         await runner.shutdown()
         await runner.cleanup()
-
-
-@pytest.fixture
-async def registry_address() -> str:
-    return await get_service_cluster_ip(
-        service_name="registry", namespace="kube-system"
-    )

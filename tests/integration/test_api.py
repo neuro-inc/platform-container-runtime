@@ -366,7 +366,7 @@ class TestApi:
 
     async def test_commit(
         self,
-        api_minikube: ApiEndpoints,
+        api: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
     ) -> None:
@@ -376,7 +376,7 @@ class TestApi:
             image = f"{repository}:{tag}"
 
             async with client.post(
-                api_minikube.commit(pod.container_id),
+                api.commit(pod.container_id),
                 json={"image": image, "push": True},
             ) as resp:
                 assert resp.status == HTTPOk.status_code, str(resp)
