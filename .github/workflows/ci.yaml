@@ -61,7 +61,7 @@ jobs:
             --driver="$MINIKUBE_DRIVER" \
             --install-addons=true \
             --addons=registry \
-            --wait
+            --wait=all
           sudo mv /root/.kube /root/.minikube $HOME
           sudo chown -R $USER $HOME/.kube $HOME/.minikube
           sed -i "s/root/home\/$USER/g" $HOME/.kube/config
