@@ -35,14 +35,25 @@ async def cri_address() -> str:
 
 
 @pytest.fixture
+async def runtime_address() -> str:
+    return await get_service_url("runtime")
+
+
+@pytest.fixture
+def registry_address() -> str:
+    return "localhost:5000"
+
+
+@pytest.fixture
 def config_factory(
-    cri_address: str, kube_config: KubeConfig, kube_node: str
+    cri_address: str, runtime_address: str, kube_config: KubeConfig, kube_node: str
 ) -> Callable[..., Config]:
     def _f(**kwargs: Any) -> Config:
         defaults = dict(
             server=ServerConfig(host="0.0.0.0", port=8080),
             node_name=kube_node,
             cri_address=cri_address,
+            runtime_address=runtime_address,
             kube=kube_config,
         )
         kwargs = {**defaults, **kwargs}

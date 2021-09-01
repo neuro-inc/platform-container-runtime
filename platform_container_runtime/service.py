@@ -2,13 +2,15 @@ import asyncio
 import json
 import logging
 from contextlib import suppress
-from typing import Any, Dict, Iterable, Union
+from typing import Any, AsyncIterator, Dict, Iterable, Optional, Union
 
 import aiohttp
 import aiohttp.web
 from yarl import URL
 
 from .cri_client import CriClient
+from .runtime_client import RuntimeClient
+from .utils import asyncgeneratorcontextmanager
 
 
 logger = logging.getLogger()
@@ -117,9 +119,11 @@ class Service:
     def __init__(
         self,
         cri_client: CriClient,
+        runtime_client: RuntimeClient,
         streaming_client: aiohttp.ClientSession,
     ) -> None:
         self._cri_client = cri_client
+        self._runtime_client = runtime_client
         self._streaming_client = streaming_client
 
     async def attach(
@@ -165,3 +169,21 @@ class Service:
             container_id=container_id,
             timeout_s=timeout_s,
         )
+
+    @asyncgeneratorcontextmanager
+    async def commit(
+        self, container_id: str, image: str
+    ) -> AsyncIterator[Dict[str, Any]]:
+        async with self._runtime_client.commit(
+            container_id=container_id, image=image
+        ) as commit:
+            async for chunk in commit:
+                yield chunk
+
+    @asyncgeneratorcontextmanager
+    async def push(
+        self, image: str, auth: Optional[Dict[str, Any]] = None
+    ) -> AsyncIterator[Dict[str, Any]]:
+        async with self._runtime_client.push(image, auth) as push:
+            async for chunk in push:
+                yield chunk

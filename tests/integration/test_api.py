@@ -1,6 +1,7 @@
 import asyncio
 import json
 import re
+import uuid
 from dataclasses import dataclass
 from typing import AsyncIterator
 
@@ -44,6 +45,9 @@ class ApiEndpoints:
 
     def kill(self, container_id: str) -> URL:
         return self.containers_endpoint / self._encode(container_id) / "kill"
+
+    def commit(self, container_id: str) -> URL:
+        return self.containers_endpoint / self._encode(container_id) / "commit"
 
     def _encode(self, value: str) -> str:
         return value.replace("/", "%2F")
@@ -359,3 +363,126 @@ class TestApi:
     ) -> None:
         async with client.post(api.kill("unknown")) as resp:
             assert resp.status == HTTPNotFound.status_code, await resp.text()
+
+    async def test_commit(
+        self,
+        api: ApiEndpoints,
+        client: aiohttp.ClientSession,
+        registry_address: str,
+    ) -> None:
+        async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
+            repository = f"{registry_address}/ubuntu"
+            tag = str(uuid.uuid4())
+            image = f"{repository}:{tag}"
+
+            async with client.post(
+                api.commit(pod.container_id),
+                json={"image": image, "push": True},
+            ) as resp:
+                assert resp.status == HTTPOk.status_code, str(resp)
+                chunks = [
+                    json.loads(chunk.decode("utf-8"))
+                    async for chunk in resp.content
+                    if chunk
+                ]
+                debug = f"Received chunks: `{chunks}`"
+                assert isinstance(chunks, list), debug
+                assert all(isinstance(s, dict) for s in chunks), debug
+                assert len(chunks) >= 4, debug  # 2 for commit(), >=2 for push()
+
+                # here we rely on chunks to be received in correct order
+
+                assert chunks[0]["status"] == "CommitStarted", debug
+                assert chunks[0]["details"]["image"] == image, debug
+                assert re.match(r"\w{64}", chunks[0]["details"]["container"]), debug
+
+                assert chunks[1] == {"status": "CommitFinished"}, debug
+
+                msg = f"The push refers to repository [{repository}]"
+                assert chunks[2].get("status") == msg, debug
+
+                assert chunks[-1].get("aux", {}).get("Tag") == tag, debug
+
+    async def test_commit_without_push(
+        self,
+        api_minikube: ApiEndpoints,
+        client: aiohttp.ClientSession,
+        registry_address: str,
+    ) -> None:
+        async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
+            repository = f"{registry_address}/ubuntu"
+            tag = str(uuid.uuid4())
+            image = f"{repository}:{tag}"
+
+            async with client.post(
+                api_minikube.commit(pod.container_id),
+                json={"image": image},
+            ) as resp:
+                assert resp.status == HTTPOk.status_code, str(resp)
+                chunks = [
+                    json.loads(chunk.decode("utf-8"))
+                    async for chunk in resp.content
+                    if chunk
+                ]
+                debug = f"Received chunks: `{chunks}`"
+                assert isinstance(chunks, list), debug
+                assert all(isinstance(s, dict) for s in chunks), debug
+                assert len(chunks) >= 2, debug
+
+                # here we rely on chunks to be received in correct order
+
+                assert chunks[0]["status"] == "CommitStarted", debug
+                assert chunks[0]["details"]["image"] == image, debug
+                assert re.match(r"\w{64}", chunks[0]["details"]["container"]), debug
+
+                assert chunks[1] == {"status": "CommitFinished"}, debug
+
+    async def test_commit_invalid_image(
+        self,
+        api: ApiEndpoints,
+        client: aiohttp.ClientSession,
+        registry_address: str,
+    ) -> None:
+        async with client.post(
+            api.commit("unknown"), json={"image": f"_{registry_address}/ubuntu:latest"}
+        ) as resp:
+            assert resp.status == HTTPBadRequest.status_code, await resp.text()
+
+    async def test_commit_unknown_container(
+        self,
+        api: ApiEndpoints,
+        client: aiohttp.ClientSession,
+        registry_address: str,
+    ) -> None:
+        async with client.post(
+            api.commit("unknown"), json={"image": f"{registry_address}/ubuntu:latest"}
+        ) as resp:
+            assert resp.status == HTTPNotFound.status_code, await resp.text()
+
+    async def test_commit_unknown_registry(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
+            async with client.post(
+                api.commit(pod.container_id),
+                json={"image": "unknown.io:5000/ubuntu:latest", "push": True},
+            ) as resp:
+                assert resp.status == HTTPOk.status_code, str(resp)
+                chunks = [
+                    json.loads(chunk.decode("utf-8"))
+                    async for chunk in resp.content
+                    if chunk
+                ]
+                debug = f"Received chunks: `{chunks}`"
+                assert isinstance(chunks, list), debug
+                assert all(isinstance(s, dict) for s in chunks), debug
+                assert len(chunks) == 4, debug  # 2 for commit(), 2 for push()
+
+                # here we rely on chunks to be received in correct order
+
+                assert chunks[0]["status"] == "CommitStarted", debug
+                assert chunks[1] == {"status": "CommitFinished"}, debug
+
+                msg = "The push refers to repository [unknown.io:5000/ubuntu]"
+                assert chunks[2].get("status") == msg, debug
+                assert "no such host" in chunks[3]["error"]

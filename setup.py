@@ -11,6 +11,8 @@ install_requires = (
     "sentry-sdk==1.3.1",
     "grpcio==1.39.0",
     "protobuf==3.17.3",
+    "aiodocker==0.21.0",
+    "docker-image-py==0.1.10",
 )
 
 setup(
