@@ -1,6 +1,8 @@
+import enum
 import functools
 import logging
 import shlex
+from dataclasses import dataclass
 from types import TracebackType
 from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, cast
 
@@ -11,6 +13,19 @@ from yarl import URL
 
 
 T = TypeVar("T", bound=Callable[..., Awaitable[Any]])
+
+
+class ContainerState(int, enum.Enum):
+    CREATED = 0
+    RUNNING = 1
+    EXITED = 2
+    UNKNOWN = 3
+
+
+@dataclass(frozen=True)
+class ContainerStatus:
+    id: str
+    state: ContainerState
 
 
 def _handle_errors(func: T) -> T:
@@ -72,6 +87,13 @@ class CriClient:
 
     @trace
     @_handle_errors
+    async def get_status(self, container_id: str) -> ContainerStatus:
+        assert self._cri_client
+
+        return await self._cri_client.get_status(container_id)
+
+    @trace
+    @_handle_errors
     async def attach(
         self,
         container_id: str,
@@ -125,6 +147,7 @@ class CriClient:
 class _CriClientV1(CriClient):
     from k8s.io.cri_api.pkg.apis.runtime.v1.api_pb2 import (
         AttachRequest,
+        ContainerStatusRequest,
         ExecRequest,
         StopContainerRequest,
         VersionRequest,
@@ -137,6 +160,14 @@ class _CriClientV1(CriClient):
     async def version(self) -> str:
         resp = await self._runtime_service_stub.Version(self.VersionRequest())
         return resp.version
+
+    async def get_status(self, container_id: str) -> ContainerStatus:
+        resp = await self._runtime_service_stub.ContainerStatus(
+            self.ContainerStatusRequest(container_id=container_id)
+        )
+        return ContainerStatus(
+            id=resp.status.id, state=ContainerState(resp.status.state)
+        )
 
     async def attach(
         self,
@@ -192,6 +223,7 @@ class _CriClientV1(CriClient):
 class _CriClientV1Alpha2(CriClient):
     from k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2 import (
         AttachRequest,
+        ContainerStatusRequest,
         ExecRequest,
         StopContainerRequest,
         VersionRequest,
@@ -204,6 +236,14 @@ class _CriClientV1Alpha2(CriClient):
     async def version(self) -> str:
         resp = await self._runtime_service_stub.Version(self.VersionRequest())
         return resp.version
+
+    async def get_status(self, container_id: str) -> ContainerStatus:
+        resp = await self._runtime_service_stub.ContainerStatus(
+            self.ContainerStatusRequest(container_id=container_id)
+        )
+        return ContainerStatus(
+            id=resp.status.id, state=ContainerState(resp.status.state)
+        )
 
     async def attach(
         self,

@@ -187,6 +187,19 @@ class TestApi:
                     if expected_output in output:
                         break
 
+    @pytest.mark.minikube
+    async def test_attach_terminated_container(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with run(
+            "ubuntu:20.10",
+            'bash -c "exit 1"',
+            expected_status="terminated",
+        ) as pod:
+            async with client.post(api.attach(pod.container_id)) as resp:
+                assert resp.status == HTTPBadRequest.status_code, await resp.text()
+                assert "Cannot attach to a not running container" in await resp.text()
+
     async def test_attach_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
@@ -307,6 +320,21 @@ class TestApi:
                         payload = json.loads(data[1:])
                         assert payload["exit_code"] == 42
 
+    @pytest.mark.minikube
+    async def test_exec_terminated_container(
+        self, api: ApiEndpoints, client: aiohttp.ClientSession
+    ) -> None:
+        async with run(
+            "ubuntu:20.10",
+            'bash -c "exit 1"',
+            expected_status="terminated",
+        ) as pod:
+            async with client.post(
+                api.exec(pod.container_id).with_query(cmd="bash")
+            ) as resp:
+                assert resp.status == HTTPBadRequest.status_code, await resp.text()
+                assert "Cannot exec into a not running container" in await resp.text()
+
     async def test_exec_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
@@ -369,7 +397,11 @@ class TestApi:
         api: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
+        kube_container_runtime: str,
     ) -> None:
+        if kube_container_runtime != "docker":
+            pytest.skip("Commit is not supported")
+
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
             repository = f"{registry_address}/ubuntu"
             tag = str(uuid.uuid4())
@@ -408,7 +440,11 @@ class TestApi:
         api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
+        kube_container_runtime: str,
     ) -> None:
+        if kube_container_runtime != "docker":
+            pytest.skip("Commit is not supported")
+
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
             repository = f"{registry_address}/ubuntu"
             tag = str(uuid.uuid4())
@@ -442,7 +478,11 @@ class TestApi:
         api: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
+        kube_container_runtime: str,
     ) -> None:
+        if kube_container_runtime != "docker":
+            pytest.skip("Commit is not supported")
+
         async with client.post(
             api.commit("unknown"), json={"image": f"_{registry_address}/ubuntu:latest"}
         ) as resp:
@@ -453,15 +493,25 @@ class TestApi:
         api: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
+        kube_container_runtime: str,
     ) -> None:
+        if kube_container_runtime != "docker":
+            pytest.skip("Commit is not supported")
+
         async with client.post(
             api.commit("unknown"), json={"image": f"{registry_address}/ubuntu:latest"}
         ) as resp:
             assert resp.status == HTTPNotFound.status_code, await resp.text()
 
     async def test_commit_unknown_registry(
-        self, api: ApiEndpoints, client: aiohttp.ClientSession
+        self,
+        api: ApiEndpoints,
+        client: aiohttp.ClientSession,
+        kube_container_runtime: str,
     ) -> None:
+        if kube_container_runtime != "docker":
+            pytest.skip("Commit is not supported")
+
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
             async with client.post(
                 api.commit(pod.container_id),
