@@ -197,8 +197,15 @@ class TestApi:
             expected_status="terminated",
         ) as pod:
             async with client.post(api.attach(pod.container_id)) as resp:
-                assert resp.status == HTTPBadRequest.status_code, await resp.text()
-                assert "Cannot attach to a not running container" in await resp.text()
+                assert (
+                    resp.status == HTTPBadRequest.status_code
+                    or resp.status == HTTPNotFound.status_code
+                ), await resp.text()
+
+                if resp.status == HTTPBadRequest.status_code:
+                    assert (
+                        "Cannot attach to a not running container" in await resp.text()
+                    )
 
     async def test_attach_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
@@ -332,8 +339,15 @@ class TestApi:
             async with client.post(
                 api.exec(pod.container_id).with_query(cmd="bash")
             ) as resp:
-                assert resp.status == HTTPBadRequest.status_code, await resp.text()
-                assert "Cannot exec into a not running container" in await resp.text()
+                assert (
+                    resp.status == HTTPBadRequest.status_code
+                    or resp.status == HTTPNotFound.status_code
+                ), await resp.text()
+
+                if resp.status == HTTPBadRequest.status_code:
+                    assert (
+                        "Cannot exec into a not running container" in await resp.text()
+                    )
 
     async def test_exec_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
