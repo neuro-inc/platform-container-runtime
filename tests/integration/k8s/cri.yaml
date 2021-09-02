@@ -16,7 +16,7 @@ data:
             listen 9001 http2;
 
             location / {
-                grpc_pass unix:/var/run/dockershim.sock;
+                grpc_pass unix:$RUNTIME_SOCK;
             }
         }
     }
@@ -42,21 +42,39 @@ spec:
       containers:
       - name: cri
         image: nginx
+        command: [bash]
+        args:
+        - -ec
+        - |
+            if [[ -S /hrun/dockershim.sock ]]
+            then
+              RUNTIME_SOCK=/hrun/dockershim.sock
+            elif [[ -S /hrun/containerd/containerd.sock ]]
+            then
+              RUNTIME_SOCK=/hrun/containerd/containerd.sock
+            elif [[ -S /hrun/crio/crio.sock ]]
+            then
+              RUNTIME_SOCK=/hrun/crio/crio.sock
+            fi
+
+            export RUNTIME_SOCK
+            envsubst < /etc/nginx-conf/nginx.conf > /etc/nginx/nginx.conf
+
+            nginx -g "daemon off;"
         ports:
         - containerPort: 9001
         volumeMounts:
         - name: nginx-conf
-          subPath: nginx.conf
-          mountPath: /etc/nginx/nginx.conf
-        - name: cri-sock
-          mountPath: /var/run/dockershim.sock
+          mountPath: /etc/nginx-conf
+        - name: host-run
+          mountPath: /hrun
       volumes:
       - name: nginx-conf
         configMap:
           name: cri
-      - name: cri-sock
+      - name: host-run
         hostPath:
-          path: /var/run/dockershim.sock
+          path: /var/run
 ---
 apiVersion: v1
 kind: Service
@@ -71,10 +89,15 @@ spec:
     service: cri
 ---
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: platform-container-runtime
 spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       service: platform-container-runtime
@@ -87,7 +110,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: platform-container-runtime
-        image: platformcontainerruntime:latest
+        image: localhost/platformcontainerruntime:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 9000

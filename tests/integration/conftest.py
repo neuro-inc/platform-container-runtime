@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -83,3 +84,6 @@ async def create_local_app_server(
     finally:
         await runner.shutdown()
         await runner.cleanup()
+
+        # https://docs.aiohttp.org/en/stable/client_advanced.html#graceful-shutdown
+        await asyncio.sleep(0.25)
