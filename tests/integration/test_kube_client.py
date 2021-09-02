@@ -15,4 +15,3 @@ class TestKubeClient:
         node = await kube_client.get_node(nodes[0].metadata.name)
 
         assert node.metadata.labels
-        assert node.container_runtime_version.startswith("docker://")

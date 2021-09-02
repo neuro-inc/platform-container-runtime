@@ -8,7 +8,7 @@ import aiohttp
 import aiohttp.web
 from yarl import URL
 
-from .cri_client import CriClient
+from .cri_client import ContainerState, CriClient
 from .runtime_client import RuntimeClient
 from .utils import asyncgeneratorcontextmanager
 
@@ -135,6 +135,14 @@ class Service:
         stderr: bool = False,
         tty: bool = False,
     ) -> Stream:
+        # For some reason cri-o always returns attach url
+        # event if container does not exist. get_status should raise
+        # ContainerNotFoundError if container does not exist.
+        status = await self._cri_client.get_status(container_id)
+        if status.state != ContainerState.RUNNING:
+            raise ValueError(
+                f"Cannot attach to a not running container {container_id!r}"
+            )
         url = await self._cri_client.attach(
             container_id=container_id,
             tty=tty,
@@ -154,6 +162,15 @@ class Service:
         stdout: bool = False,
         stderr: bool = False,
     ) -> Stream:
+        # For some reason cri-o always returns exec url
+        # event if container does not exist. get_status should raise
+        # ContainerNotFoundError if container does not exist.
+        status = await self._cri_client.get_status(container_id)
+        print(status)
+        if status.state != ContainerState.RUNNING:
+            raise ValueError(
+                "Cannot exec into a not running container {container_id!r}"
+            )
         url = await self._cri_client.exec(
             container_id=container_id,
             cmd=cmd,

@@ -44,13 +44,14 @@ async def get_container_id(
     namespace: str = "default",
     timeout_s: int = 30,
     interval_s: int = 1,
+    expected_status: str = "running",
 ) -> str:
     while timeout_s:
         output = await get_pod(pod_name, namespace=namespace)
         container_statuses = output["status"].get("containerStatuses", ())
 
         if not container_statuses or any(
-            "running" not in s.get("state", {}) for s in container_statuses
+            expected_status not in s.get("state", {}) for s in container_statuses
         ):
             time.sleep(interval_s)
             timeout_s -= interval_s
@@ -58,7 +59,7 @@ async def get_container_id(
 
         return container_statuses[0]["containerID"]
 
-    pytest.fail(f"Pod {pod_name!r} container is not running.")
+    pytest.fail(f"Pod {pod_name!r} container is not in {expected_status!r} status.")
 
 
 @asynccontextmanager
@@ -71,6 +72,8 @@ async def run(
     attach: bool = False,
     timeout_s: int = 60,
     interval_s: int = 1,
+    restart: str = "Never",
+    expected_status: str = "running",
 ) -> AsyncIterator[Pod]:
     pod_name = str(uuid.uuid4())
     opts = f" --attach={str(attach).lower()}"
@@ -90,7 +93,10 @@ async def run(
         yield Pod(
             name=pod_name,
             container_id=await get_container_id(
-                pod_name, timeout_s=timeout_s, interval_s=interval_s
+                pod_name,
+                timeout_s=timeout_s,
+                interval_s=interval_s,
+                expected_status=expected_status,
             ),
         )
     finally:
