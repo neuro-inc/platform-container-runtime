@@ -12,7 +12,7 @@ install_requires = (
     "grpcio==1.39.0",
     "protobuf==3.17.3",
     "aiodocker==0.21.0",
-    "docker-image-py==0.1.10",
+    "docker-image-py==0.1.12",
 )
 
 setup(
