@@ -34,32 +34,8 @@ setup:
 	pip install -r requirements/dev.txt
 	pre-commit install
 
-setup_cri_grpc:
-	go get -d github.com/gogo/protobuf/gogoproto
-	go get -d k8s.io/cri-api/pkg/apis/runtime/v1
-
-	rm -rf k8s github
-
-	python -m grpc_tools.protoc \
-		--proto_path=$(GOPATH)/src \
-		--python_out=. \
-		--grpc_python_out=. \
-		--mypy_out=. \
-		github.com/gogo/protobuf/gogoproto/gogo.proto \
-		k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto \
-		k8s.io/cri-api/pkg/apis/runtime/v1/api.proto
-
-	# Fix folder structure after generation
-	mv github.com/gogo/protobuf/gogoproto/*.py github/com/gogo/protobuf/gogoproto
-	mv k8s.io/cri_api/pkg/apis/runtime/v1alpha2/*.py k8s/io/cri_api/pkg/apis/runtime/v1alpha2
-	mv k8s.io/cri_api/pkg/apis/runtime/v1/*.py k8s/io/cri_api/pkg/apis/runtime/v1
-
-	touch github/com/gogo/protobuf/gogoproto/__init__.py
-	touch k8s/io/cri_api/pkg/apis/runtime/v1/__init__.py
-	touch k8s/io/cri_api/pkg/apis/runtime/v1alpha2/__init__.py
-
-	rm -rf github.com
-	rm -rf k8s.io
+setup_pb2:
+	scripts/genpb2.sh
 
 lint: format
 	mypy platform_container_runtime tests setup.py
