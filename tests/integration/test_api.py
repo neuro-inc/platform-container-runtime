@@ -406,14 +406,14 @@ class TestApi:
         async with client.post(api.kill("unknown")) as resp:
             assert resp.status == HTTPNotFound.status_code, await resp.text()
 
-    async def test_commit(
+    async def test_commit1(
         self,
         api: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
         kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime != "docker":
+        if kube_container_runtime == "cri-o":
             pytest.skip("Commit is not supported")
 
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:

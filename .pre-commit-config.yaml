@@ -12,13 +12,13 @@ repos:
   rev: 'v5.9.3'
   hooks:
   - id: isort
-    exclude: "^github|^k8s"
+    exclude: "^github|^k8s|^containerd"
 - repo: https://github.com/psf/black
   rev: '21.8b0'
   hooks:
   - id: black
     language_version: python3 # Should be a command that runs python3.6+
-    exclude: "^github|^k8s"
+    exclude: "^github|^k8s|^containerd"
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: 'v4.0.1'
   hooks:
@@ -28,7 +28,7 @@ repos:
   - id: debug-statements
   - id: check-added-large-files
   - id: end-of-file-fixer
-    exclude: "^github|^k8s"
+    exclude: "^github|^k8s|^containerd"
   - id: requirements-txt-fixer
   - id: trailing-whitespace
   - id: check-symlinks
@@ -46,9 +46,9 @@ repos:
   hooks:
   - id: pyupgrade
     args: ['--py36-plus']
-    exclude: "^github|^k8s"
+    exclude: "^github|^k8s|^containerd"
 - repo: https://gitlab.com/pycqa/flake8
   rev: '3.9.2'
   hooks:
   - id: flake8
-    exclude: "^docs/|^github|^k8s"
+    exclude: "^docs/|^github|^k8s|^containerd"

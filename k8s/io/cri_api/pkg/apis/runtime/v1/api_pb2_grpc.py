@@ -115,6 +115,16 @@ class RuntimeServiceStub(object):
                 request_serializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListContainerStatsRequest.SerializeToString,
                 response_deserializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListContainerStatsResponse.FromString,
                 )
+        self.PodSandboxStats = channel.unary_unary(
+                '/runtime.v1.RuntimeService/PodSandboxStats',
+                request_serializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.PodSandboxStatsRequest.SerializeToString,
+                response_deserializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.PodSandboxStatsResponse.FromString,
+                )
+        self.ListPodSandboxStats = channel.unary_unary(
+                '/runtime.v1.RuntimeService/ListPodSandboxStats',
+                request_serializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListPodSandboxStatsRequest.SerializeToString,
+                response_deserializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListPodSandboxStatsResponse.FromString,
+                )
         self.UpdateRuntimeConfig = channel.unary_unary(
                 '/runtime.v1.RuntimeService/UpdateRuntimeConfig',
                 request_serializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.UpdateRuntimeConfigRequest.SerializeToString,
@@ -297,6 +307,21 @@ class RuntimeServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def PodSandboxStats(self, request, context):
+        """PodSandboxStats returns stats of the pod. If the pod sandbox does not
+        exist, the call returns an error.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListPodSandboxStats(self, request, context):
+        """ListPodSandboxStats returns stats of the pods matching a filter.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpdateRuntimeConfig(self, request, context):
         """UpdateRuntimeConfig updates the runtime configuration based on the given request.
         """
@@ -413,6 +438,16 @@ def add_RuntimeServiceServicer_to_server(servicer, server):
                     servicer.ListContainerStats,
                     request_deserializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListContainerStatsRequest.FromString,
                     response_serializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListContainerStatsResponse.SerializeToString,
+            ),
+            'PodSandboxStats': grpc.unary_unary_rpc_method_handler(
+                    servicer.PodSandboxStats,
+                    request_deserializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.PodSandboxStatsRequest.FromString,
+                    response_serializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.PodSandboxStatsResponse.SerializeToString,
+            ),
+            'ListPodSandboxStats': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListPodSandboxStats,
+                    request_deserializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListPodSandboxStatsRequest.FromString,
+                    response_serializer=k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListPodSandboxStatsResponse.SerializeToString,
             ),
             'UpdateRuntimeConfig': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateRuntimeConfig,
@@ -772,6 +807,40 @@ class RuntimeService(object):
         return grpc.experimental.unary_unary(request, target, '/runtime.v1.RuntimeService/ListContainerStats',
             k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListContainerStatsRequest.SerializeToString,
             k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListContainerStatsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def PodSandboxStats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/runtime.v1.RuntimeService/PodSandboxStats',
+            k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.PodSandboxStatsRequest.SerializeToString,
+            k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.PodSandboxStatsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ListPodSandboxStats(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/runtime.v1.RuntimeService/ListPodSandboxStats',
+            k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListPodSandboxStatsRequest.SerializeToString,
+            k8s_dot_io_dot_cri__api_dot_pkg_dot_apis_dot_runtime_dot_v1_dot_api__pb2.ListPodSandboxStatsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

@@ -21,7 +21,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\010v1alpha2\330\341\036\000\200\342\036\001\310\341\036\001\310\342\036\001\340\342\036\001\320\342\036\001\220\343\036\000',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n2k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto\x12\x10runtime.v1alpha2\x1a-github.com/gogo/protobuf/gogoproto/gogo.proto\"!\n\x0eVersionRequest\x12\x0f\n\x07version\x18\x01 \x01(\t\"n\n\x0fVersionResponse\x12\x0f\n\x07version\x18\x01 \x01(\t\x12\x14\n\x0cruntime_name\x18\x02 \x01(\t\x12\x17\n\x0fruntime_version\x18\x03 \x01(\t\x12\x1b\n\x13runtime_api_version\x18\x04 \x01(\t\"?\n\tDNSConfig\x12\x0f\n\x07servers\x18\x01 \x03(\t\x12\x10\n\x08searches\x18\x02 \x03(\t\x12\x0f\n\x07options\x18\x03 \x03(\t\"w\n\x0bPortMapping\x12,\n\x08protocol\x18\x01 \x01(\x0e\x32\x1a.runtime.v1alpha2.Protocol\x12\x16\n\x0e\x63ontainer_port\x18\x02 \x01(\x05\x12\x11\n\thost_port\x18\x03 \x01(\x05\x12\x0f\n\x07host_ip\x18\x04 \x01(\t\"\x96\x01\n\x05Mount\x12\x16\n\x0e\x63ontainer_path\x18\x01 \x01(\t\x12\x11\n\thost_path\x18\x02 \x01(\t\x12\x10\n\x08readonly\x18\x03 \x01(\x08\x12\x17\n\x0fselinux_relabel\x18\x04 \x01(\x08\x12\x37\n\x0bpropagation\x18\x05 \x01(\x0e\x32\".runtime.v1alpha2.MountPropagation\"\xb2\x01\n\x0fNamespaceOption\x12\x30\n\x07network\x18\x01 \x01(\x0e\x32\x1f.runtime.v1alpha2.NamespaceMode\x12,\n\x03pid\x18\x02 \x01(\x0e\x32\x1f.runtime.v1alpha2.NamespaceMode\x12,\n\x03ipc\x18\x03 \x01(\x0e\x32\x1f.runtime.v1alpha2.NamespaceMode\x12\x11\n\ttarget_id\x18\x04 \x01(\t\"\x1b\n\nInt64Value\x12\r\n\x05value\x18\x01 \x01(\x03\"\xd1\x03\n\x1bLinuxSandboxSecurityContext\x12<\n\x11namespace_options\x18\x01 \x01(\x0b\x32!.runtime.v1alpha2.NamespaceOption\x12\x38\n\x0fselinux_options\x18\x02 \x01(\x0b\x32\x1f.runtime.v1alpha2.SELinuxOption\x12\x31\n\x0brun_as_user\x18\x03 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x32\n\x0crun_as_group\x18\x08 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x17\n\x0freadonly_rootfs\x18\x04 \x01(\x08\x12\x1b\n\x13supplemental_groups\x18\x05 \x03(\x03\x12\x12\n\nprivileged\x18\x06 \x01(\x08\x12\x32\n\x07seccomp\x18\t \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12\x33\n\x08\x61pparmor\x18\n \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12 \n\x14seccomp_profile_path\x18\x07 \x01(\tB\x02\x18\x01\"\xaf\x01\n\x0fSecurityProfile\x12\x43\n\x0cprofile_type\x18\x01 \x01(\x0e\x32-.runtime.v1alpha2.SecurityProfile.ProfileType\x12\x15\n\rlocalhost_ref\x18\x02 \x01(\t\"@\n\x0bProfileType\x12\x12\n\x0eRuntimeDefault\x10\x00\x12\x0e\n\nUnconfined\x10\x01\x12\r\n\tLocalhost\x10\x02\"\xee\x01\n\x15LinuxPodSandboxConfig\x12\x15\n\rcgroup_parent\x18\x01 \x01(\t\x12G\n\x10security_context\x18\x02 \x01(\x0b\x32-.runtime.v1alpha2.LinuxSandboxSecurityContext\x12\x45\n\x07sysctls\x18\x03 \x03(\x0b\x32\x34.runtime.v1alpha2.LinuxPodSandboxConfig.SysctlsEntry\x1a.\n\x0cSysctlsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"S\n\x12PodSandboxMetadata\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0b\n\x03uid\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\x12\x0f\n\x07\x61ttempt\x18\x04 \x01(\r\"\xbb\x04\n\x10PodSandboxConfig\x12\x36\n\x08metadata\x18\x01 \x01(\x0b\x32$.runtime.v1alpha2.PodSandboxMetadata\x12\x10\n\x08hostname\x18\x02 \x01(\t\x12\x15\n\rlog_directory\x18\x03 \x01(\t\x12/\n\ndns_config\x18\x04 \x01(\x0b\x32\x1b.runtime.v1alpha2.DNSConfig\x12\x34\n\rport_mappings\x18\x05 \x03(\x0b\x32\x1d.runtime.v1alpha2.PortMapping\x12>\n\x06labels\x18\x06 \x03(\x0b\x32..runtime.v1alpha2.PodSandboxConfig.LabelsEntry\x12H\n\x0b\x61nnotations\x18\x07 \x03(\x0b\x32\x33.runtime.v1alpha2.PodSandboxConfig.AnnotationsEntry\x12\x36\n\x05linux\x18\x08 \x01(\x0b\x32\'.runtime.v1alpha2.LinuxPodSandboxConfig\x12:\n\x07windows\x18\t \x01(\x0b\x32).runtime.v1alpha2.WindowsPodSandboxConfig\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"c\n\x14RunPodSandboxRequest\x12\x32\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxConfig\x12\x17\n\x0fruntime_handler\x18\x02 \x01(\t\"/\n\x15RunPodSandboxResponse\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\"/\n\x15StopPodSandboxRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\"\x18\n\x16StopPodSandboxResponse\"1\n\x17RemovePodSandboxRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\"\x1a\n\x18RemovePodSandboxResponse\"B\n\x17PodSandboxStatusRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\"\x13\n\x05PodIP\x12\n\n\x02ip\x18\x01 \x01(\t\"V\n\x17PodSandboxNetworkStatus\x12\n\n\x02ip\x18\x01 \x01(\t\x12/\n\x0e\x61\x64\x64itional_ips\x18\x02 \x03(\x0b\x32\x17.runtime.v1alpha2.PodIP\"?\n\tNamespace\x12\x32\n\x07options\x18\x02 \x01(\x0b\x32!.runtime.v1alpha2.NamespaceOption\"H\n\x15LinuxPodSandboxStatus\x12/\n\nnamespaces\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.Namespace\"\x96\x04\n\x10PodSandboxStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x36\n\x08metadata\x18\x02 \x01(\x0b\x32$.runtime.v1alpha2.PodSandboxMetadata\x12\x30\n\x05state\x18\x03 \x01(\x0e\x32!.runtime.v1alpha2.PodSandboxState\x12\x12\n\ncreated_at\x18\x04 \x01(\x03\x12:\n\x07network\x18\x05 \x01(\x0b\x32).runtime.v1alpha2.PodSandboxNetworkStatus\x12\x36\n\x05linux\x18\x06 \x01(\x0b\x32\'.runtime.v1alpha2.LinuxPodSandboxStatus\x12>\n\x06labels\x18\x07 \x03(\x0b\x32..runtime.v1alpha2.PodSandboxStatus.LabelsEntry\x12H\n\x0b\x61nnotations\x18\x08 \x03(\x0b\x32\x33.runtime.v1alpha2.PodSandboxStatus.AnnotationsEntry\x12\x17\n\x0fruntime_handler\x18\t \x01(\t\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xbf\x01\n\x18PodSandboxStatusResponse\x12\x32\n\x06status\x18\x01 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxStatus\x12\x42\n\x04info\x18\x02 \x03(\x0b\x32\x34.runtime.v1alpha2.PodSandboxStatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"H\n\x14PodSandboxStateValue\x12\x30\n\x05state\x18\x01 \x01(\x0e\x32!.runtime.v1alpha2.PodSandboxState\"\xda\x01\n\x10PodSandboxFilter\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x05state\x18\x02 \x01(\x0b\x32&.runtime.v1alpha2.PodSandboxStateValue\x12M\n\x0elabel_selector\x18\x03 \x03(\x0b\x32\x35.runtime.v1alpha2.PodSandboxFilter.LabelSelectorEntry\x1a\x34\n\x12LabelSelectorEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"K\n\x15ListPodSandboxRequest\x12\x32\n\x06\x66ilter\x18\x01 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxFilter\"\x90\x03\n\nPodSandbox\x12\n\n\x02id\x18\x01 \x01(\t\x12\x36\n\x08metadata\x18\x02 \x01(\x0b\x32$.runtime.v1alpha2.PodSandboxMetadata\x12\x30\n\x05state\x18\x03 \x01(\x0e\x32!.runtime.v1alpha2.PodSandboxState\x12\x12\n\ncreated_at\x18\x04 \x01(\x03\x12\x38\n\x06labels\x18\x05 \x03(\x0b\x32(.runtime.v1alpha2.PodSandbox.LabelsEntry\x12\x42\n\x0b\x61nnotations\x18\x06 \x03(\x0b\x32-.runtime.v1alpha2.PodSandbox.AnnotationsEntry\x12\x17\n\x0fruntime_handler\x18\x07 \x01(\t\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"E\n\x16ListPodSandboxResponse\x12+\n\x05items\x18\x01 \x03(\x0b\x32\x1c.runtime.v1alpha2.PodSandbox\"\x91\x01\n\tImageSpec\x12\r\n\x05image\x18\x01 \x01(\t\x12\x41\n\x0b\x61nnotations\x18\x02 \x03(\x0b\x32,.runtime.v1alpha2.ImageSpec.AnnotationsEntry\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"&\n\x08KeyValue\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x8b\x03\n\x17LinuxContainerResources\x12\x12\n\ncpu_period\x18\x01 \x01(\x03\x12\x11\n\tcpu_quota\x18\x02 \x01(\x03\x12\x12\n\ncpu_shares\x18\x03 \x01(\x03\x12\x1d\n\x15memory_limit_in_bytes\x18\x04 \x01(\x03\x12\x15\n\room_score_adj\x18\x05 \x01(\x03\x12\x13\n\x0b\x63puset_cpus\x18\x06 \x01(\t\x12\x13\n\x0b\x63puset_mems\x18\x07 \x01(\t\x12\x38\n\x0fhugepage_limits\x18\x08 \x03(\x0b\x32\x1f.runtime.v1alpha2.HugepageLimit\x12G\n\x07unified\x18\t \x03(\x0b\x32\x36.runtime.v1alpha2.LinuxContainerResources.UnifiedEntry\x12\"\n\x1amemory_swap_limit_in_bytes\x18\n \x01(\x03\x1a.\n\x0cUnifiedEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"1\n\rHugepageLimit\x12\x11\n\tpage_size\x18\x01 \x01(\t\x12\r\n\x05limit\x18\x02 \x01(\x04\"H\n\rSELinuxOption\x12\x0c\n\x04user\x18\x01 \x01(\t\x12\x0c\n\x04role\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\x12\r\n\x05level\x18\x04 \x01(\t\"A\n\nCapability\x12\x18\n\x10\x61\x64\x64_capabilities\x18\x01 \x03(\t\x12\x19\n\x11\x64rop_capabilities\x18\x02 \x03(\t\"\x82\x05\n\x1dLinuxContainerSecurityContext\x12\x32\n\x0c\x63\x61pabilities\x18\x01 \x01(\x0b\x32\x1c.runtime.v1alpha2.Capability\x12\x12\n\nprivileged\x18\x02 \x01(\x08\x12<\n\x11namespace_options\x18\x03 \x01(\x0b\x32!.runtime.v1alpha2.NamespaceOption\x12\x38\n\x0fselinux_options\x18\x04 \x01(\x0b\x32\x1f.runtime.v1alpha2.SELinuxOption\x12\x31\n\x0brun_as_user\x18\x05 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x32\n\x0crun_as_group\x18\x0c \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x17\n\x0frun_as_username\x18\x06 \x01(\t\x12\x17\n\x0freadonly_rootfs\x18\x07 \x01(\x08\x12\x1b\n\x13supplemental_groups\x18\x08 \x03(\x03\x12\x14\n\x0cno_new_privs\x18\x0b \x01(\x08\x12\x14\n\x0cmasked_paths\x18\r \x03(\t\x12\x16\n\x0ereadonly_paths\x18\x0e \x03(\t\x12\x32\n\x07seccomp\x18\x0f \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12\x33\n\x08\x61pparmor\x18\x10 \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12\x1c\n\x10\x61pparmor_profile\x18\t \x01(\tB\x02\x18\x01\x12 \n\x14seccomp_profile_path\x18\n \x01(\tB\x02\x18\x01\"\x9f\x01\n\x14LinuxContainerConfig\x12<\n\tresources\x18\x01 \x01(\x0b\x32).runtime.v1alpha2.LinuxContainerResources\x12I\n\x10security_context\x18\x02 \x01(\x0b\x32/.runtime.v1alpha2.LinuxContainerSecurityContext\"g\n\x1dWindowsSandboxSecurityContext\x12\x17\n\x0frun_as_username\x18\x01 \x01(\t\x12\x17\n\x0f\x63redential_spec\x18\x02 \x01(\t\x12\x14\n\x0chost_process\x18\x03 \x01(\x08\"d\n\x17WindowsPodSandboxConfig\x12I\n\x10security_context\x18\x01 \x01(\x0b\x32/.runtime.v1alpha2.WindowsSandboxSecurityContext\"i\n\x1fWindowsContainerSecurityContext\x12\x17\n\x0frun_as_username\x18\x01 \x01(\t\x12\x17\n\x0f\x63redential_spec\x18\x02 \x01(\t\x12\x14\n\x0chost_process\x18\x03 \x01(\x08\"\xa5\x01\n\x16WindowsContainerConfig\x12>\n\tresources\x18\x01 \x01(\x0b\x32+.runtime.v1alpha2.WindowsContainerResources\x12K\n\x10security_context\x18\x02 \x01(\x0b\x32\x31.runtime.v1alpha2.WindowsContainerSecurityContext\"v\n\x19WindowsContainerResources\x12\x12\n\ncpu_shares\x18\x01 \x01(\x03\x12\x11\n\tcpu_count\x18\x02 \x01(\x03\x12\x13\n\x0b\x63pu_maximum\x18\x03 \x01(\x03\x12\x1d\n\x15memory_limit_in_bytes\x18\x04 \x01(\x03\"2\n\x11\x43ontainerMetadata\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07\x61ttempt\x18\x02 \x01(\r\"H\n\x06\x44\x65vice\x12\x16\n\x0e\x63ontainer_path\x18\x01 \x01(\t\x12\x11\n\thost_path\x18\x02 \x01(\t\x12\x13\n\x0bpermissions\x18\x03 \x01(\t\"\xc5\x05\n\x0f\x43ontainerConfig\x12\x35\n\x08metadata\x18\x01 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12*\n\x05image\x18\x02 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x0f\n\x07\x63ommand\x18\x03 \x03(\t\x12\x0c\n\x04\x61rgs\x18\x04 \x03(\t\x12\x13\n\x0bworking_dir\x18\x05 \x01(\t\x12(\n\x04\x65nvs\x18\x06 \x03(\x0b\x32\x1a.runtime.v1alpha2.KeyValue\x12\'\n\x06mounts\x18\x07 \x03(\x0b\x32\x17.runtime.v1alpha2.Mount\x12)\n\x07\x64\x65vices\x18\x08 \x03(\x0b\x32\x18.runtime.v1alpha2.Device\x12=\n\x06labels\x18\t \x03(\x0b\x32-.runtime.v1alpha2.ContainerConfig.LabelsEntry\x12G\n\x0b\x61nnotations\x18\n \x03(\x0b\x32\x32.runtime.v1alpha2.ContainerConfig.AnnotationsEntry\x12\x10\n\x08log_path\x18\x0b \x01(\t\x12\r\n\x05stdin\x18\x0c \x01(\x08\x12\x12\n\nstdin_once\x18\r \x01(\x08\x12\x0b\n\x03tty\x18\x0e \x01(\x08\x12\x35\n\x05linux\x18\x0f \x01(\x0b\x32&.runtime.v1alpha2.LinuxContainerConfig\x12\x39\n\x07windows\x18\x10 \x01(\x0b\x32(.runtime.v1alpha2.WindowsContainerConfig\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x9f\x01\n\x16\x43reateContainerRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\x12\x31\n\x06\x63onfig\x18\x02 \x01(\x0b\x32!.runtime.v1alpha2.ContainerConfig\x12:\n\x0esandbox_config\x18\x03 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxConfig\"/\n\x17\x43reateContainerResponse\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"-\n\x15StartContainerRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"\x18\n\x16StartContainerResponse\"=\n\x14StopContainerRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0f\n\x07timeout\x18\x02 \x01(\x03\"\x17\n\x15StopContainerResponse\".\n\x16RemoveContainerRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"\x19\n\x17RemoveContainerResponse\"F\n\x13\x43ontainerStateValue\x12/\n\x05state\x18\x01 \x01(\x0e\x32 .runtime.v1alpha2.ContainerState\"\xef\x01\n\x0f\x43ontainerFilter\x12\n\n\x02id\x18\x01 \x01(\t\x12\x34\n\x05state\x18\x02 \x01(\x0b\x32%.runtime.v1alpha2.ContainerStateValue\x12\x16\n\x0epod_sandbox_id\x18\x03 \x01(\t\x12L\n\x0elabel_selector\x18\x04 \x03(\x0b\x32\x34.runtime.v1alpha2.ContainerFilter.LabelSelectorEntry\x1a\x34\n\x12LabelSelectorEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"J\n\x15ListContainersRequest\x12\x31\n\x06\x66ilter\x18\x01 \x01(\x0b\x32!.runtime.v1alpha2.ContainerFilter\"\xc9\x03\n\tContainer\x12\n\n\x02id\x18\x01 \x01(\t\x12\x16\n\x0epod_sandbox_id\x18\x02 \x01(\t\x12\x35\n\x08metadata\x18\x03 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12*\n\x05image\x18\x04 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x11\n\timage_ref\x18\x05 \x01(\t\x12/\n\x05state\x18\x06 \x01(\x0e\x32 .runtime.v1alpha2.ContainerState\x12\x12\n\ncreated_at\x18\x07 \x01(\x03\x12\x37\n\x06labels\x18\x08 \x03(\x0b\x32\'.runtime.v1alpha2.Container.LabelsEntry\x12\x41\n\x0b\x61nnotations\x18\t \x03(\x0b\x32,.runtime.v1alpha2.Container.AnnotationsEntry\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"I\n\x16ListContainersResponse\x12/\n\ncontainers\x18\x01 \x03(\x0b\x32\x1b.runtime.v1alpha2.Container\"?\n\x16\x43ontainerStatusRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\"\xdb\x04\n\x0f\x43ontainerStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x08metadata\x18\x02 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12/\n\x05state\x18\x03 \x01(\x0e\x32 .runtime.v1alpha2.ContainerState\x12\x12\n\ncreated_at\x18\x04 \x01(\x03\x12\x12\n\nstarted_at\x18\x05 \x01(\x03\x12\x13\n\x0b\x66inished_at\x18\x06 \x01(\x03\x12\x11\n\texit_code\x18\x07 \x01(\x05\x12*\n\x05image\x18\x08 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x11\n\timage_ref\x18\t \x01(\t\x12\x0e\n\x06reason\x18\n \x01(\t\x12\x0f\n\x07message\x18\x0b \x01(\t\x12=\n\x06labels\x18\x0c \x03(\x0b\x32-.runtime.v1alpha2.ContainerStatus.LabelsEntry\x12G\n\x0b\x61nnotations\x18\r \x03(\x0b\x32\x32.runtime.v1alpha2.ContainerStatus.AnnotationsEntry\x12\'\n\x06mounts\x18\x0e \x03(\x0b\x32\x17.runtime.v1alpha2.Mount\x12\x10\n\x08log_path\x18\x0f \x01(\t\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xbc\x01\n\x17\x43ontainerStatusResponse\x12\x31\n\x06status\x18\x01 \x01(\x0b\x32!.runtime.v1alpha2.ContainerStatus\x12\x41\n\x04info\x18\x02 \x03(\x0b\x32\x33.runtime.v1alpha2.ContainerStatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xbc\x02\n\x1fUpdateContainerResourcesRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x38\n\x05linux\x18\x02 \x01(\x0b\x32).runtime.v1alpha2.LinuxContainerResources\x12<\n\x07windows\x18\x03 \x01(\x0b\x32+.runtime.v1alpha2.WindowsContainerResources\x12W\n\x0b\x61nnotations\x18\x04 \x03(\x0b\x32\x42.runtime.v1alpha2.UpdateContainerResourcesRequest.AnnotationsEntry\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\"\n UpdateContainerResourcesResponse\"E\n\x0f\x45xecSyncRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0b\n\x03\x63md\x18\x02 \x03(\t\x12\x0f\n\x07timeout\x18\x03 \x01(\x03\"E\n\x10\x45xecSyncResponse\x12\x0e\n\x06stdout\x18\x01 \x01(\x0c\x12\x0e\n\x06stderr\x18\x02 \x01(\x0c\x12\x11\n\texit_code\x18\x03 \x01(\x05\"l\n\x0b\x45xecRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0b\n\x03\x63md\x18\x02 \x03(\t\x12\x0b\n\x03tty\x18\x03 \x01(\x08\x12\r\n\x05stdin\x18\x04 \x01(\x08\x12\x0e\n\x06stdout\x18\x05 \x01(\x08\x12\x0e\n\x06stderr\x18\x06 \x01(\x08\"\x1b\n\x0c\x45xecResponse\x12\x0b\n\x03url\x18\x01 \x01(\t\"a\n\rAttachRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\r\n\x05stdin\x18\x02 \x01(\x08\x12\x0b\n\x03tty\x18\x03 \x01(\x08\x12\x0e\n\x06stdout\x18\x04 \x01(\x08\x12\x0e\n\x06stderr\x18\x05 \x01(\x08\"\x1d\n\x0e\x41ttachResponse\x12\x0b\n\x03url\x18\x01 \x01(\t\":\n\x12PortForwardRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x03(\x05\"\"\n\x13PortForwardResponse\x12\x0b\n\x03url\x18\x01 \x01(\t\"9\n\x0bImageFilter\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\"B\n\x11ListImagesRequest\x12-\n\x06\x66ilter\x18\x01 \x01(\x0b\x32\x1d.runtime.v1alpha2.ImageFilter\"\xb2\x01\n\x05Image\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\trepo_tags\x18\x02 \x03(\t\x12\x14\n\x0crepo_digests\x18\x03 \x03(\t\x12\x0c\n\x04size\x18\x04 \x01(\x04\x12)\n\x03uid\x18\x05 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x10\n\x08username\x18\x06 \x01(\t\x12)\n\x04spec\x18\x07 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\"=\n\x12ListImagesResponse\x12\'\n\x06images\x18\x01 \x03(\x0b\x32\x17.runtime.v1alpha2.Image\"Q\n\x12ImageStatusRequest\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\"\xa9\x01\n\x13ImageStatusResponse\x12&\n\x05image\x18\x01 \x01(\x0b\x32\x17.runtime.v1alpha2.Image\x12=\n\x04info\x18\x02 \x03(\x0b\x32/.runtime.v1alpha2.ImageStatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x86\x01\n\nAuthConfig\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x0c\n\x04\x61uth\x18\x03 \x01(\t\x12\x16\n\x0eserver_address\x18\x04 \x01(\t\x12\x16\n\x0eidentity_token\x18\x05 \x01(\t\x12\x16\n\x0eregistry_token\x18\x06 \x01(\t\"\xa6\x01\n\x10PullImageRequest\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12*\n\x04\x61uth\x18\x02 \x01(\x0b\x32\x1c.runtime.v1alpha2.AuthConfig\x12:\n\x0esandbox_config\x18\x03 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxConfig\"&\n\x11PullImageResponse\x12\x11\n\timage_ref\x18\x01 \x01(\t\"@\n\x12RemoveImageRequest\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\"\x15\n\x13RemoveImageResponse\"!\n\rNetworkConfig\x12\x10\n\x08pod_cidr\x18\x01 \x01(\t\"H\n\rRuntimeConfig\x12\x37\n\x0enetwork_config\x18\x01 \x01(\x0b\x32\x1f.runtime.v1alpha2.NetworkConfig\"U\n\x1aUpdateRuntimeConfigRequest\x12\x37\n\x0eruntime_config\x18\x01 \x01(\x0b\x32\x1f.runtime.v1alpha2.RuntimeConfig\"\x1d\n\x1bUpdateRuntimeConfigResponse\"Q\n\x10RuntimeCondition\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\x08\x12\x0e\n\x06reason\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\"G\n\rRuntimeStatus\x12\x36\n\nconditions\x18\x01 \x03(\x0b\x32\".runtime.v1alpha2.RuntimeCondition\" \n\rStatusRequest\x12\x0f\n\x07verbose\x18\x01 \x01(\x08\"\xa8\x01\n\x0eStatusResponse\x12/\n\x06status\x18\x01 \x01(\x0b\x32\x1f.runtime.v1alpha2.RuntimeStatus\x12\x38\n\x04info\x18\x02 \x03(\x0b\x32*.runtime.v1alpha2.StatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x14\n\x12ImageFsInfoRequest\"\x1c\n\x0bUInt64Value\x12\r\n\x05value\x18\x01 \x01(\x04\"*\n\x14\x46ilesystemIdentifier\x12\x12\n\nmountpoint\x18\x01 \x01(\t\"\xc2\x01\n\x0f\x46ilesystemUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12\x35\n\x05\x66s_id\x18\x02 \x01(\x0b\x32&.runtime.v1alpha2.FilesystemIdentifier\x12\x31\n\nused_bytes\x18\x03 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x32\n\x0binodes_used\x18\x04 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"S\n\x13ImageFsInfoResponse\x12<\n\x11image_filesystems\x18\x01 \x03(\x0b\x32!.runtime.v1alpha2.FilesystemUsage\"-\n\x15\x43ontainerStatsRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"I\n\x16\x43ontainerStatsResponse\x12/\n\x05stats\x18\x01 \x01(\x0b\x32 .runtime.v1alpha2.ContainerStats\"S\n\x19ListContainerStatsRequest\x12\x36\n\x06\x66ilter\x18\x01 \x01(\x0b\x32&.runtime.v1alpha2.ContainerStatsFilter\"\xc3\x01\n\x14\x43ontainerStatsFilter\x12\n\n\x02id\x18\x01 \x01(\t\x12\x16\n\x0epod_sandbox_id\x18\x02 \x01(\t\x12Q\n\x0elabel_selector\x18\x03 \x03(\x0b\x32\x39.runtime.v1alpha2.ContainerStatsFilter.LabelSelectorEntry\x1a\x34\n\x12LabelSelectorEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"M\n\x1aListContainerStatsResponse\x12/\n\x05stats\x18\x01 \x03(\x0b\x32 .runtime.v1alpha2.ContainerStats\"\xcb\x02\n\x13\x43ontainerAttributes\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x08metadata\x18\x02 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12\x41\n\x06labels\x18\x03 \x03(\x0b\x32\x31.runtime.v1alpha2.ContainerAttributes.LabelsEntry\x12K\n\x0b\x61nnotations\x18\x04 \x03(\x0b\x32\x36.runtime.v1alpha2.ContainerAttributes.AnnotationsEntry\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xde\x01\n\x0e\x43ontainerStats\x12\x39\n\nattributes\x18\x01 \x01(\x0b\x32%.runtime.v1alpha2.ContainerAttributes\x12\'\n\x03\x63pu\x18\x02 \x01(\x0b\x32\x1a.runtime.v1alpha2.CpuUsage\x12-\n\x06memory\x18\x03 \x01(\x0b\x32\x1d.runtime.v1alpha2.MemoryUsage\x12\x39\n\x0ewritable_layer\x18\x04 \x01(\x0b\x32!.runtime.v1alpha2.FilesystemUsage\"]\n\x08\x43puUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12>\n\x17usage_core_nano_seconds\x18\x02 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"Z\n\x0bMemoryUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12\x38\n\x11working_set_bytes\x18\x02 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"1\n\x19ReopenContainerLogRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"\x1c\n\x1aReopenContainerLogResponse*&\n\x08Protocol\x12\x07\n\x03TCP\x10\x00\x12\x07\n\x03UDP\x10\x01\x12\x08\n\x04SCTP\x10\x02*m\n\x10MountPropagation\x12\x17\n\x13PROPAGATION_PRIVATE\x10\x00\x12!\n\x1dPROPAGATION_HOST_TO_CONTAINER\x10\x01\x12\x1d\n\x19PROPAGATION_BIDIRECTIONAL\x10\x02*=\n\rNamespaceMode\x12\x07\n\x03POD\x10\x00\x12\r\n\tCONTAINER\x10\x01\x12\x08\n\x04NODE\x10\x02\x12\n\n\x06TARGET\x10\x03*:\n\x0fPodSandboxState\x12\x11\n\rSANDBOX_READY\x10\x00\x12\x14\n\x10SANDBOX_NOTREADY\x10\x01*k\n\x0e\x43ontainerState\x12\x15\n\x11\x43ONTAINER_CREATED\x10\x00\x12\x15\n\x11\x43ONTAINER_RUNNING\x10\x01\x12\x14\n\x10\x43ONTAINER_EXITED\x10\x02\x12\x15\n\x11\x43ONTAINER_UNKNOWN\x10\x03\x32\xc1\x11\n\x0eRuntimeService\x12P\n\x07Version\x12 .runtime.v1alpha2.VersionRequest\x1a!.runtime.v1alpha2.VersionResponse\"\x00\x12\x62\n\rRunPodSandbox\x12&.runtime.v1alpha2.RunPodSandboxRequest\x1a\'.runtime.v1alpha2.RunPodSandboxResponse\"\x00\x12\x65\n\x0eStopPodSandbox\x12\'.runtime.v1alpha2.StopPodSandboxRequest\x1a(.runtime.v1alpha2.StopPodSandboxResponse\"\x00\x12k\n\x10RemovePodSandbox\x12).runtime.v1alpha2.RemovePodSandboxRequest\x1a*.runtime.v1alpha2.RemovePodSandboxResponse\"\x00\x12k\n\x10PodSandboxStatus\x12).runtime.v1alpha2.PodSandboxStatusRequest\x1a*.runtime.v1alpha2.PodSandboxStatusResponse\"\x00\x12\x65\n\x0eListPodSandbox\x12\'.runtime.v1alpha2.ListPodSandboxRequest\x1a(.runtime.v1alpha2.ListPodSandboxResponse\"\x00\x12h\n\x0f\x43reateContainer\x12(.runtime.v1alpha2.CreateContainerRequest\x1a).runtime.v1alpha2.CreateContainerResponse\"\x00\x12\x65\n\x0eStartContainer\x12\'.runtime.v1alpha2.StartContainerRequest\x1a(.runtime.v1alpha2.StartContainerResponse\"\x00\x12\x62\n\rStopContainer\x12&.runtime.v1alpha2.StopContainerRequest\x1a\'.runtime.v1alpha2.StopContainerResponse\"\x00\x12h\n\x0fRemoveContainer\x12(.runtime.v1alpha2.RemoveContainerRequest\x1a).runtime.v1alpha2.RemoveContainerResponse\"\x00\x12\x65\n\x0eListContainers\x12\'.runtime.v1alpha2.ListContainersRequest\x1a(.runtime.v1alpha2.ListContainersResponse\"\x00\x12h\n\x0f\x43ontainerStatus\x12(.runtime.v1alpha2.ContainerStatusRequest\x1a).runtime.v1alpha2.ContainerStatusResponse\"\x00\x12\x83\x01\n\x18UpdateContainerResources\x12\x31.runtime.v1alpha2.UpdateContainerResourcesRequest\x1a\x32.runtime.v1alpha2.UpdateContainerResourcesResponse\"\x00\x12q\n\x12ReopenContainerLog\x12+.runtime.v1alpha2.ReopenContainerLogRequest\x1a,.runtime.v1alpha2.ReopenContainerLogResponse\"\x00\x12S\n\x08\x45xecSync\x12!.runtime.v1alpha2.ExecSyncRequest\x1a\".runtime.v1alpha2.ExecSyncResponse\"\x00\x12G\n\x04\x45xec\x12\x1d.runtime.v1alpha2.ExecRequest\x1a\x1e.runtime.v1alpha2.ExecResponse\"\x00\x12M\n\x06\x41ttach\x12\x1f.runtime.v1alpha2.AttachRequest\x1a .runtime.v1alpha2.AttachResponse\"\x00\x12\\\n\x0bPortForward\x12$.runtime.v1alpha2.PortForwardRequest\x1a%.runtime.v1alpha2.PortForwardResponse\"\x00\x12\x65\n\x0e\x43ontainerStats\x12\'.runtime.v1alpha2.ContainerStatsRequest\x1a(.runtime.v1alpha2.ContainerStatsResponse\"\x00\x12q\n\x12ListContainerStats\x12+.runtime.v1alpha2.ListContainerStatsRequest\x1a,.runtime.v1alpha2.ListContainerStatsResponse\"\x00\x12t\n\x13UpdateRuntimeConfig\x12,.runtime.v1alpha2.UpdateRuntimeConfigRequest\x1a-.runtime.v1alpha2.UpdateRuntimeConfigResponse\"\x00\x12M\n\x06Status\x12\x1f.runtime.v1alpha2.StatusRequest\x1a .runtime.v1alpha2.StatusResponse\"\x00\x32\xdb\x03\n\x0cImageService\x12Y\n\nListImages\x12#.runtime.v1alpha2.ListImagesRequest\x1a$.runtime.v1alpha2.ListImagesResponse\"\x00\x12\\\n\x0bImageStatus\x12$.runtime.v1alpha2.ImageStatusRequest\x1a%.runtime.v1alpha2.ImageStatusResponse\"\x00\x12V\n\tPullImage\x12\".runtime.v1alpha2.PullImageRequest\x1a#.runtime.v1alpha2.PullImageResponse\"\x00\x12\\\n\x0bRemoveImage\x12$.runtime.v1alpha2.RemoveImageRequest\x1a%.runtime.v1alpha2.RemoveImageResponse\"\x00\x12\\\n\x0bImageFsInfo\x12$.runtime.v1alpha2.ImageFsInfoRequest\x1a%.runtime.v1alpha2.ImageFsInfoResponse\"\x00\x42&Z\x08v1alpha2\xd8\xe1\x1e\x00\x80\xe2\x1e\x01\xc8\xe1\x1e\x01\xc8\xe2\x1e\x01\xe0\xe2\x1e\x01\xd0\xe2\x1e\x01\x90\xe3\x1e\x00\x62\x06proto3'
+  serialized_pb=b'\n2k8s.io/cri-api/pkg/apis/runtime/v1alpha2/api.proto\x12\x10runtime.v1alpha2\x1a-github.com/gogo/protobuf/gogoproto/gogo.proto\"!\n\x0eVersionRequest\x12\x0f\n\x07version\x18\x01 \x01(\t\"n\n\x0fVersionResponse\x12\x0f\n\x07version\x18\x01 \x01(\t\x12\x14\n\x0cruntime_name\x18\x02 \x01(\t\x12\x17\n\x0fruntime_version\x18\x03 \x01(\t\x12\x1b\n\x13runtime_api_version\x18\x04 \x01(\t\"?\n\tDNSConfig\x12\x0f\n\x07servers\x18\x01 \x03(\t\x12\x10\n\x08searches\x18\x02 \x03(\t\x12\x0f\n\x07options\x18\x03 \x03(\t\"w\n\x0bPortMapping\x12,\n\x08protocol\x18\x01 \x01(\x0e\x32\x1a.runtime.v1alpha2.Protocol\x12\x16\n\x0e\x63ontainer_port\x18\x02 \x01(\x05\x12\x11\n\thost_port\x18\x03 \x01(\x05\x12\x0f\n\x07host_ip\x18\x04 \x01(\t\"\x96\x01\n\x05Mount\x12\x16\n\x0e\x63ontainer_path\x18\x01 \x01(\t\x12\x11\n\thost_path\x18\x02 \x01(\t\x12\x10\n\x08readonly\x18\x03 \x01(\x08\x12\x17\n\x0fselinux_relabel\x18\x04 \x01(\x08\x12\x37\n\x0bpropagation\x18\x05 \x01(\x0e\x32\".runtime.v1alpha2.MountPropagation\"\xb2\x01\n\x0fNamespaceOption\x12\x30\n\x07network\x18\x01 \x01(\x0e\x32\x1f.runtime.v1alpha2.NamespaceMode\x12,\n\x03pid\x18\x02 \x01(\x0e\x32\x1f.runtime.v1alpha2.NamespaceMode\x12,\n\x03ipc\x18\x03 \x01(\x0e\x32\x1f.runtime.v1alpha2.NamespaceMode\x12\x11\n\ttarget_id\x18\x04 \x01(\t\"\x1b\n\nInt64Value\x12\r\n\x05value\x18\x01 \x01(\x03\"\xd1\x03\n\x1bLinuxSandboxSecurityContext\x12<\n\x11namespace_options\x18\x01 \x01(\x0b\x32!.runtime.v1alpha2.NamespaceOption\x12\x38\n\x0fselinux_options\x18\x02 \x01(\x0b\x32\x1f.runtime.v1alpha2.SELinuxOption\x12\x31\n\x0brun_as_user\x18\x03 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x32\n\x0crun_as_group\x18\x08 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x17\n\x0freadonly_rootfs\x18\x04 \x01(\x08\x12\x1b\n\x13supplemental_groups\x18\x05 \x03(\x03\x12\x12\n\nprivileged\x18\x06 \x01(\x08\x12\x32\n\x07seccomp\x18\t \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12\x33\n\x08\x61pparmor\x18\n \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12 \n\x14seccomp_profile_path\x18\x07 \x01(\tB\x02\x18\x01\"\xaf\x01\n\x0fSecurityProfile\x12\x43\n\x0cprofile_type\x18\x01 \x01(\x0e\x32-.runtime.v1alpha2.SecurityProfile.ProfileType\x12\x15\n\rlocalhost_ref\x18\x02 \x01(\t\"@\n\x0bProfileType\x12\x12\n\x0eRuntimeDefault\x10\x00\x12\x0e\n\nUnconfined\x10\x01\x12\r\n\tLocalhost\x10\x02\"\xee\x01\n\x15LinuxPodSandboxConfig\x12\x15\n\rcgroup_parent\x18\x01 \x01(\t\x12G\n\x10security_context\x18\x02 \x01(\x0b\x32-.runtime.v1alpha2.LinuxSandboxSecurityContext\x12\x45\n\x07sysctls\x18\x03 \x03(\x0b\x32\x34.runtime.v1alpha2.LinuxPodSandboxConfig.SysctlsEntry\x1a.\n\x0cSysctlsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"S\n\x12PodSandboxMetadata\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0b\n\x03uid\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\x12\x0f\n\x07\x61ttempt\x18\x04 \x01(\r\"\xbb\x04\n\x10PodSandboxConfig\x12\x36\n\x08metadata\x18\x01 \x01(\x0b\x32$.runtime.v1alpha2.PodSandboxMetadata\x12\x10\n\x08hostname\x18\x02 \x01(\t\x12\x15\n\rlog_directory\x18\x03 \x01(\t\x12/\n\ndns_config\x18\x04 \x01(\x0b\x32\x1b.runtime.v1alpha2.DNSConfig\x12\x34\n\rport_mappings\x18\x05 \x03(\x0b\x32\x1d.runtime.v1alpha2.PortMapping\x12>\n\x06labels\x18\x06 \x03(\x0b\x32..runtime.v1alpha2.PodSandboxConfig.LabelsEntry\x12H\n\x0b\x61nnotations\x18\x07 \x03(\x0b\x32\x33.runtime.v1alpha2.PodSandboxConfig.AnnotationsEntry\x12\x36\n\x05linux\x18\x08 \x01(\x0b\x32\'.runtime.v1alpha2.LinuxPodSandboxConfig\x12:\n\x07windows\x18\t \x01(\x0b\x32).runtime.v1alpha2.WindowsPodSandboxConfig\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"c\n\x14RunPodSandboxRequest\x12\x32\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxConfig\x12\x17\n\x0fruntime_handler\x18\x02 \x01(\t\"/\n\x15RunPodSandboxResponse\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\"/\n\x15StopPodSandboxRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\"\x18\n\x16StopPodSandboxResponse\"1\n\x17RemovePodSandboxRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\"\x1a\n\x18RemovePodSandboxResponse\"B\n\x17PodSandboxStatusRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\"\x13\n\x05PodIP\x12\n\n\x02ip\x18\x01 \x01(\t\"V\n\x17PodSandboxNetworkStatus\x12\n\n\x02ip\x18\x01 \x01(\t\x12/\n\x0e\x61\x64\x64itional_ips\x18\x02 \x03(\x0b\x32\x17.runtime.v1alpha2.PodIP\"?\n\tNamespace\x12\x32\n\x07options\x18\x02 \x01(\x0b\x32!.runtime.v1alpha2.NamespaceOption\"H\n\x15LinuxPodSandboxStatus\x12/\n\nnamespaces\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.Namespace\"\x96\x04\n\x10PodSandboxStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x36\n\x08metadata\x18\x02 \x01(\x0b\x32$.runtime.v1alpha2.PodSandboxMetadata\x12\x30\n\x05state\x18\x03 \x01(\x0e\x32!.runtime.v1alpha2.PodSandboxState\x12\x12\n\ncreated_at\x18\x04 \x01(\x03\x12:\n\x07network\x18\x05 \x01(\x0b\x32).runtime.v1alpha2.PodSandboxNetworkStatus\x12\x36\n\x05linux\x18\x06 \x01(\x0b\x32\'.runtime.v1alpha2.LinuxPodSandboxStatus\x12>\n\x06labels\x18\x07 \x03(\x0b\x32..runtime.v1alpha2.PodSandboxStatus.LabelsEntry\x12H\n\x0b\x61nnotations\x18\x08 \x03(\x0b\x32\x33.runtime.v1alpha2.PodSandboxStatus.AnnotationsEntry\x12\x17\n\x0fruntime_handler\x18\t \x01(\t\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xbf\x01\n\x18PodSandboxStatusResponse\x12\x32\n\x06status\x18\x01 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxStatus\x12\x42\n\x04info\x18\x02 \x03(\x0b\x32\x34.runtime.v1alpha2.PodSandboxStatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"H\n\x14PodSandboxStateValue\x12\x30\n\x05state\x18\x01 \x01(\x0e\x32!.runtime.v1alpha2.PodSandboxState\"\xda\x01\n\x10PodSandboxFilter\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x05state\x18\x02 \x01(\x0b\x32&.runtime.v1alpha2.PodSandboxStateValue\x12M\n\x0elabel_selector\x18\x03 \x03(\x0b\x32\x35.runtime.v1alpha2.PodSandboxFilter.LabelSelectorEntry\x1a\x34\n\x12LabelSelectorEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"K\n\x15ListPodSandboxRequest\x12\x32\n\x06\x66ilter\x18\x01 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxFilter\"\x90\x03\n\nPodSandbox\x12\n\n\x02id\x18\x01 \x01(\t\x12\x36\n\x08metadata\x18\x02 \x01(\x0b\x32$.runtime.v1alpha2.PodSandboxMetadata\x12\x30\n\x05state\x18\x03 \x01(\x0e\x32!.runtime.v1alpha2.PodSandboxState\x12\x12\n\ncreated_at\x18\x04 \x01(\x03\x12\x38\n\x06labels\x18\x05 \x03(\x0b\x32(.runtime.v1alpha2.PodSandbox.LabelsEntry\x12\x42\n\x0b\x61nnotations\x18\x06 \x03(\x0b\x32-.runtime.v1alpha2.PodSandbox.AnnotationsEntry\x12\x17\n\x0fruntime_handler\x18\x07 \x01(\t\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"E\n\x16ListPodSandboxResponse\x12+\n\x05items\x18\x01 \x03(\x0b\x32\x1c.runtime.v1alpha2.PodSandbox\"0\n\x16PodSandboxStatsRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\"K\n\x17PodSandboxStatsResponse\x12\x30\n\x05stats\x18\x01 \x01(\x0b\x32!.runtime.v1alpha2.PodSandboxStats\"\xad\x01\n\x15PodSandboxStatsFilter\x12\n\n\x02id\x18\x01 \x01(\t\x12R\n\x0elabel_selector\x18\x02 \x03(\x0b\x32:.runtime.v1alpha2.PodSandboxStatsFilter.LabelSelectorEntry\x1a\x34\n\x12LabelSelectorEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"U\n\x1aListPodSandboxStatsRequest\x12\x37\n\x06\x66ilter\x18\x01 \x01(\x0b\x32\'.runtime.v1alpha2.PodSandboxStatsFilter\"O\n\x1bListPodSandboxStatsResponse\x12\x30\n\x05stats\x18\x01 \x03(\x0b\x32!.runtime.v1alpha2.PodSandboxStats\"\xcf\x02\n\x14PodSandboxAttributes\x12\n\n\x02id\x18\x01 \x01(\t\x12\x36\n\x08metadata\x18\x02 \x01(\x0b\x32$.runtime.v1alpha2.PodSandboxMetadata\x12\x42\n\x06labels\x18\x03 \x03(\x0b\x32\x32.runtime.v1alpha2.PodSandboxAttributes.LabelsEntry\x12L\n\x0b\x61nnotations\x18\x04 \x03(\x0b\x32\x37.runtime.v1alpha2.PodSandboxAttributes.AnnotationsEntry\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xbf\x01\n\x0fPodSandboxStats\x12:\n\nattributes\x18\x01 \x01(\x0b\x32&.runtime.v1alpha2.PodSandboxAttributes\x12\x35\n\x05linux\x18\x02 \x01(\x0b\x32&.runtime.v1alpha2.LinuxPodSandboxStats\x12\x39\n\x07windows\x18\x03 \x01(\x0b\x32(.runtime.v1alpha2.WindowsPodSandboxStats\"\x86\x02\n\x14LinuxPodSandboxStats\x12\'\n\x03\x63pu\x18\x01 \x01(\x0b\x32\x1a.runtime.v1alpha2.CpuUsage\x12-\n\x06memory\x18\x02 \x01(\x0b\x32\x1d.runtime.v1alpha2.MemoryUsage\x12/\n\x07network\x18\x03 \x01(\x0b\x32\x1e.runtime.v1alpha2.NetworkUsage\x12/\n\x07process\x18\x04 \x01(\x0b\x32\x1e.runtime.v1alpha2.ProcessUsage\x12\x34\n\ncontainers\x18\x05 \x03(\x0b\x32 .runtime.v1alpha2.ContainerStats\"\x18\n\x16WindowsPodSandboxStats\"\xa2\x01\n\x0cNetworkUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12\x42\n\x11\x64\x65\x66\x61ult_interface\x18\x02 \x01(\x0b\x32\'.runtime.v1alpha2.NetworkInterfaceUsage\x12;\n\ninterfaces\x18\x03 \x03(\x0b\x32\'.runtime.v1alpha2.NetworkInterfaceUsage\"\xeb\x01\n\x15NetworkInterfaceUsage\x12\x0c\n\x04name\x18\x01 \x01(\t\x12/\n\x08rx_bytes\x18\x02 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x30\n\trx_errors\x18\x03 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12/\n\x08tx_bytes\x18\x04 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x30\n\ttx_errors\x18\x05 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"W\n\x0cProcessUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12\x34\n\rprocess_count\x18\x02 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"\x91\x01\n\tImageSpec\x12\r\n\x05image\x18\x01 \x01(\t\x12\x41\n\x0b\x61nnotations\x18\x02 \x03(\x0b\x32,.runtime.v1alpha2.ImageSpec.AnnotationsEntry\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"&\n\x08KeyValue\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x8b\x03\n\x17LinuxContainerResources\x12\x12\n\ncpu_period\x18\x01 \x01(\x03\x12\x11\n\tcpu_quota\x18\x02 \x01(\x03\x12\x12\n\ncpu_shares\x18\x03 \x01(\x03\x12\x1d\n\x15memory_limit_in_bytes\x18\x04 \x01(\x03\x12\x15\n\room_score_adj\x18\x05 \x01(\x03\x12\x13\n\x0b\x63puset_cpus\x18\x06 \x01(\t\x12\x13\n\x0b\x63puset_mems\x18\x07 \x01(\t\x12\x38\n\x0fhugepage_limits\x18\x08 \x03(\x0b\x32\x1f.runtime.v1alpha2.HugepageLimit\x12G\n\x07unified\x18\t \x03(\x0b\x32\x36.runtime.v1alpha2.LinuxContainerResources.UnifiedEntry\x12\"\n\x1amemory_swap_limit_in_bytes\x18\n \x01(\x03\x1a.\n\x0cUnifiedEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"1\n\rHugepageLimit\x12\x11\n\tpage_size\x18\x01 \x01(\t\x12\r\n\x05limit\x18\x02 \x01(\x04\"H\n\rSELinuxOption\x12\x0c\n\x04user\x18\x01 \x01(\t\x12\x0c\n\x04role\x18\x02 \x01(\t\x12\x0c\n\x04type\x18\x03 \x01(\t\x12\r\n\x05level\x18\x04 \x01(\t\"A\n\nCapability\x12\x18\n\x10\x61\x64\x64_capabilities\x18\x01 \x03(\t\x12\x19\n\x11\x64rop_capabilities\x18\x02 \x03(\t\"\x82\x05\n\x1dLinuxContainerSecurityContext\x12\x32\n\x0c\x63\x61pabilities\x18\x01 \x01(\x0b\x32\x1c.runtime.v1alpha2.Capability\x12\x12\n\nprivileged\x18\x02 \x01(\x08\x12<\n\x11namespace_options\x18\x03 \x01(\x0b\x32!.runtime.v1alpha2.NamespaceOption\x12\x38\n\x0fselinux_options\x18\x04 \x01(\x0b\x32\x1f.runtime.v1alpha2.SELinuxOption\x12\x31\n\x0brun_as_user\x18\x05 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x32\n\x0crun_as_group\x18\x0c \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x17\n\x0frun_as_username\x18\x06 \x01(\t\x12\x17\n\x0freadonly_rootfs\x18\x07 \x01(\x08\x12\x1b\n\x13supplemental_groups\x18\x08 \x03(\x03\x12\x14\n\x0cno_new_privs\x18\x0b \x01(\x08\x12\x14\n\x0cmasked_paths\x18\r \x03(\t\x12\x16\n\x0ereadonly_paths\x18\x0e \x03(\t\x12\x32\n\x07seccomp\x18\x0f \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12\x33\n\x08\x61pparmor\x18\x10 \x01(\x0b\x32!.runtime.v1alpha2.SecurityProfile\x12\x1c\n\x10\x61pparmor_profile\x18\t \x01(\tB\x02\x18\x01\x12 \n\x14seccomp_profile_path\x18\n \x01(\tB\x02\x18\x01\"\x9f\x01\n\x14LinuxContainerConfig\x12<\n\tresources\x18\x01 \x01(\x0b\x32).runtime.v1alpha2.LinuxContainerResources\x12I\n\x10security_context\x18\x02 \x01(\x0b\x32/.runtime.v1alpha2.LinuxContainerSecurityContext\"g\n\x1dWindowsSandboxSecurityContext\x12\x17\n\x0frun_as_username\x18\x01 \x01(\t\x12\x17\n\x0f\x63redential_spec\x18\x02 \x01(\t\x12\x14\n\x0chost_process\x18\x03 \x01(\x08\"d\n\x17WindowsPodSandboxConfig\x12I\n\x10security_context\x18\x01 \x01(\x0b\x32/.runtime.v1alpha2.WindowsSandboxSecurityContext\"i\n\x1fWindowsContainerSecurityContext\x12\x17\n\x0frun_as_username\x18\x01 \x01(\t\x12\x17\n\x0f\x63redential_spec\x18\x02 \x01(\t\x12\x14\n\x0chost_process\x18\x03 \x01(\x08\"\xa5\x01\n\x16WindowsContainerConfig\x12>\n\tresources\x18\x01 \x01(\x0b\x32+.runtime.v1alpha2.WindowsContainerResources\x12K\n\x10security_context\x18\x02 \x01(\x0b\x32\x31.runtime.v1alpha2.WindowsContainerSecurityContext\"v\n\x19WindowsContainerResources\x12\x12\n\ncpu_shares\x18\x01 \x01(\x03\x12\x11\n\tcpu_count\x18\x02 \x01(\x03\x12\x13\n\x0b\x63pu_maximum\x18\x03 \x01(\x03\x12\x1d\n\x15memory_limit_in_bytes\x18\x04 \x01(\x03\"2\n\x11\x43ontainerMetadata\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0f\n\x07\x61ttempt\x18\x02 \x01(\r\"H\n\x06\x44\x65vice\x12\x16\n\x0e\x63ontainer_path\x18\x01 \x01(\t\x12\x11\n\thost_path\x18\x02 \x01(\t\x12\x13\n\x0bpermissions\x18\x03 \x01(\t\"\xc5\x05\n\x0f\x43ontainerConfig\x12\x35\n\x08metadata\x18\x01 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12*\n\x05image\x18\x02 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x0f\n\x07\x63ommand\x18\x03 \x03(\t\x12\x0c\n\x04\x61rgs\x18\x04 \x03(\t\x12\x13\n\x0bworking_dir\x18\x05 \x01(\t\x12(\n\x04\x65nvs\x18\x06 \x03(\x0b\x32\x1a.runtime.v1alpha2.KeyValue\x12\'\n\x06mounts\x18\x07 \x03(\x0b\x32\x17.runtime.v1alpha2.Mount\x12)\n\x07\x64\x65vices\x18\x08 \x03(\x0b\x32\x18.runtime.v1alpha2.Device\x12=\n\x06labels\x18\t \x03(\x0b\x32-.runtime.v1alpha2.ContainerConfig.LabelsEntry\x12G\n\x0b\x61nnotations\x18\n \x03(\x0b\x32\x32.runtime.v1alpha2.ContainerConfig.AnnotationsEntry\x12\x10\n\x08log_path\x18\x0b \x01(\t\x12\r\n\x05stdin\x18\x0c \x01(\x08\x12\x12\n\nstdin_once\x18\r \x01(\x08\x12\x0b\n\x03tty\x18\x0e \x01(\x08\x12\x35\n\x05linux\x18\x0f \x01(\x0b\x32&.runtime.v1alpha2.LinuxContainerConfig\x12\x39\n\x07windows\x18\x10 \x01(\x0b\x32(.runtime.v1alpha2.WindowsContainerConfig\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x9f\x01\n\x16\x43reateContainerRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\x12\x31\n\x06\x63onfig\x18\x02 \x01(\x0b\x32!.runtime.v1alpha2.ContainerConfig\x12:\n\x0esandbox_config\x18\x03 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxConfig\"/\n\x17\x43reateContainerResponse\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"-\n\x15StartContainerRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"\x18\n\x16StartContainerResponse\"=\n\x14StopContainerRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0f\n\x07timeout\x18\x02 \x01(\x03\"\x17\n\x15StopContainerResponse\".\n\x16RemoveContainerRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"\x19\n\x17RemoveContainerResponse\"F\n\x13\x43ontainerStateValue\x12/\n\x05state\x18\x01 \x01(\x0e\x32 .runtime.v1alpha2.ContainerState\"\xef\x01\n\x0f\x43ontainerFilter\x12\n\n\x02id\x18\x01 \x01(\t\x12\x34\n\x05state\x18\x02 \x01(\x0b\x32%.runtime.v1alpha2.ContainerStateValue\x12\x16\n\x0epod_sandbox_id\x18\x03 \x01(\t\x12L\n\x0elabel_selector\x18\x04 \x03(\x0b\x32\x34.runtime.v1alpha2.ContainerFilter.LabelSelectorEntry\x1a\x34\n\x12LabelSelectorEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"J\n\x15ListContainersRequest\x12\x31\n\x06\x66ilter\x18\x01 \x01(\x0b\x32!.runtime.v1alpha2.ContainerFilter\"\xc9\x03\n\tContainer\x12\n\n\x02id\x18\x01 \x01(\t\x12\x16\n\x0epod_sandbox_id\x18\x02 \x01(\t\x12\x35\n\x08metadata\x18\x03 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12*\n\x05image\x18\x04 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x11\n\timage_ref\x18\x05 \x01(\t\x12/\n\x05state\x18\x06 \x01(\x0e\x32 .runtime.v1alpha2.ContainerState\x12\x12\n\ncreated_at\x18\x07 \x01(\x03\x12\x37\n\x06labels\x18\x08 \x03(\x0b\x32\'.runtime.v1alpha2.Container.LabelsEntry\x12\x41\n\x0b\x61nnotations\x18\t \x03(\x0b\x32,.runtime.v1alpha2.Container.AnnotationsEntry\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"I\n\x16ListContainersResponse\x12/\n\ncontainers\x18\x01 \x03(\x0b\x32\x1b.runtime.v1alpha2.Container\"?\n\x16\x43ontainerStatusRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\"\xdb\x04\n\x0f\x43ontainerStatus\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x08metadata\x18\x02 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12/\n\x05state\x18\x03 \x01(\x0e\x32 .runtime.v1alpha2.ContainerState\x12\x12\n\ncreated_at\x18\x04 \x01(\x03\x12\x12\n\nstarted_at\x18\x05 \x01(\x03\x12\x13\n\x0b\x66inished_at\x18\x06 \x01(\x03\x12\x11\n\texit_code\x18\x07 \x01(\x05\x12*\n\x05image\x18\x08 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x11\n\timage_ref\x18\t \x01(\t\x12\x0e\n\x06reason\x18\n \x01(\t\x12\x0f\n\x07message\x18\x0b \x01(\t\x12=\n\x06labels\x18\x0c \x03(\x0b\x32-.runtime.v1alpha2.ContainerStatus.LabelsEntry\x12G\n\x0b\x61nnotations\x18\r \x03(\x0b\x32\x32.runtime.v1alpha2.ContainerStatus.AnnotationsEntry\x12\'\n\x06mounts\x18\x0e \x03(\x0b\x32\x17.runtime.v1alpha2.Mount\x12\x10\n\x08log_path\x18\x0f \x01(\t\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xbc\x01\n\x17\x43ontainerStatusResponse\x12\x31\n\x06status\x18\x01 \x01(\x0b\x32!.runtime.v1alpha2.ContainerStatus\x12\x41\n\x04info\x18\x02 \x03(\x0b\x32\x33.runtime.v1alpha2.ContainerStatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xbc\x02\n\x1fUpdateContainerResourcesRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x38\n\x05linux\x18\x02 \x01(\x0b\x32).runtime.v1alpha2.LinuxContainerResources\x12<\n\x07windows\x18\x03 \x01(\x0b\x32+.runtime.v1alpha2.WindowsContainerResources\x12W\n\x0b\x61nnotations\x18\x04 \x03(\x0b\x32\x42.runtime.v1alpha2.UpdateContainerResourcesRequest.AnnotationsEntry\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\"\n UpdateContainerResourcesResponse\"E\n\x0f\x45xecSyncRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0b\n\x03\x63md\x18\x02 \x03(\t\x12\x0f\n\x07timeout\x18\x03 \x01(\x03\"E\n\x10\x45xecSyncResponse\x12\x0e\n\x06stdout\x18\x01 \x01(\x0c\x12\x0e\n\x06stderr\x18\x02 \x01(\x0c\x12\x11\n\texit_code\x18\x03 \x01(\x05\"l\n\x0b\x45xecRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\x0b\n\x03\x63md\x18\x02 \x03(\t\x12\x0b\n\x03tty\x18\x03 \x01(\x08\x12\r\n\x05stdin\x18\x04 \x01(\x08\x12\x0e\n\x06stdout\x18\x05 \x01(\x08\x12\x0e\n\x06stderr\x18\x06 \x01(\x08\"\x1b\n\x0c\x45xecResponse\x12\x0b\n\x03url\x18\x01 \x01(\t\"a\n\rAttachRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\x12\r\n\x05stdin\x18\x02 \x01(\x08\x12\x0b\n\x03tty\x18\x03 \x01(\x08\x12\x0e\n\x06stdout\x18\x04 \x01(\x08\x12\x0e\n\x06stderr\x18\x05 \x01(\x08\"\x1d\n\x0e\x41ttachResponse\x12\x0b\n\x03url\x18\x01 \x01(\t\":\n\x12PortForwardRequest\x12\x16\n\x0epod_sandbox_id\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x03(\x05\"\"\n\x13PortForwardResponse\x12\x0b\n\x03url\x18\x01 \x01(\t\"9\n\x0bImageFilter\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\"B\n\x11ListImagesRequest\x12-\n\x06\x66ilter\x18\x01 \x01(\x0b\x32\x1d.runtime.v1alpha2.ImageFilter\"\xb2\x01\n\x05Image\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\trepo_tags\x18\x02 \x03(\t\x12\x14\n\x0crepo_digests\x18\x03 \x03(\t\x12\x0c\n\x04size\x18\x04 \x01(\x04\x12)\n\x03uid\x18\x05 \x01(\x0b\x32\x1c.runtime.v1alpha2.Int64Value\x12\x10\n\x08username\x18\x06 \x01(\t\x12)\n\x04spec\x18\x07 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\"=\n\x12ListImagesResponse\x12\'\n\x06images\x18\x01 \x03(\x0b\x32\x17.runtime.v1alpha2.Image\"Q\n\x12ImageStatusRequest\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12\x0f\n\x07verbose\x18\x02 \x01(\x08\"\xa9\x01\n\x13ImageStatusResponse\x12&\n\x05image\x18\x01 \x01(\x0b\x32\x17.runtime.v1alpha2.Image\x12=\n\x04info\x18\x02 \x03(\x0b\x32/.runtime.v1alpha2.ImageStatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x86\x01\n\nAuthConfig\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x0c\n\x04\x61uth\x18\x03 \x01(\t\x12\x16\n\x0eserver_address\x18\x04 \x01(\t\x12\x16\n\x0eidentity_token\x18\x05 \x01(\t\x12\x16\n\x0eregistry_token\x18\x06 \x01(\t\"\xa6\x01\n\x10PullImageRequest\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\x12*\n\x04\x61uth\x18\x02 \x01(\x0b\x32\x1c.runtime.v1alpha2.AuthConfig\x12:\n\x0esandbox_config\x18\x03 \x01(\x0b\x32\".runtime.v1alpha2.PodSandboxConfig\"&\n\x11PullImageResponse\x12\x11\n\timage_ref\x18\x01 \x01(\t\"@\n\x12RemoveImageRequest\x12*\n\x05image\x18\x01 \x01(\x0b\x32\x1b.runtime.v1alpha2.ImageSpec\"\x15\n\x13RemoveImageResponse\"!\n\rNetworkConfig\x12\x10\n\x08pod_cidr\x18\x01 \x01(\t\"H\n\rRuntimeConfig\x12\x37\n\x0enetwork_config\x18\x01 \x01(\x0b\x32\x1f.runtime.v1alpha2.NetworkConfig\"U\n\x1aUpdateRuntimeConfigRequest\x12\x37\n\x0eruntime_config\x18\x01 \x01(\x0b\x32\x1f.runtime.v1alpha2.RuntimeConfig\"\x1d\n\x1bUpdateRuntimeConfigResponse\"Q\n\x10RuntimeCondition\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\x0e\n\x06status\x18\x02 \x01(\x08\x12\x0e\n\x06reason\x18\x03 \x01(\t\x12\x0f\n\x07message\x18\x04 \x01(\t\"G\n\rRuntimeStatus\x12\x36\n\nconditions\x18\x01 \x03(\x0b\x32\".runtime.v1alpha2.RuntimeCondition\" \n\rStatusRequest\x12\x0f\n\x07verbose\x18\x01 \x01(\x08\"\xa8\x01\n\x0eStatusResponse\x12/\n\x06status\x18\x01 \x01(\x0b\x32\x1f.runtime.v1alpha2.RuntimeStatus\x12\x38\n\x04info\x18\x02 \x03(\x0b\x32*.runtime.v1alpha2.StatusResponse.InfoEntry\x1a+\n\tInfoEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\x14\n\x12ImageFsInfoRequest\"\x1c\n\x0bUInt64Value\x12\r\n\x05value\x18\x01 \x01(\x04\"*\n\x14\x46ilesystemIdentifier\x12\x12\n\nmountpoint\x18\x01 \x01(\t\"\xc2\x01\n\x0f\x46ilesystemUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12\x35\n\x05\x66s_id\x18\x02 \x01(\x0b\x32&.runtime.v1alpha2.FilesystemIdentifier\x12\x31\n\nused_bytes\x18\x03 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x32\n\x0binodes_used\x18\x04 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"S\n\x13ImageFsInfoResponse\x12<\n\x11image_filesystems\x18\x01 \x03(\x0b\x32!.runtime.v1alpha2.FilesystemUsage\"-\n\x15\x43ontainerStatsRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"I\n\x16\x43ontainerStatsResponse\x12/\n\x05stats\x18\x01 \x01(\x0b\x32 .runtime.v1alpha2.ContainerStats\"S\n\x19ListContainerStatsRequest\x12\x36\n\x06\x66ilter\x18\x01 \x01(\x0b\x32&.runtime.v1alpha2.ContainerStatsFilter\"\xc3\x01\n\x14\x43ontainerStatsFilter\x12\n\n\x02id\x18\x01 \x01(\t\x12\x16\n\x0epod_sandbox_id\x18\x02 \x01(\t\x12Q\n\x0elabel_selector\x18\x03 \x03(\x0b\x32\x39.runtime.v1alpha2.ContainerStatsFilter.LabelSelectorEntry\x1a\x34\n\x12LabelSelectorEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"M\n\x1aListContainerStatsResponse\x12/\n\x05stats\x18\x01 \x03(\x0b\x32 .runtime.v1alpha2.ContainerStats\"\xcb\x02\n\x13\x43ontainerAttributes\x12\n\n\x02id\x18\x01 \x01(\t\x12\x35\n\x08metadata\x18\x02 \x01(\x0b\x32#.runtime.v1alpha2.ContainerMetadata\x12\x41\n\x06labels\x18\x03 \x03(\x0b\x32\x31.runtime.v1alpha2.ContainerAttributes.LabelsEntry\x12K\n\x0b\x61nnotations\x18\x04 \x03(\x0b\x32\x36.runtime.v1alpha2.ContainerAttributes.AnnotationsEntry\x1a-\n\x0bLabelsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\x1a\x32\n\x10\x41nnotationsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xde\x01\n\x0e\x43ontainerStats\x12\x39\n\nattributes\x18\x01 \x01(\x0b\x32%.runtime.v1alpha2.ContainerAttributes\x12\'\n\x03\x63pu\x18\x02 \x01(\x0b\x32\x1a.runtime.v1alpha2.CpuUsage\x12-\n\x06memory\x18\x03 \x01(\x0b\x32\x1d.runtime.v1alpha2.MemoryUsage\x12\x39\n\x0ewritable_layer\x18\x04 \x01(\x0b\x32!.runtime.v1alpha2.FilesystemUsage\"\x96\x01\n\x08\x43puUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12>\n\x17usage_core_nano_seconds\x18\x02 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x37\n\x10usage_nano_cores\x18\x03 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"\xe6\x02\n\x0bMemoryUsage\x12\x11\n\ttimestamp\x18\x01 \x01(\x03\x12\x38\n\x11working_set_bytes\x18\x02 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x36\n\x0f\x61vailable_bytes\x18\x03 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x32\n\x0busage_bytes\x18\x04 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x30\n\trss_bytes\x18\x05 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x32\n\x0bpage_faults\x18\x06 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\x12\x38\n\x11major_page_faults\x18\x07 \x01(\x0b\x32\x1d.runtime.v1alpha2.UInt64Value\"1\n\x19ReopenContainerLogRequest\x12\x14\n\x0c\x63ontainer_id\x18\x01 \x01(\t\"\x1c\n\x1aReopenContainerLogResponse*&\n\x08Protocol\x12\x07\n\x03TCP\x10\x00\x12\x07\n\x03UDP\x10\x01\x12\x08\n\x04SCTP\x10\x02*m\n\x10MountPropagation\x12\x17\n\x13PROPAGATION_PRIVATE\x10\x00\x12!\n\x1dPROPAGATION_HOST_TO_CONTAINER\x10\x01\x12\x1d\n\x19PROPAGATION_BIDIRECTIONAL\x10\x02*=\n\rNamespaceMode\x12\x07\n\x03POD\x10\x00\x12\r\n\tCONTAINER\x10\x01\x12\x08\n\x04NODE\x10\x02\x12\n\n\x06TARGET\x10\x03*:\n\x0fPodSandboxState\x12\x11\n\rSANDBOX_READY\x10\x00\x12\x14\n\x10SANDBOX_NOTREADY\x10\x01*k\n\x0e\x43ontainerState\x12\x15\n\x11\x43ONTAINER_CREATED\x10\x00\x12\x15\n\x11\x43ONTAINER_RUNNING\x10\x01\x12\x14\n\x10\x43ONTAINER_EXITED\x10\x02\x12\x15\n\x11\x43ONTAINER_UNKNOWN\x10\x03\x32\xa1\x13\n\x0eRuntimeService\x12P\n\x07Version\x12 .runtime.v1alpha2.VersionRequest\x1a!.runtime.v1alpha2.VersionResponse\"\x00\x12\x62\n\rRunPodSandbox\x12&.runtime.v1alpha2.RunPodSandboxRequest\x1a\'.runtime.v1alpha2.RunPodSandboxResponse\"\x00\x12\x65\n\x0eStopPodSandbox\x12\'.runtime.v1alpha2.StopPodSandboxRequest\x1a(.runtime.v1alpha2.StopPodSandboxResponse\"\x00\x12k\n\x10RemovePodSandbox\x12).runtime.v1alpha2.RemovePodSandboxRequest\x1a*.runtime.v1alpha2.RemovePodSandboxResponse\"\x00\x12k\n\x10PodSandboxStatus\x12).runtime.v1alpha2.PodSandboxStatusRequest\x1a*.runtime.v1alpha2.PodSandboxStatusResponse\"\x00\x12\x65\n\x0eListPodSandbox\x12\'.runtime.v1alpha2.ListPodSandboxRequest\x1a(.runtime.v1alpha2.ListPodSandboxResponse\"\x00\x12h\n\x0f\x43reateContainer\x12(.runtime.v1alpha2.CreateContainerRequest\x1a).runtime.v1alpha2.CreateContainerResponse\"\x00\x12\x65\n\x0eStartContainer\x12\'.runtime.v1alpha2.StartContainerRequest\x1a(.runtime.v1alpha2.StartContainerResponse\"\x00\x12\x62\n\rStopContainer\x12&.runtime.v1alpha2.StopContainerRequest\x1a\'.runtime.v1alpha2.StopContainerResponse\"\x00\x12h\n\x0fRemoveContainer\x12(.runtime.v1alpha2.RemoveContainerRequest\x1a).runtime.v1alpha2.RemoveContainerResponse\"\x00\x12\x65\n\x0eListContainers\x12\'.runtime.v1alpha2.ListContainersRequest\x1a(.runtime.v1alpha2.ListContainersResponse\"\x00\x12h\n\x0f\x43ontainerStatus\x12(.runtime.v1alpha2.ContainerStatusRequest\x1a).runtime.v1alpha2.ContainerStatusResponse\"\x00\x12\x83\x01\n\x18UpdateContainerResources\x12\x31.runtime.v1alpha2.UpdateContainerResourcesRequest\x1a\x32.runtime.v1alpha2.UpdateContainerResourcesResponse\"\x00\x12q\n\x12ReopenContainerLog\x12+.runtime.v1alpha2.ReopenContainerLogRequest\x1a,.runtime.v1alpha2.ReopenContainerLogResponse\"\x00\x12S\n\x08\x45xecSync\x12!.runtime.v1alpha2.ExecSyncRequest\x1a\".runtime.v1alpha2.ExecSyncResponse\"\x00\x12G\n\x04\x45xec\x12\x1d.runtime.v1alpha2.ExecRequest\x1a\x1e.runtime.v1alpha2.ExecResponse\"\x00\x12M\n\x06\x41ttach\x12\x1f.runtime.v1alpha2.AttachRequest\x1a .runtime.v1alpha2.AttachResponse\"\x00\x12\\\n\x0bPortForward\x12$.runtime.v1alpha2.PortForwardRequest\x1a%.runtime.v1alpha2.PortForwardResponse\"\x00\x12\x65\n\x0e\x43ontainerStats\x12\'.runtime.v1alpha2.ContainerStatsRequest\x1a(.runtime.v1alpha2.ContainerStatsResponse\"\x00\x12q\n\x12ListContainerStats\x12+.runtime.v1alpha2.ListContainerStatsRequest\x1a,.runtime.v1alpha2.ListContainerStatsResponse\"\x00\x12h\n\x0fPodSandboxStats\x12(.runtime.v1alpha2.PodSandboxStatsRequest\x1a).runtime.v1alpha2.PodSandboxStatsResponse\"\x00\x12t\n\x13ListPodSandboxStats\x12,.runtime.v1alpha2.ListPodSandboxStatsRequest\x1a-.runtime.v1alpha2.ListPodSandboxStatsResponse\"\x00\x12t\n\x13UpdateRuntimeConfig\x12,.runtime.v1alpha2.UpdateRuntimeConfigRequest\x1a-.runtime.v1alpha2.UpdateRuntimeConfigResponse\"\x00\x12M\n\x06Status\x12\x1f.runtime.v1alpha2.StatusRequest\x1a .runtime.v1alpha2.StatusResponse\"\x00\x32\xdb\x03\n\x0cImageService\x12Y\n\nListImages\x12#.runtime.v1alpha2.ListImagesRequest\x1a$.runtime.v1alpha2.ListImagesResponse\"\x00\x12\\\n\x0bImageStatus\x12$.runtime.v1alpha2.ImageStatusRequest\x1a%.runtime.v1alpha2.ImageStatusResponse\"\x00\x12V\n\tPullImage\x12\".runtime.v1alpha2.PullImageRequest\x1a#.runtime.v1alpha2.PullImageResponse\"\x00\x12\\\n\x0bRemoveImage\x12$.runtime.v1alpha2.RemoveImageRequest\x1a%.runtime.v1alpha2.RemoveImageResponse\"\x00\x12\\\n\x0bImageFsInfo\x12$.runtime.v1alpha2.ImageFsInfoRequest\x1a%.runtime.v1alpha2.ImageFsInfoResponse\"\x00\x42&Z\x08v1alpha2\xd8\xe1\x1e\x00\x80\xe2\x1e\x01\xc8\xe1\x1e\x01\xc8\xe2\x1e\x01\xe0\xe2\x1e\x01\xd0\xe2\x1e\x01\x90\xe3\x1e\x00\x62\x06proto3'
   ,
   dependencies=[github_dot_com_dot_gogo_dot_protobuf_dot_gogoproto_dot_gogo__pb2.DESCRIPTOR,])
 
@@ -50,8 +50,8 @@ _PROTOCOL = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=14017,
-  serialized_end=14055,
+  serialized_start=16130,
+  serialized_end=16168,
 )
 _sym_db.RegisterEnumDescriptor(_PROTOCOL)
 
@@ -81,8 +81,8 @@ _MOUNTPROPAGATION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=14057,
-  serialized_end=14166,
+  serialized_start=16170,
+  serialized_end=16279,
 )
 _sym_db.RegisterEnumDescriptor(_MOUNTPROPAGATION)
 
@@ -117,8 +117,8 @@ _NAMESPACEMODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=14168,
-  serialized_end=14229,
+  serialized_start=16281,
+  serialized_end=16342,
 )
 _sym_db.RegisterEnumDescriptor(_NAMESPACEMODE)
 
@@ -143,8 +143,8 @@ _PODSANDBOXSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=14231,
-  serialized_end=14289,
+  serialized_start=16344,
+  serialized_end=16402,
 )
 _sym_db.RegisterEnumDescriptor(_PODSANDBOXSTATE)
 
@@ -179,8 +179,8 @@ _CONTAINERSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=14291,
-  serialized_end=14398,
+  serialized_start=16404,
+  serialized_end=16511,
 )
 _sym_db.RegisterEnumDescriptor(_CONTAINERSTATE)
 
@@ -1929,6 +1929,616 @@ _LISTPODSANDBOXRESPONSE = _descriptor.Descriptor(
 )
 
 
+_PODSANDBOXSTATSREQUEST = _descriptor.Descriptor(
+  name='PodSandboxStatsRequest',
+  full_name='runtime.v1alpha2.PodSandboxStatsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='pod_sandbox_id', full_name='runtime.v1alpha2.PodSandboxStatsRequest.pod_sandbox_id', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=4558,
+  serialized_end=4606,
+)
+
+
+_PODSANDBOXSTATSRESPONSE = _descriptor.Descriptor(
+  name='PodSandboxStatsResponse',
+  full_name='runtime.v1alpha2.PodSandboxStatsResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='stats', full_name='runtime.v1alpha2.PodSandboxStatsResponse.stats', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=4608,
+  serialized_end=4683,
+)
+
+
+_PODSANDBOXSTATSFILTER_LABELSELECTORENTRY = _descriptor.Descriptor(
+  name='LabelSelectorEntry',
+  full_name='runtime.v1alpha2.PodSandboxStatsFilter.LabelSelectorEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='runtime.v1alpha2.PodSandboxStatsFilter.LabelSelectorEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='runtime.v1alpha2.PodSandboxStatsFilter.LabelSelectorEntry.value', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=b'8\001',
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=3953,
+  serialized_end=4005,
+)
+
+_PODSANDBOXSTATSFILTER = _descriptor.Descriptor(
+  name='PodSandboxStatsFilter',
+  full_name='runtime.v1alpha2.PodSandboxStatsFilter',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='id', full_name='runtime.v1alpha2.PodSandboxStatsFilter.id', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='label_selector', full_name='runtime.v1alpha2.PodSandboxStatsFilter.label_selector', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_PODSANDBOXSTATSFILTER_LABELSELECTORENTRY, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=4686,
+  serialized_end=4859,
+)
+
+
+_LISTPODSANDBOXSTATSREQUEST = _descriptor.Descriptor(
+  name='ListPodSandboxStatsRequest',
+  full_name='runtime.v1alpha2.ListPodSandboxStatsRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='filter', full_name='runtime.v1alpha2.ListPodSandboxStatsRequest.filter', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=4861,
+  serialized_end=4946,
+)
+
+
+_LISTPODSANDBOXSTATSRESPONSE = _descriptor.Descriptor(
+  name='ListPodSandboxStatsResponse',
+  full_name='runtime.v1alpha2.ListPodSandboxStatsResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='stats', full_name='runtime.v1alpha2.ListPodSandboxStatsResponse.stats', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=4948,
+  serialized_end=5027,
+)
+
+
+_PODSANDBOXATTRIBUTES_LABELSENTRY = _descriptor.Descriptor(
+  name='LabelsEntry',
+  full_name='runtime.v1alpha2.PodSandboxAttributes.LabelsEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='runtime.v1alpha2.PodSandboxAttributes.LabelsEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='runtime.v1alpha2.PodSandboxAttributes.LabelsEntry.value', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=b'8\001',
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2262,
+  serialized_end=2307,
+)
+
+_PODSANDBOXATTRIBUTES_ANNOTATIONSENTRY = _descriptor.Descriptor(
+  name='AnnotationsEntry',
+  full_name='runtime.v1alpha2.PodSandboxAttributes.AnnotationsEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='runtime.v1alpha2.PodSandboxAttributes.AnnotationsEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='runtime.v1alpha2.PodSandboxAttributes.AnnotationsEntry.value', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=b'8\001',
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2309,
+  serialized_end=2359,
+)
+
+_PODSANDBOXATTRIBUTES = _descriptor.Descriptor(
+  name='PodSandboxAttributes',
+  full_name='runtime.v1alpha2.PodSandboxAttributes',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='id', full_name='runtime.v1alpha2.PodSandboxAttributes.id', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='metadata', full_name='runtime.v1alpha2.PodSandboxAttributes.metadata', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='labels', full_name='runtime.v1alpha2.PodSandboxAttributes.labels', index=2,
+      number=3, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='annotations', full_name='runtime.v1alpha2.PodSandboxAttributes.annotations', index=3,
+      number=4, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_PODSANDBOXATTRIBUTES_LABELSENTRY, _PODSANDBOXATTRIBUTES_ANNOTATIONSENTRY, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=5030,
+  serialized_end=5365,
+)
+
+
+_PODSANDBOXSTATS = _descriptor.Descriptor(
+  name='PodSandboxStats',
+  full_name='runtime.v1alpha2.PodSandboxStats',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='attributes', full_name='runtime.v1alpha2.PodSandboxStats.attributes', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='linux', full_name='runtime.v1alpha2.PodSandboxStats.linux', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='windows', full_name='runtime.v1alpha2.PodSandboxStats.windows', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=5368,
+  serialized_end=5559,
+)
+
+
+_LINUXPODSANDBOXSTATS = _descriptor.Descriptor(
+  name='LinuxPodSandboxStats',
+  full_name='runtime.v1alpha2.LinuxPodSandboxStats',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='cpu', full_name='runtime.v1alpha2.LinuxPodSandboxStats.cpu', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='memory', full_name='runtime.v1alpha2.LinuxPodSandboxStats.memory', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='network', full_name='runtime.v1alpha2.LinuxPodSandboxStats.network', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='process', full_name='runtime.v1alpha2.LinuxPodSandboxStats.process', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='containers', full_name='runtime.v1alpha2.LinuxPodSandboxStats.containers', index=4,
+      number=5, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=5562,
+  serialized_end=5824,
+)
+
+
+_WINDOWSPODSANDBOXSTATS = _descriptor.Descriptor(
+  name='WindowsPodSandboxStats',
+  full_name='runtime.v1alpha2.WindowsPodSandboxStats',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=5826,
+  serialized_end=5850,
+)
+
+
+_NETWORKUSAGE = _descriptor.Descriptor(
+  name='NetworkUsage',
+  full_name='runtime.v1alpha2.NetworkUsage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='runtime.v1alpha2.NetworkUsage.timestamp', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='default_interface', full_name='runtime.v1alpha2.NetworkUsage.default_interface', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='interfaces', full_name='runtime.v1alpha2.NetworkUsage.interfaces', index=2,
+      number=3, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=5853,
+  serialized_end=6015,
+)
+
+
+_NETWORKINTERFACEUSAGE = _descriptor.Descriptor(
+  name='NetworkInterfaceUsage',
+  full_name='runtime.v1alpha2.NetworkInterfaceUsage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='runtime.v1alpha2.NetworkInterfaceUsage.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='rx_bytes', full_name='runtime.v1alpha2.NetworkInterfaceUsage.rx_bytes', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='rx_errors', full_name='runtime.v1alpha2.NetworkInterfaceUsage.rx_errors', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='tx_bytes', full_name='runtime.v1alpha2.NetworkInterfaceUsage.tx_bytes', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='tx_errors', full_name='runtime.v1alpha2.NetworkInterfaceUsage.tx_errors', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=6018,
+  serialized_end=6253,
+)
+
+
+_PROCESSUSAGE = _descriptor.Descriptor(
+  name='ProcessUsage',
+  full_name='runtime.v1alpha2.ProcessUsage',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='timestamp', full_name='runtime.v1alpha2.ProcessUsage.timestamp', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='process_count', full_name='runtime.v1alpha2.ProcessUsage.process_count', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=6255,
+  serialized_end=6342,
+)
+
+
 _IMAGESPEC_ANNOTATIONSENTRY = _descriptor.Descriptor(
   name='AnnotationsEntry',
   full_name='runtime.v1alpha2.ImageSpec.AnnotationsEntry',
@@ -2001,8 +2611,8 @@ _IMAGESPEC = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4559,
-  serialized_end=4704,
+  serialized_start=6345,
+  serialized_end=6490,
 )
 
 
@@ -2040,8 +2650,8 @@ _KEYVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4706,
-  serialized_end=4744,
+  serialized_start=6492,
+  serialized_end=6530,
 )
 
 
@@ -2079,8 +2689,8 @@ _LINUXCONTAINERRESOURCES_UNIFIEDENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5096,
-  serialized_end=5142,
+  serialized_start=6882,
+  serialized_end=6928,
 )
 
 _LINUXCONTAINERRESOURCES = _descriptor.Descriptor(
@@ -2173,8 +2783,8 @@ _LINUXCONTAINERRESOURCES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4747,
-  serialized_end=5142,
+  serialized_start=6533,
+  serialized_end=6928,
 )
 
 
@@ -2212,8 +2822,8 @@ _HUGEPAGELIMIT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5144,
-  serialized_end=5193,
+  serialized_start=6930,
+  serialized_end=6979,
 )
 
 
@@ -2265,8 +2875,8 @@ _SELINUXOPTION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5195,
-  serialized_end=5267,
+  serialized_start=6981,
+  serialized_end=7053,
 )
 
 
@@ -2304,8 +2914,8 @@ _CAPABILITY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5269,
-  serialized_end=5334,
+  serialized_start=7055,
+  serialized_end=7120,
 )
 
 
@@ -2441,8 +3051,8 @@ _LINUXCONTAINERSECURITYCONTEXT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5337,
-  serialized_end=5979,
+  serialized_start=7123,
+  serialized_end=7765,
 )
 
 
@@ -2480,8 +3090,8 @@ _LINUXCONTAINERCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5982,
-  serialized_end=6141,
+  serialized_start=7768,
+  serialized_end=7927,
 )
 
 
@@ -2526,8 +3136,8 @@ _WINDOWSSANDBOXSECURITYCONTEXT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6143,
-  serialized_end=6246,
+  serialized_start=7929,
+  serialized_end=8032,
 )
 
 
@@ -2558,8 +3168,8 @@ _WINDOWSPODSANDBOXCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6248,
-  serialized_end=6348,
+  serialized_start=8034,
+  serialized_end=8134,
 )
 
 
@@ -2604,8 +3214,8 @@ _WINDOWSCONTAINERSECURITYCONTEXT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6350,
-  serialized_end=6455,
+  serialized_start=8136,
+  serialized_end=8241,
 )
 
 
@@ -2643,8 +3253,8 @@ _WINDOWSCONTAINERCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6458,
-  serialized_end=6623,
+  serialized_start=8244,
+  serialized_end=8409,
 )
 
 
@@ -2696,8 +3306,8 @@ _WINDOWSCONTAINERRESOURCES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6625,
-  serialized_end=6743,
+  serialized_start=8411,
+  serialized_end=8529,
 )
 
 
@@ -2735,8 +3345,8 @@ _CONTAINERMETADATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6745,
-  serialized_end=6795,
+  serialized_start=8531,
+  serialized_end=8581,
 )
 
 
@@ -2781,8 +3391,8 @@ _DEVICE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6797,
-  serialized_end=6869,
+  serialized_start=8583,
+  serialized_end=8655,
 )
 
 
@@ -2994,8 +3604,8 @@ _CONTAINERCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=6872,
-  serialized_end=7581,
+  serialized_start=8658,
+  serialized_end=9367,
 )
 
 
@@ -3040,8 +3650,8 @@ _CREATECONTAINERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7584,
-  serialized_end=7743,
+  serialized_start=9370,
+  serialized_end=9529,
 )
 
 
@@ -3072,8 +3682,8 @@ _CREATECONTAINERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7745,
-  serialized_end=7792,
+  serialized_start=9531,
+  serialized_end=9578,
 )
 
 
@@ -3104,8 +3714,8 @@ _STARTCONTAINERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7794,
-  serialized_end=7839,
+  serialized_start=9580,
+  serialized_end=9625,
 )
 
 
@@ -3129,8 +3739,8 @@ _STARTCONTAINERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7841,
-  serialized_end=7865,
+  serialized_start=9627,
+  serialized_end=9651,
 )
 
 
@@ -3168,8 +3778,8 @@ _STOPCONTAINERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7867,
-  serialized_end=7928,
+  serialized_start=9653,
+  serialized_end=9714,
 )
 
 
@@ -3193,8 +3803,8 @@ _STOPCONTAINERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7930,
-  serialized_end=7953,
+  serialized_start=9716,
+  serialized_end=9739,
 )
 
 
@@ -3225,8 +3835,8 @@ _REMOVECONTAINERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=7955,
-  serialized_end=8001,
+  serialized_start=9741,
+  serialized_end=9787,
 )
 
 
@@ -3250,8 +3860,8 @@ _REMOVECONTAINERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=8003,
-  serialized_end=8028,
+  serialized_start=9789,
+  serialized_end=9814,
 )
 
 
@@ -3282,8 +3892,8 @@ _CONTAINERSTATEVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=8030,
-  serialized_end=8100,
+  serialized_start=9816,
+  serialized_end=9886,
 )
 
 
@@ -3373,8 +3983,8 @@ _CONTAINERFILTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=8103,
-  serialized_end=8342,
+  serialized_start=9889,
+  serialized_end=10128,
 )
 
 
@@ -3405,8 +4015,8 @@ _LISTCONTAINERSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=8344,
-  serialized_end=8418,
+  serialized_start=10130,
+  serialized_end=10204,
 )
 
 
@@ -3569,8 +4179,8 @@ _CONTAINER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=8421,
-  serialized_end=8878,
+  serialized_start=10207,
+  serialized_end=10664,
 )
 
 
@@ -3601,8 +4211,8 @@ _LISTCONTAINERSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=8880,
-  serialized_end=8953,
+  serialized_start=10666,
+  serialized_end=10739,
 )
 
 
@@ -3640,8 +4250,8 @@ _CONTAINERSTATUSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=8955,
-  serialized_end=9018,
+  serialized_start=10741,
+  serialized_end=10804,
 )
 
 
@@ -3846,8 +4456,8 @@ _CONTAINERSTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=9021,
-  serialized_end=9624,
+  serialized_start=10807,
+  serialized_end=11410,
 )
 
 
@@ -3923,8 +4533,8 @@ _CONTAINERSTATUSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=9627,
-  serialized_end=9815,
+  serialized_start=11413,
+  serialized_end=11601,
 )
 
 
@@ -4014,8 +4624,8 @@ _UPDATECONTAINERRESOURCESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=9818,
-  serialized_end=10134,
+  serialized_start=11604,
+  serialized_end=11920,
 )
 
 
@@ -4039,8 +4649,8 @@ _UPDATECONTAINERRESOURCESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10136,
-  serialized_end=10170,
+  serialized_start=11922,
+  serialized_end=11956,
 )
 
 
@@ -4085,8 +4695,8 @@ _EXECSYNCREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10172,
-  serialized_end=10241,
+  serialized_start=11958,
+  serialized_end=12027,
 )
 
 
@@ -4131,8 +4741,8 @@ _EXECSYNCRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10243,
-  serialized_end=10312,
+  serialized_start=12029,
+  serialized_end=12098,
 )
 
 
@@ -4198,8 +4808,8 @@ _EXECREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10314,
-  serialized_end=10422,
+  serialized_start=12100,
+  serialized_end=12208,
 )
 
 
@@ -4230,8 +4840,8 @@ _EXECRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10424,
-  serialized_end=10451,
+  serialized_start=12210,
+  serialized_end=12237,
 )
 
 
@@ -4290,8 +4900,8 @@ _ATTACHREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10453,
-  serialized_end=10550,
+  serialized_start=12239,
+  serialized_end=12336,
 )
 
 
@@ -4322,8 +4932,8 @@ _ATTACHRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10552,
-  serialized_end=10581,
+  serialized_start=12338,
+  serialized_end=12367,
 )
 
 
@@ -4361,8 +4971,8 @@ _PORTFORWARDREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10583,
-  serialized_end=10641,
+  serialized_start=12369,
+  serialized_end=12427,
 )
 
 
@@ -4393,8 +5003,8 @@ _PORTFORWARDRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10643,
-  serialized_end=10677,
+  serialized_start=12429,
+  serialized_end=12463,
 )
 
 
@@ -4425,8 +5035,8 @@ _IMAGEFILTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10679,
-  serialized_end=10736,
+  serialized_start=12465,
+  serialized_end=12522,
 )
 
 
@@ -4457,8 +5067,8 @@ _LISTIMAGESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10738,
-  serialized_end=10804,
+  serialized_start=12524,
+  serialized_end=12590,
 )
 
 
@@ -4531,8 +5141,8 @@ _IMAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10807,
-  serialized_end=10985,
+  serialized_start=12593,
+  serialized_end=12771,
 )
 
 
@@ -4563,8 +5173,8 @@ _LISTIMAGESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=10987,
-  serialized_end=11048,
+  serialized_start=12773,
+  serialized_end=12834,
 )
 
 
@@ -4602,8 +5212,8 @@ _IMAGESTATUSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11050,
-  serialized_end=11131,
+  serialized_start=12836,
+  serialized_end=12917,
 )
 
 
@@ -4679,8 +5289,8 @@ _IMAGESTATUSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11134,
-  serialized_end=11303,
+  serialized_start=12920,
+  serialized_end=13089,
 )
 
 
@@ -4746,8 +5356,8 @@ _AUTHCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11306,
-  serialized_end=11440,
+  serialized_start=13092,
+  serialized_end=13226,
 )
 
 
@@ -4792,8 +5402,8 @@ _PULLIMAGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11443,
-  serialized_end=11609,
+  serialized_start=13229,
+  serialized_end=13395,
 )
 
 
@@ -4824,8 +5434,8 @@ _PULLIMAGERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11611,
-  serialized_end=11649,
+  serialized_start=13397,
+  serialized_end=13435,
 )
 
 
@@ -4856,8 +5466,8 @@ _REMOVEIMAGEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11651,
-  serialized_end=11715,
+  serialized_start=13437,
+  serialized_end=13501,
 )
 
 
@@ -4881,8 +5491,8 @@ _REMOVEIMAGERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11717,
-  serialized_end=11738,
+  serialized_start=13503,
+  serialized_end=13524,
 )
 
 
@@ -4913,8 +5523,8 @@ _NETWORKCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11740,
-  serialized_end=11773,
+  serialized_start=13526,
+  serialized_end=13559,
 )
 
 
@@ -4945,8 +5555,8 @@ _RUNTIMECONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11775,
-  serialized_end=11847,
+  serialized_start=13561,
+  serialized_end=13633,
 )
 
 
@@ -4977,8 +5587,8 @@ _UPDATERUNTIMECONFIGREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11849,
-  serialized_end=11934,
+  serialized_start=13635,
+  serialized_end=13720,
 )
 
 
@@ -5002,8 +5612,8 @@ _UPDATERUNTIMECONFIGRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11936,
-  serialized_end=11965,
+  serialized_start=13722,
+  serialized_end=13751,
 )
 
 
@@ -5055,8 +5665,8 @@ _RUNTIMECONDITION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=11967,
-  serialized_end=12048,
+  serialized_start=13753,
+  serialized_end=13834,
 )
 
 
@@ -5087,8 +5697,8 @@ _RUNTIMESTATUS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12050,
-  serialized_end=12121,
+  serialized_start=13836,
+  serialized_end=13907,
 )
 
 
@@ -5119,8 +5729,8 @@ _STATUSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12123,
-  serialized_end=12155,
+  serialized_start=13909,
+  serialized_end=13941,
 )
 
 
@@ -5196,8 +5806,8 @@ _STATUSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12158,
-  serialized_end=12326,
+  serialized_start=13944,
+  serialized_end=14112,
 )
 
 
@@ -5221,8 +5831,8 @@ _IMAGEFSINFOREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12328,
-  serialized_end=12348,
+  serialized_start=14114,
+  serialized_end=14134,
 )
 
 
@@ -5253,8 +5863,8 @@ _UINT64VALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12350,
-  serialized_end=12378,
+  serialized_start=14136,
+  serialized_end=14164,
 )
 
 
@@ -5285,8 +5895,8 @@ _FILESYSTEMIDENTIFIER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12380,
-  serialized_end=12422,
+  serialized_start=14166,
+  serialized_end=14208,
 )
 
 
@@ -5338,8 +5948,8 @@ _FILESYSTEMUSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12425,
-  serialized_end=12619,
+  serialized_start=14211,
+  serialized_end=14405,
 )
 
 
@@ -5370,8 +5980,8 @@ _IMAGEFSINFORESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12621,
-  serialized_end=12704,
+  serialized_start=14407,
+  serialized_end=14490,
 )
 
 
@@ -5402,8 +6012,8 @@ _CONTAINERSTATSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12706,
-  serialized_end=12751,
+  serialized_start=14492,
+  serialized_end=14537,
 )
 
 
@@ -5434,8 +6044,8 @@ _CONTAINERSTATSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12753,
-  serialized_end=12826,
+  serialized_start=14539,
+  serialized_end=14612,
 )
 
 
@@ -5466,8 +6076,8 @@ _LISTCONTAINERSTATSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12828,
-  serialized_end=12911,
+  serialized_start=14614,
+  serialized_end=14697,
 )
 
 
@@ -5550,8 +6160,8 @@ _CONTAINERSTATSFILTER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=12914,
-  serialized_end=13109,
+  serialized_start=14700,
+  serialized_end=14895,
 )
 
 
@@ -5582,8 +6192,8 @@ _LISTCONTAINERSTATSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=13111,
-  serialized_end=13188,
+  serialized_start=14897,
+  serialized_end=14974,
 )
 
 
@@ -5711,8 +6321,8 @@ _CONTAINERATTRIBUTES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=13191,
-  serialized_end=13522,
+  serialized_start=14977,
+  serialized_end=15308,
 )
 
 
@@ -5764,8 +6374,8 @@ _CONTAINERSTATS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=13525,
-  serialized_end=13747,
+  serialized_start=15311,
+  serialized_end=15533,
 )
 
 
@@ -5791,6 +6401,13 @@ _CPUUSAGE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='usage_nano_cores', full_name='runtime.v1alpha2.CpuUsage.usage_nano_cores', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -5803,8 +6420,8 @@ _CPUUSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=13749,
-  serialized_end=13842,
+  serialized_start=15536,
+  serialized_end=15686,
 )
 
 
@@ -5830,6 +6447,41 @@ _MEMORYUSAGE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='available_bytes', full_name='runtime.v1alpha2.MemoryUsage.available_bytes', index=2,
+      number=3, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='usage_bytes', full_name='runtime.v1alpha2.MemoryUsage.usage_bytes', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='rss_bytes', full_name='runtime.v1alpha2.MemoryUsage.rss_bytes', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='page_faults', full_name='runtime.v1alpha2.MemoryUsage.page_faults', index=5,
+      number=6, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='major_page_faults', full_name='runtime.v1alpha2.MemoryUsage.major_page_faults', index=6,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -5842,8 +6494,8 @@ _MEMORYUSAGE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=13844,
-  serialized_end=13934,
+  serialized_start=15689,
+  serialized_end=16047,
 )
 
 
@@ -5874,8 +6526,8 @@ _REOPENCONTAINERLOGREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=13936,
-  serialized_end=13985,
+  serialized_start=16049,
+  serialized_end=16098,
 )
 
 
@@ -5899,8 +6551,8 @@ _REOPENCONTAINERLOGRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=13987,
-  serialized_end=14015,
+  serialized_start=16100,
+  serialized_end=16128,
 )
 
 _PORTMAPPING.fields_by_name['protocol'].enum_type = _PROTOCOL
@@ -5955,6 +6607,31 @@ _PODSANDBOX.fields_by_name['state'].enum_type = _PODSANDBOXSTATE
 _PODSANDBOX.fields_by_name['labels'].message_type = _PODSANDBOX_LABELSENTRY
 _PODSANDBOX.fields_by_name['annotations'].message_type = _PODSANDBOX_ANNOTATIONSENTRY
 _LISTPODSANDBOXRESPONSE.fields_by_name['items'].message_type = _PODSANDBOX
+_PODSANDBOXSTATSRESPONSE.fields_by_name['stats'].message_type = _PODSANDBOXSTATS
+_PODSANDBOXSTATSFILTER_LABELSELECTORENTRY.containing_type = _PODSANDBOXSTATSFILTER
+_PODSANDBOXSTATSFILTER.fields_by_name['label_selector'].message_type = _PODSANDBOXSTATSFILTER_LABELSELECTORENTRY
+_LISTPODSANDBOXSTATSREQUEST.fields_by_name['filter'].message_type = _PODSANDBOXSTATSFILTER
+_LISTPODSANDBOXSTATSRESPONSE.fields_by_name['stats'].message_type = _PODSANDBOXSTATS
+_PODSANDBOXATTRIBUTES_LABELSENTRY.containing_type = _PODSANDBOXATTRIBUTES
+_PODSANDBOXATTRIBUTES_ANNOTATIONSENTRY.containing_type = _PODSANDBOXATTRIBUTES
+_PODSANDBOXATTRIBUTES.fields_by_name['metadata'].message_type = _PODSANDBOXMETADATA
+_PODSANDBOXATTRIBUTES.fields_by_name['labels'].message_type = _PODSANDBOXATTRIBUTES_LABELSENTRY
+_PODSANDBOXATTRIBUTES.fields_by_name['annotations'].message_type = _PODSANDBOXATTRIBUTES_ANNOTATIONSENTRY
+_PODSANDBOXSTATS.fields_by_name['attributes'].message_type = _PODSANDBOXATTRIBUTES
+_PODSANDBOXSTATS.fields_by_name['linux'].message_type = _LINUXPODSANDBOXSTATS
+_PODSANDBOXSTATS.fields_by_name['windows'].message_type = _WINDOWSPODSANDBOXSTATS
+_LINUXPODSANDBOXSTATS.fields_by_name['cpu'].message_type = _CPUUSAGE
+_LINUXPODSANDBOXSTATS.fields_by_name['memory'].message_type = _MEMORYUSAGE
+_LINUXPODSANDBOXSTATS.fields_by_name['network'].message_type = _NETWORKUSAGE
+_LINUXPODSANDBOXSTATS.fields_by_name['process'].message_type = _PROCESSUSAGE
+_LINUXPODSANDBOXSTATS.fields_by_name['containers'].message_type = _CONTAINERSTATS
+_NETWORKUSAGE.fields_by_name['default_interface'].message_type = _NETWORKINTERFACEUSAGE
+_NETWORKUSAGE.fields_by_name['interfaces'].message_type = _NETWORKINTERFACEUSAGE
+_NETWORKINTERFACEUSAGE.fields_by_name['rx_bytes'].message_type = _UINT64VALUE
+_NETWORKINTERFACEUSAGE.fields_by_name['rx_errors'].message_type = _UINT64VALUE
+_NETWORKINTERFACEUSAGE.fields_by_name['tx_bytes'].message_type = _UINT64VALUE
+_NETWORKINTERFACEUSAGE.fields_by_name['tx_errors'].message_type = _UINT64VALUE
+_PROCESSUSAGE.fields_by_name['process_count'].message_type = _UINT64VALUE
 _IMAGESPEC_ANNOTATIONSENTRY.containing_type = _IMAGESPEC
 _IMAGESPEC.fields_by_name['annotations'].message_type = _IMAGESPEC_ANNOTATIONSENTRY
 _LINUXCONTAINERRESOURCES_UNIFIEDENTRY.containing_type = _LINUXCONTAINERRESOURCES
@@ -6051,7 +6728,13 @@ _CONTAINERSTATS.fields_by_name['cpu'].message_type = _CPUUSAGE
 _CONTAINERSTATS.fields_by_name['memory'].message_type = _MEMORYUSAGE
 _CONTAINERSTATS.fields_by_name['writable_layer'].message_type = _FILESYSTEMUSAGE
 _CPUUSAGE.fields_by_name['usage_core_nano_seconds'].message_type = _UINT64VALUE
+_CPUUSAGE.fields_by_name['usage_nano_cores'].message_type = _UINT64VALUE
 _MEMORYUSAGE.fields_by_name['working_set_bytes'].message_type = _UINT64VALUE
+_MEMORYUSAGE.fields_by_name['available_bytes'].message_type = _UINT64VALUE
+_MEMORYUSAGE.fields_by_name['usage_bytes'].message_type = _UINT64VALUE
+_MEMORYUSAGE.fields_by_name['rss_bytes'].message_type = _UINT64VALUE
+_MEMORYUSAGE.fields_by_name['page_faults'].message_type = _UINT64VALUE
+_MEMORYUSAGE.fields_by_name['major_page_faults'].message_type = _UINT64VALUE
 DESCRIPTOR.message_types_by_name['VersionRequest'] = _VERSIONREQUEST
 DESCRIPTOR.message_types_by_name['VersionResponse'] = _VERSIONRESPONSE
 DESCRIPTOR.message_types_by_name['DNSConfig'] = _DNSCONFIG
@@ -6082,6 +6765,18 @@ DESCRIPTOR.message_types_by_name['PodSandboxFilter'] = _PODSANDBOXFILTER
 DESCRIPTOR.message_types_by_name['ListPodSandboxRequest'] = _LISTPODSANDBOXREQUEST
 DESCRIPTOR.message_types_by_name['PodSandbox'] = _PODSANDBOX
 DESCRIPTOR.message_types_by_name['ListPodSandboxResponse'] = _LISTPODSANDBOXRESPONSE
+DESCRIPTOR.message_types_by_name['PodSandboxStatsRequest'] = _PODSANDBOXSTATSREQUEST
+DESCRIPTOR.message_types_by_name['PodSandboxStatsResponse'] = _PODSANDBOXSTATSRESPONSE
+DESCRIPTOR.message_types_by_name['PodSandboxStatsFilter'] = _PODSANDBOXSTATSFILTER
+DESCRIPTOR.message_types_by_name['ListPodSandboxStatsRequest'] = _LISTPODSANDBOXSTATSREQUEST
+DESCRIPTOR.message_types_by_name['ListPodSandboxStatsResponse'] = _LISTPODSANDBOXSTATSRESPONSE
+DESCRIPTOR.message_types_by_name['PodSandboxAttributes'] = _PODSANDBOXATTRIBUTES
+DESCRIPTOR.message_types_by_name['PodSandboxStats'] = _PODSANDBOXSTATS
+DESCRIPTOR.message_types_by_name['LinuxPodSandboxStats'] = _LINUXPODSANDBOXSTATS
+DESCRIPTOR.message_types_by_name['WindowsPodSandboxStats'] = _WINDOWSPODSANDBOXSTATS
+DESCRIPTOR.message_types_by_name['NetworkUsage'] = _NETWORKUSAGE
+DESCRIPTOR.message_types_by_name['NetworkInterfaceUsage'] = _NETWORKINTERFACEUSAGE
+DESCRIPTOR.message_types_by_name['ProcessUsage'] = _PROCESSUSAGE
 DESCRIPTOR.message_types_by_name['ImageSpec'] = _IMAGESPEC
 DESCRIPTOR.message_types_by_name['KeyValue'] = _KEYVALUE
 DESCRIPTOR.message_types_by_name['LinuxContainerResources'] = _LINUXCONTAINERRESOURCES
@@ -6447,6 +7142,114 @@ ListPodSandboxResponse = _reflection.GeneratedProtocolMessageType('ListPodSandbo
   # @@protoc_insertion_point(class_scope:runtime.v1alpha2.ListPodSandboxResponse)
   })
 _sym_db.RegisterMessage(ListPodSandboxResponse)
+
+PodSandboxStatsRequest = _reflection.GeneratedProtocolMessageType('PodSandboxStatsRequest', (_message.Message,), {
+  'DESCRIPTOR' : _PODSANDBOXSTATSREQUEST,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxStatsRequest)
+  })
+_sym_db.RegisterMessage(PodSandboxStatsRequest)
+
+PodSandboxStatsResponse = _reflection.GeneratedProtocolMessageType('PodSandboxStatsResponse', (_message.Message,), {
+  'DESCRIPTOR' : _PODSANDBOXSTATSRESPONSE,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxStatsResponse)
+  })
+_sym_db.RegisterMessage(PodSandboxStatsResponse)
+
+PodSandboxStatsFilter = _reflection.GeneratedProtocolMessageType('PodSandboxStatsFilter', (_message.Message,), {
+
+  'LabelSelectorEntry' : _reflection.GeneratedProtocolMessageType('LabelSelectorEntry', (_message.Message,), {
+    'DESCRIPTOR' : _PODSANDBOXSTATSFILTER_LABELSELECTORENTRY,
+    '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+    # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxStatsFilter.LabelSelectorEntry)
+    })
+  ,
+  'DESCRIPTOR' : _PODSANDBOXSTATSFILTER,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxStatsFilter)
+  })
+_sym_db.RegisterMessage(PodSandboxStatsFilter)
+_sym_db.RegisterMessage(PodSandboxStatsFilter.LabelSelectorEntry)
+
+ListPodSandboxStatsRequest = _reflection.GeneratedProtocolMessageType('ListPodSandboxStatsRequest', (_message.Message,), {
+  'DESCRIPTOR' : _LISTPODSANDBOXSTATSREQUEST,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.ListPodSandboxStatsRequest)
+  })
+_sym_db.RegisterMessage(ListPodSandboxStatsRequest)
+
+ListPodSandboxStatsResponse = _reflection.GeneratedProtocolMessageType('ListPodSandboxStatsResponse', (_message.Message,), {
+  'DESCRIPTOR' : _LISTPODSANDBOXSTATSRESPONSE,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.ListPodSandboxStatsResponse)
+  })
+_sym_db.RegisterMessage(ListPodSandboxStatsResponse)
+
+PodSandboxAttributes = _reflection.GeneratedProtocolMessageType('PodSandboxAttributes', (_message.Message,), {
+
+  'LabelsEntry' : _reflection.GeneratedProtocolMessageType('LabelsEntry', (_message.Message,), {
+    'DESCRIPTOR' : _PODSANDBOXATTRIBUTES_LABELSENTRY,
+    '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+    # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxAttributes.LabelsEntry)
+    })
+  ,
+
+  'AnnotationsEntry' : _reflection.GeneratedProtocolMessageType('AnnotationsEntry', (_message.Message,), {
+    'DESCRIPTOR' : _PODSANDBOXATTRIBUTES_ANNOTATIONSENTRY,
+    '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+    # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxAttributes.AnnotationsEntry)
+    })
+  ,
+  'DESCRIPTOR' : _PODSANDBOXATTRIBUTES,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxAttributes)
+  })
+_sym_db.RegisterMessage(PodSandboxAttributes)
+_sym_db.RegisterMessage(PodSandboxAttributes.LabelsEntry)
+_sym_db.RegisterMessage(PodSandboxAttributes.AnnotationsEntry)
+
+PodSandboxStats = _reflection.GeneratedProtocolMessageType('PodSandboxStats', (_message.Message,), {
+  'DESCRIPTOR' : _PODSANDBOXSTATS,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.PodSandboxStats)
+  })
+_sym_db.RegisterMessage(PodSandboxStats)
+
+LinuxPodSandboxStats = _reflection.GeneratedProtocolMessageType('LinuxPodSandboxStats', (_message.Message,), {
+  'DESCRIPTOR' : _LINUXPODSANDBOXSTATS,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.LinuxPodSandboxStats)
+  })
+_sym_db.RegisterMessage(LinuxPodSandboxStats)
+
+WindowsPodSandboxStats = _reflection.GeneratedProtocolMessageType('WindowsPodSandboxStats', (_message.Message,), {
+  'DESCRIPTOR' : _WINDOWSPODSANDBOXSTATS,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.WindowsPodSandboxStats)
+  })
+_sym_db.RegisterMessage(WindowsPodSandboxStats)
+
+NetworkUsage = _reflection.GeneratedProtocolMessageType('NetworkUsage', (_message.Message,), {
+  'DESCRIPTOR' : _NETWORKUSAGE,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.NetworkUsage)
+  })
+_sym_db.RegisterMessage(NetworkUsage)
+
+NetworkInterfaceUsage = _reflection.GeneratedProtocolMessageType('NetworkInterfaceUsage', (_message.Message,), {
+  'DESCRIPTOR' : _NETWORKINTERFACEUSAGE,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.NetworkInterfaceUsage)
+  })
+_sym_db.RegisterMessage(NetworkInterfaceUsage)
+
+ProcessUsage = _reflection.GeneratedProtocolMessageType('ProcessUsage', (_message.Message,), {
+  'DESCRIPTOR' : _PROCESSUSAGE,
+  '__module__' : 'k8s.io.cri_api.pkg.apis.runtime.v1alpha2.api_pb2'
+  # @@protoc_insertion_point(class_scope:runtime.v1alpha2.ProcessUsage)
+  })
+_sym_db.RegisterMessage(ProcessUsage)
 
 ImageSpec = _reflection.GeneratedProtocolMessageType('ImageSpec', (_message.Message,), {
 
@@ -7127,6 +7930,9 @@ _PODSANDBOXSTATUSRESPONSE_INFOENTRY._options = None
 _PODSANDBOXFILTER_LABELSELECTORENTRY._options = None
 _PODSANDBOX_LABELSENTRY._options = None
 _PODSANDBOX_ANNOTATIONSENTRY._options = None
+_PODSANDBOXSTATSFILTER_LABELSELECTORENTRY._options = None
+_PODSANDBOXATTRIBUTES_LABELSENTRY._options = None
+_PODSANDBOXATTRIBUTES_ANNOTATIONSENTRY._options = None
 _IMAGESPEC_ANNOTATIONSENTRY._options = None
 _LINUXCONTAINERRESOURCES_UNIFIEDENTRY._options = None
 _LINUXCONTAINERSECURITYCONTEXT.fields_by_name['apparmor_profile']._options = None
@@ -7153,8 +7959,8 @@ _RUNTIMESERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=14401,
-  serialized_end=16642,
+  serialized_start=16514,
+  serialized_end=18979,
   methods=[
   _descriptor.MethodDescriptor(
     name='Version',
@@ -7357,9 +8163,29 @@ _RUNTIMESERVICE = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
+    name='PodSandboxStats',
+    full_name='runtime.v1alpha2.RuntimeService.PodSandboxStats',
+    index=20,
+    containing_service=None,
+    input_type=_PODSANDBOXSTATSREQUEST,
+    output_type=_PODSANDBOXSTATSRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='ListPodSandboxStats',
+    full_name='runtime.v1alpha2.RuntimeService.ListPodSandboxStats',
+    index=21,
+    containing_service=None,
+    input_type=_LISTPODSANDBOXSTATSREQUEST,
+    output_type=_LISTPODSANDBOXSTATSRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
     name='UpdateRuntimeConfig',
     full_name='runtime.v1alpha2.RuntimeService.UpdateRuntimeConfig',
-    index=20,
+    index=22,
     containing_service=None,
     input_type=_UPDATERUNTIMECONFIGREQUEST,
     output_type=_UPDATERUNTIMECONFIGRESPONSE,
@@ -7369,7 +8195,7 @@ _RUNTIMESERVICE = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='Status',
     full_name='runtime.v1alpha2.RuntimeService.Status',
-    index=21,
+    index=23,
     containing_service=None,
     input_type=_STATUSREQUEST,
     output_type=_STATUSRESPONSE,
@@ -7389,8 +8215,8 @@ _IMAGESERVICE = _descriptor.ServiceDescriptor(
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=16645,
-  serialized_end=17120,
+  serialized_start=18982,
+  serialized_end=19457,
   methods=[
   _descriptor.MethodDescriptor(
     name='ListImages',

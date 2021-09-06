@@ -7,6 +7,7 @@ from docker_image.reference import (
     Reference as _ImageReference,
 )
 
+from .containerd_client import ContainerdClient
 from .utils import asyncgeneratorcontextmanager
 
 
@@ -51,8 +52,13 @@ class ImageReference:
 
 
 class RuntimeClient:
-    def __init__(self, docker_client: Optional[Docker] = None) -> None:
+    def __init__(
+        self,
+        docker_client: Optional[Docker] = None,
+        containerd_client: Optional[ContainerdClient] = None,
+    ) -> None:
         self._docker_client = docker_client
+        self._containerd_client = containerd_client
 
     @asyncgeneratorcontextmanager
     async def commit(
@@ -73,6 +79,9 @@ class RuntimeClient:
             await container.commit(repository=image_ref.repository, tag=image_ref.tag)
             yield self._create_commit_finished_chunk()
             return
+
+        if self._containerd_client:
+            await self._containerd_client.commit(container_id=container_id)
 
         raise ValueError("Commit is not supported by container runtime")
 

@@ -28,9 +28,11 @@ from neuro_logging import (
     setup_sentry,
     setup_zipkin_tracer,
 )
+from yarl import URL
 
 from .config import Config, SentryConfig, ZipkinConfig
 from .config_factory import EnvironConfigFactory
+from .containerd_client import ContainerdClient
 from .cri_client import ContainerNotFoundError as CriContainerNotFoundError, CriClient
 from .kube_client import KubeClient
 from .runtime_client import (
@@ -304,6 +306,14 @@ async def create_runtime_client(
             config.runtime_address or "unix:///hrun/docker.sock"
         ) as docker:
             yield RuntimeClient(docker_client=docker)
+    elif container_runtime_version.startswith("containerd://"):
+        if config.runtime_address:
+            url = URL(config.runtime_address)
+            runtime_address = f"{url.host}:{url.port}"
+        else:
+            runtime_address = "unix:/hrun/containerd/containerd.sock"
+        async with grpc.aio.insecure_channel(runtime_address) as channel:
+            yield RuntimeClient(containerd_client=ContainerdClient(channel))
     else:
         yield RuntimeClient()
 
