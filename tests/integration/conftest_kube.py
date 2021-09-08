@@ -66,6 +66,7 @@ async def get_container_id(
 async def run(
     image: str,
     cmd: str,
+    image_pull_policy: str = "",
     namespace: str = "default",
     tty: bool = False,
     stdin: bool = False,
@@ -84,10 +85,16 @@ async def run(
     if tty:
         opts += " -t"
 
+    if image_pull_policy:
+        opts += f" --image-pull-policy {image_pull_policy}"
+
     try:
         kubectl = f"kubectl --context=minikube -n {namespace}"
         process = await asyncio.create_subprocess_shell(
-            f"{kubectl} run {pod_name}{opts} --image {image} -- {cmd}"
+            f"{kubectl} run {pod_name}{opts} "
+            f"--image {image} "
+            f"--restart {restart} "
+            f"-- {cmd}"
         )
         await process.communicate()
         yield Pod(

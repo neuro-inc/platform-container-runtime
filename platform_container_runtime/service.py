@@ -166,7 +166,6 @@ class Service:
         # event if container does not exist. get_status should raise
         # ContainerNotFoundError if container does not exist.
         status = await self._cri_client.get_status(container_id)
-        print(status)
         if status.state != ContainerState.RUNNING:
             raise ValueError(
                 "Cannot exec into a not running container {container_id!r}"

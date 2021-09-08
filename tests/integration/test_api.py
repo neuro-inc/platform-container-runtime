@@ -450,6 +450,11 @@ class TestApi:
 
                 assert chunks[-1].get("aux", {}).get("Tag") == tag, debug
 
+        async with run(
+            image, 'bash -c "sleep infinity"', image_pull_policy="Never"
+        ) as pod:
+            pass
+
     @pytest.mark.minikube
     async def test_commit_without_push(
         self,
@@ -488,6 +493,11 @@ class TestApi:
                 assert re.match(r"\w{64}", chunks[0]["details"]["container"]), debug
 
                 assert chunks[1] == {"status": "CommitFinished"}, debug
+
+        async with run(
+            image, 'bash -c "sleep infinity"', image_pull_policy="Never"
+        ) as pod:
+            pass
 
     @pytest.mark.minikube
     async def test_commit_invalid_image(
