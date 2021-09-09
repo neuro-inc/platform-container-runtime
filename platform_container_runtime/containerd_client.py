@@ -93,7 +93,7 @@ class Descriptor:
 
 
 @dataclass(frozen=True)
-class Stubs:
+class Clients:
     leases: LeasesStub
     containers: ContainersStub
     tasks: TasksStub
@@ -103,7 +103,7 @@ class Stubs:
     content: ContentStub
 
     @classmethod
-    def create(cls, channel: grpc.aio.Channel) -> "Stubs":
+    def create(cls, channel: grpc.aio.Channel) -> "Clients":
         return cls(
             leases=LeasesStub(channel),
             containers=ContainersStub(channel),
@@ -129,8 +129,8 @@ class Metadata(grpc.aio.Metadata):
 # leases are used to tell Containerd garbage collector
 # to not delete resources while lease exists or is not expired
 class Lease:
-    def __init__(self, stubs: Stubs, namespace: str, duration: timedelta) -> None:
-        self._leases_stub = stubs.leases
+    def __init__(self, clients: Clients, namespace: str, duration: timedelta) -> None:
+        self._leases_stub = clients.leases
         self._namespace = namespace
         self._duration = duration
         self._lease_id = ""
@@ -162,12 +162,12 @@ class SnapshotDiff:
 class Snapshot:
     def __init__(
         self,
-        stubs: Stubs,
+        clients: Clients,
         namespace: str,
         snapshotter: str,
         snapshot_key: str,
     ) -> None:
-        self._stubs = stubs
+        self._clients = clients
         self._namespace = namespace
         self._snapshotter = snapshotter
         self._snapshot_key = snapshot_key
@@ -182,12 +182,12 @@ class Snapshot:
 
     @trace
     async def get_diff(self, lease_id: Optional[str] = None) -> SnapshotDiff:
-        resp = await self._stubs.snapshots.Stat(
+        resp = await self._clients.snapshots.Stat(
             StatSnapshotRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
             metadata=Metadata(namespace=self._namespace),
         )
         lower_key = f"{self._snapshot_key}-parent-view"
-        resp = await self._stubs.snapshots.View(
+        resp = await self._clients.snapshots.View(
             ViewSnapshotRequest(
                 snapshotter=self._snapshotter,
                 key=lower_key,
@@ -197,17 +197,17 @@ class Snapshot:
         )
         logger.info("Created parent snapshot vew %r", lower_key)
         lower_mounts = resp.mounts
-        resp = await self._stubs.snapshots.Mounts(
+        resp = await self._clients.snapshots.Mounts(
             MountsRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
             metadata=Metadata(namespace=self._namespace),
         )
         upper_mounts = resp.mounts
-        await self._stubs.snapshots.Remove(
+        await self._clients.snapshots.Remove(
             RemoveSnapshotRequest(snapshotter=self._snapshotter, key=lower_key),
             metadata=Metadata(namespace=self._namespace),
         )
         logger.info("Removed parent snapshot vew %r", lower_key)
-        resp = await self._stubs.diff.Diff(
+        resp = await self._clients.diff.Diff(
             DiffRequest(left=lower_mounts, right=upper_mounts),
             metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
         )
@@ -217,7 +217,7 @@ class Snapshot:
             digest=resp.diff.digest,
             size=resp.diff.size,
         )
-        resp = await self._stubs.content.Info(
+        resp = await self._clients.content.Info(
             InfoRequest(digest=desc.digest),
             metadata=Metadata(namespace=self._namespace),
         )
@@ -227,9 +227,11 @@ class Snapshot:
 
 
 class ImageManifest(Dict[str, Any]):
-    def __init__(self, stubs: Stubs, namespace: str, content: Dict[str, Any]) -> None:
+    def __init__(
+        self, clients: Clients, namespace: str, content: Dict[str, Any]
+    ) -> None:
         super().__init__(content)
-        self._stubs = stubs
+        self._clients = clients
         self._namespace = namespace
 
     @property
@@ -240,14 +242,14 @@ class ImageManifest(Dict[str, Any]):
     @trace
     async def read(
         cls,
-        stubs: Stubs,
+        clients: Clients,
         namespace: str,
         architecture: str,
         os: str,
         descriptor: Descriptor,
     ) -> "ImageManifest":
         manifest = await cls._read_manifest(
-            stubs,
+            clients,
             namespace=namespace,
             architecture=architecture,
             os=os,
@@ -256,18 +258,18 @@ class ImageManifest(Dict[str, Any]):
         config = _get_value(manifest, "config", "Config")
         config_digest = _get_value(config, "digest", "Digest")
         manifest["config"] = await cls._read_config(
-            stubs, namespace=namespace, digest=config_digest
+            clients, namespace=namespace, digest=config_digest
         )
-        return cls(stubs=stubs, namespace=namespace, content=manifest)
+        return cls(clients=clients, namespace=namespace, content=manifest)
 
     @classmethod
     @trace
     async def _read_manifest(
-        cls, stubs: Stubs, namespace: str, architecture: str, os: str, digest: str
+        cls, clients: Clients, namespace: str, architecture: str, os: str, digest: str
     ) -> Dict[str, Any]:
         while True:
             data: List[bytes] = []
-            async for resp in stubs.content.Read(
+            async for resp in clients.content.Read(
                 ReadContentRequest(
                     digest=digest,
                     offset=0,  # from the start
@@ -307,10 +309,10 @@ class ImageManifest(Dict[str, Any]):
     @classmethod
     @trace
     async def _read_config(
-        cls, stubs: Stubs, namespace: str, digest: str
+        cls, clients: Clients, namespace: str, digest: str
     ) -> Dict[str, Any]:
         data: List[bytes] = []
-        async for resp in stubs.content.Read(
+        async for resp in clients.content.Read(
             ReadContentRequest(
                 digest=digest,
                 offset=0,  # from the start
@@ -358,7 +360,7 @@ class ImageManifest(Dict[str, Any]):
             digest = _get_value(layer, "digest", "Digest")
             labels[f"containerd.io/gc.ref.content.{i + 1}"] = digest
 
-        async for resp in self._stubs.content.Write(
+        async for resp in self._clients.content.Write(
             [
                 WriteContentRequest(
                     action=COMMIT,
@@ -385,7 +387,7 @@ class ImageManifest(Dict[str, Any]):
         labels: Optional[Dict[str, Any]] = None,
         lease_id: Optional[str] = None,
     ) -> None:
-        async for resp in self._stubs.content.Write(
+        async for resp in self._clients.content.Write(
             [
                 WriteContentRequest(
                     action=COMMIT,
@@ -407,9 +409,9 @@ class ImageManifest(Dict[str, Any]):
 
 class Image:
     def __init__(
-        self, stubs: Stubs, namespace: str, name: str, manifest: ImageManifest
+        self, clients: Clients, namespace: str, name: str, manifest: ImageManifest
     ) -> None:
-        self._stubs = stubs
+        self._clients = clients
         self._namespace = namespace
         self._name = name
         self._manifest = manifest
@@ -425,9 +427,9 @@ class Image:
     @classmethod
     @trace
     async def read(
-        cls, stubs: Stubs, namespace: str, name: str, architecture: str, os: str
+        cls, clients: Clients, namespace: str, name: str, architecture: str, os: str
     ) -> "Image":
-        resp = await stubs.images.Get(
+        resp = await clients.images.Get(
             GetImageRequest(name=name),
             metadata=Metadata(namespace=namespace),
         )
@@ -437,13 +439,13 @@ class Image:
             size=resp.image.target.size,
         )
         manifest = await ImageManifest.read(
-            stubs,
+            clients,
             namespace=namespace,
             architecture=architecture,
             os=os,
             descriptor=manifest_descriptor,
         )
-        return cls(stubs=stubs, namespace=namespace, name=name, manifest=manifest)
+        return cls(clients=clients, namespace=namespace, name=name, manifest=manifest)
 
     @trace
     async def write(
@@ -466,7 +468,7 @@ class Image:
             created_at=created_at,
         )
         try:
-            await self._stubs.images.Update(
+            await self._clients.images.Update(
                 UpdateImageRequest(image=image_pb2),
                 metadata=Metadata(namespace=self._namespace),
             )
@@ -474,7 +476,7 @@ class Image:
         except grpc.aio.AioRpcError as ex:
             status = ex.code()
             if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
-                await self._stubs.images.Create(
+                await self._clients.images.Create(
                     CreateImageRequest(image=image_pb2),
                     metadata=Metadata(namespace=self._namespace),
                 )
@@ -486,7 +488,7 @@ class Image:
 class Container:
     def __init__(
         self,
-        stubs: Stubs,
+        clients: Clients,
         namespace: str,
         architecture: str,
         os: str,
@@ -494,7 +496,7 @@ class Container:
         image: str,
         snapshot: Snapshot,
     ) -> None:
-        self._stubs = stubs
+        self._clients = clients
         self._namespace = namespace
         self._architecture = architecture
         self._os = os
@@ -520,14 +522,14 @@ class Container:
 
     @trace
     async def pause(self) -> bool:
-        resp = await self._stubs.tasks.Get(
+        resp = await self._clients.tasks.Get(
             GetRequest(container_id=self._id),
             metadata=Metadata(namespace=self._namespace),
         )
         if resp.process.status in (CREATED, PAUSED, STOPPED):
             logger.info("Container %r is not running", self._id)
             return False
-        await self._stubs.tasks.Pause(
+        await self._clients.tasks.Pause(
             PauseTaskRequest(container_id=self._id),
             metadata=Metadata(namespace=self._namespace),
         )
@@ -536,7 +538,7 @@ class Container:
 
     @trace
     async def resume(self) -> None:
-        await self._stubs.tasks.Resume(
+        await self._clients.tasks.Resume(
             ResumeTaskRequest(container_id=self._id),
             metadata=Metadata(namespace=self._namespace),
         )
@@ -550,10 +552,10 @@ class Container:
             paused = await self.pause()
 
             async with Lease(
-                self._stubs, self._namespace, timedelta(hours=1)
+                self._clients, self._namespace, timedelta(hours=1)
             ) as lease_id:
                 parent_image = await Image.read(
-                    self._stubs,
+                    self._clients,
                     namespace=self._namespace,
                     name=self._image,
                     architecture=self._architecture,
@@ -562,7 +564,7 @@ class Container:
                 image_diff = await self._snapshot.get_diff(lease_id=lease_id)
                 logger.info("Created new image layer %r", image_diff.descriptor)
                 new_image_manifest = ImageManifest(
-                    self._stubs,
+                    self._clients,
                     namespace=self._namespace,
                     content=self._create_commit_image_manifest(
                         parent_image, image_diff
@@ -572,7 +574,7 @@ class Container:
                     *new_image_manifest.config["rootfs"]["diff_ids"]
                 )
                 new_image = Image(
-                    self._stubs,
+                    self._clients,
                     namespace=self._namespace,
                     name=image,
                     manifest=new_image_manifest,
@@ -628,24 +630,24 @@ class ContainerdClient:
         self._namespace = namespace
         self._architecture = architecture.lower()
         self._os = os.lower()
-        self._stubs = Stubs.create(channel)
+        self._clients = Clients.create(channel)
 
     @trace
     async def get_container(self, container_id: str) -> Container:
         try:
-            resp = await self._stubs.containers.Get(
+            resp = await self._clients.containers.Get(
                 GetContainerRequest(id=container_id),
                 metadata=Metadata(namespace=self._namespace),
             )
             return Container(
-                stubs=self._stubs,
+                clients=self._clients,
                 namespace=self._namespace,
                 architecture=self._architecture,
                 os=self._os,
                 id=resp.container.id,
                 image=resp.container.image,
                 snapshot=Snapshot(
-                    stubs=self._stubs,
+                    clients=self._clients,
                     namespace=self._namespace,
                     snapshotter=resp.container.snapshotter,
                     snapshot_key=resp.container.snapshot_key,
