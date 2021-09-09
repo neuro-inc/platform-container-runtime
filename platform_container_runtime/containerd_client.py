@@ -226,6 +226,263 @@ class Snapshot:
         )
 
 
+class ImageManifest(Dict[str, Any]):
+    def __init__(self, stubs: Stubs, namespace: str, content: Dict[str, Any]) -> None:
+        super().__init__(content)
+        self._stubs = stubs
+        self._namespace = namespace
+
+    @property
+    def config(self) -> Dict[str, Any]:
+        return _get_value(self, "config", "Config")
+
+    @classmethod
+    @trace
+    async def read(
+        cls,
+        stubs: Stubs,
+        namespace: str,
+        architecture: str,
+        os: str,
+        descriptor: Descriptor,
+    ) -> "ImageManifest":
+        manifest = await cls._read_manifest(
+            stubs,
+            namespace=namespace,
+            architecture=architecture,
+            os=os,
+            digest=descriptor.digest,
+        )
+        config = _get_value(manifest, "config", "Config")
+        config_digest = _get_value(config, "digest", "Digest")
+        manifest["config"] = await cls._read_config(
+            stubs, namespace=namespace, digest=config_digest
+        )
+        return cls(stubs=stubs, namespace=namespace, content=manifest)
+
+    @classmethod
+    @trace
+    async def _read_manifest(
+        cls, stubs: Stubs, namespace: str, architecture: str, os: str, digest: str
+    ) -> Dict[str, Any]:
+        while True:
+            data: List[bytes] = []
+            async for resp in stubs.content.Read(
+                ReadContentRequest(
+                    digest=digest,
+                    offset=0,  # from the start
+                    size=0,  # entire content
+                ),
+                metadata=Metadata(namespace=namespace),
+            ):
+                data.append(resp.data)
+
+            logger.info("Read content %s", digest)
+            content = json.loads(b"".join(data))
+            media_type = _get_value(content, "mediaType", "MediaType")
+
+            if media_type in (
+                MediaType.DOCKER_MANIFEST_V2,
+                MediaType.OCI_IMAGE_MANIFEST_V1,
+            ):
+                return content
+
+            if media_type in (
+                MediaType.DOCKER_MANIFEST_LIST_V2,
+                MediaType.OCI_IMAGE_INDEX_V1,
+            ):
+                for m in content["manifests"]:
+                    platform = _get_value(m, "platform", "Platform")
+                    os = _get_value(platform, "os", "Os")
+                    arch = _get_value(platform, "architecture", "Architecture")
+                    if os.lower() == os and arch.lower() == architecture:
+                        digest = m["digest"]
+                        break
+                else:
+                    raise ContainerdError(f"Platform ({os},{arch}) is not supported")
+                continue
+
+            raise ContainerdError(f"Media type {media_type!r} is not supported")
+
+    @classmethod
+    @trace
+    async def _read_config(
+        cls, stubs: Stubs, namespace: str, digest: str
+    ) -> Dict[str, Any]:
+        data: List[bytes] = []
+        async for resp in stubs.content.Read(
+            ReadContentRequest(
+                digest=digest,
+                offset=0,  # from the start
+                size=0,  # entire content
+            ),
+            metadata=Metadata(namespace=namespace),
+        ):
+            data.append(resp.data)
+        return json.loads(b"".join(data))
+
+    @trace
+    async def write(
+        self,
+        config_labels: Optional[Dict[str, Any]] = None,
+        lease_id: Optional[str] = None,
+    ) -> Descriptor:
+        config_desc = Descriptor.from_data(
+            MediaType.DOCKER_IMAGE_CONFIG_V1, self.config
+        )
+        await self._write_config(
+            content=self.config,
+            desc=config_desc,
+            labels=config_labels,
+            lease_id=lease_id,
+        )
+        manifest = dict(self)
+        manifest["config"] = config_desc.to_primitive()
+        manifest_desc = Descriptor.from_data(MediaType.DOCKER_MANIFEST_V2, manifest)
+        await self._write_manifest(
+            content=manifest,
+            desc=manifest_desc,
+            lease_id=lease_id,
+        )
+        return manifest_desc
+
+    @trace
+    async def _write_manifest(
+        self,
+        content: Dict[str, Any],
+        desc: Descriptor,
+        lease_id: Optional[str] = None,
+    ) -> None:
+        labels = {"containerd.io/gc.ref.content.0": content["config"]["digest"]}
+        for i, layer in enumerate(content["layers"]):
+            digest = _get_value(layer, "digest", "Digest")
+            labels[f"containerd.io/gc.ref.content.{i + 1}"] = digest
+
+        async for resp in self._stubs.content.Write(
+            [
+                WriteContentRequest(
+                    action=COMMIT,
+                    ref=desc.digest,
+                    data=json.dumps(content).encode(),
+                    offset=0,
+                    total=desc.size,
+                    expected=desc.digest,
+                    labels=labels,
+                ),
+            ],
+            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
+        ):
+            assert resp.action == COMMIT
+            assert resp.offset == desc.size, "Not all data was written"
+            assert resp.digest == desc.digest, "Data is corrupted"
+        logger.info("Created image manifest content %r", desc.digest)
+
+    @trace
+    async def _write_config(
+        self,
+        content: Dict[str, Any],
+        desc: Descriptor,
+        labels: Optional[Dict[str, Any]] = None,
+        lease_id: Optional[str] = None,
+    ) -> None:
+        async for resp in self._stubs.content.Write(
+            [
+                WriteContentRequest(
+                    action=COMMIT,
+                    ref=desc.digest,
+                    data=json.dumps(content).encode(),
+                    offset=0,
+                    total=desc.size,
+                    expected=desc.digest,
+                    labels=labels,
+                ),
+            ],
+            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
+        ):
+            assert resp.action == COMMIT
+            assert resp.offset == desc.size, "Not all data was written"
+            assert resp.digest == desc.digest, "Data is corrupted"
+        logger.info("Created image config content %r", desc.digest)
+
+
+class Image:
+    def __init__(
+        self, stubs: Stubs, namespace: str, name: str, manifest: ImageManifest
+    ) -> None:
+        self._stubs = stubs
+        self._namespace = namespace
+        self._name = name
+        self._manifest = manifest
+
+    @property
+    def config(self) -> Dict[str, Any]:
+        return self._manifest.config
+
+    @property
+    def layers(self) -> List[Dict[str, Any]]:
+        return list(_get_value(self._manifest, "layers", "Layers"))
+
+    @classmethod
+    @trace
+    async def read(
+        cls, stubs: Stubs, namespace: str, name: str, architecture: str, os: str
+    ) -> "Image":
+        resp = await stubs.images.Get(
+            GetImageRequest(name=name),
+            metadata=Metadata(namespace=namespace),
+        )
+        manifest_descriptor = Descriptor(
+            media_type=resp.image.target.media_type,
+            digest=resp.image.target.digest,
+            size=resp.image.target.size,
+        )
+        manifest = await ImageManifest.read(
+            stubs,
+            namespace=namespace,
+            architecture=architecture,
+            os=os,
+            descriptor=manifest_descriptor,
+        )
+        return cls(stubs=stubs, namespace=namespace, name=name, manifest=manifest)
+
+    @trace
+    async def write(
+        self,
+        config_labels: Optional[Dict[str, Any]] = None,
+        lease_id: Optional[str] = None,
+    ) -> None:
+        manifest_desc = await self._manifest.write(
+            config_labels=config_labels, lease_id=lease_id
+        )
+        created_at = Timestamp()
+        created_at.GetCurrentTime()
+        image_pb2 = ImagePb2(
+            name=self._name,
+            target=DescriptorPb2(
+                media_type=manifest_desc.media_type,
+                digest=manifest_desc.digest,
+                size=manifest_desc.size,
+            ),
+            created_at=created_at,
+        )
+        try:
+            await self._stubs.images.Update(
+                UpdateImageRequest(image=image_pb2),
+                metadata=Metadata(namespace=self._namespace),
+            )
+            logger.info("Updated image %r", self._name)
+        except grpc.aio.AioRpcError as ex:
+            status = ex.code()
+            if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
+                await self._stubs.images.Create(
+                    CreateImageRequest(image=image_pb2),
+                    metadata=Metadata(namespace=self._namespace),
+                )
+                logger.info("Created image %r", self._name)
+                return
+            raise
+
+
 class Container:
     def __init__(
         self,
@@ -295,237 +552,69 @@ class Container:
             async with Lease(
                 self._stubs, self._namespace, timedelta(hours=1)
             ) as lease_id:
+                parent_image = await Image.read(
+                    self._stubs,
+                    namespace=self._namespace,
+                    name=self._image,
+                    architecture=self._architecture,
+                    os=self._os,
+                )
                 image_diff = await self._snapshot.get_diff(lease_id=lease_id)
                 logger.info("Created new image layer %r", image_diff.descriptor)
-                image_manifest_desc = await self._write_image_content(
-                    image_diff_id=image_diff.id,
-                    image_diff_desc=image_diff.descriptor,
+                new_image_manifest = ImageManifest(
+                    self._stubs,
+                    namespace=self._namespace,
+                    content=self._create_commit_image_manifest(
+                        parent_image, image_diff
+                    ),
+                )
+                new_image_diff_ids_digest = _create_digest_chain(
+                    *new_image_manifest.config["rootfs"]["diff_ids"]
+                )
+                new_image = Image(
+                    self._stubs,
+                    namespace=self._namespace,
+                    name=image,
+                    manifest=new_image_manifest,
+                )
+                await new_image.write(
+                    config_labels={
+                        f"containerd.io/gc.ref.snapshot.{self._snapshot.snapshotter}": (
+                            new_image_diff_ids_digest
+                        )
+                    },
                     lease_id=lease_id,
                 )
-                await self._create_image(image, image_manifest_desc)
         finally:
             if paused:
                 await self.resume()
 
-    @trace
-    async def _write_image_content(
-        self, image_diff_id: str, image_diff_desc: Descriptor, lease_id: str
-    ) -> Descriptor:
-        parent_image_manifest = await self._read_image_manifest(self._image)
-        parent_image_config = await self._read_image_config(parent_image_manifest)
-        image_config = self._create_image_config(parent_image_config, image_diff_id)
-        image_config_desc = Descriptor.from_data(
-            MediaType.DOCKER_IMAGE_CONFIG_V1, image_config
-        )
-        await self._write_image_config_content(
-            snapshotter=self._snapshot.snapshotter,
-            image_config=image_config,
-            image_config_desc=image_config_desc,
-            lease_id=lease_id,
-        )
-        image_manifest = self._create_image_manifest(
-            parent_image_manifest,
-            image_config_desc=image_config_desc,
-            image_diff_desc=image_diff_desc,
-        )
-        image_manifest_desc = Descriptor.from_data(
-            MediaType.DOCKER_MANIFEST_V2, image_manifest
-        )
-        await self._write_image_manifest_content(
-            image_manifest=image_manifest,
-            image_manifest_desc=image_manifest_desc,
-            image_config_desc=image_config_desc,
-            lease_id=lease_id,
-        )
-        return image_manifest_desc
-
-    @trace
-    async def _read_image_config(self, manifest: Dict[str, Any]) -> Dict[str, Any]:
-        config = _get_value(manifest, "config", "Config")
-        digest = _get_value(config, "digest", "Digest")
-        data: List[bytes] = []
-        async for resp in self._stubs.content.Read(
-            ReadContentRequest(
-                digest=digest,
-                offset=0,  # from the start
-                size=0,  # entire content
-            ),
-            metadata=Metadata(namespace=self._namespace),
-        ):
-            data.append(resp.data)
-        return json.loads(b"".join(data))
-
-    def _create_image_config(
-        self,
-        parent_image_config: Dict[str, Any],
-        image_diff_id: str,
+    def _create_commit_image_manifest(
+        self, parent_image: Image, image_diff: SnapshotDiff
     ) -> Dict[str, Any]:
-        config = _get_value(parent_image_config, "config", "Config")
-        root_fs = _get_value(parent_image_config, "rootfs", "RootFS")
+        return {
+            "schemaVersion": 2,
+            "mediaType": MediaType.DOCKER_MANIFEST_V2,
+            "config": self._create_commit_image_config(parent_image, image_diff),
+            "layers": parent_image.layers + [image_diff.descriptor.to_primitive()],
+        }
+
+    def _create_commit_image_config(
+        self, parent_image: Image, image_diff: SnapshotDiff
+    ) -> Dict[str, Any]:
+        root_fs = _get_value(parent_image.config, "rootfs", "RootFS")
         layers = _get_value(root_fs, "diff_ids", "Diff_ids")
         return {
             "architecture": self._architecture,
             "os": self._os,
-            "config": config,
+            "config": parent_image.config,
             "rootfs": {
                 "type": "layers",
-                "diff_ids": layers + [image_diff_id],
+                "diff_ids": layers + [image_diff.id],
             },
             "author": "",
             "created": datetime.now(timezone.utc).isoformat(),
         }
-
-    @trace
-    async def _write_image_config_content(
-        self,
-        snapshotter: str,
-        image_config: Dict[str, Any],
-        image_config_desc: Descriptor,
-        lease_id: str,
-    ) -> None:
-        diff_ids_digest = _create_digest_chain(*image_config["rootfs"]["diff_ids"])
-        async for resp in self._stubs.content.Write(
-            [
-                WriteContentRequest(
-                    action=COMMIT,
-                    ref=image_config_desc.digest,
-                    data=json.dumps(image_config).encode(),
-                    offset=0,
-                    total=image_config_desc.size,
-                    expected=image_config_desc.digest,
-                    labels={
-                        f"containerd.io/gc.ref.snapshot.{snapshotter}": diff_ids_digest
-                    },
-                ),
-            ],
-            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
-        ):
-            assert resp.action == COMMIT
-            assert resp.offset == image_config_desc.size, "Not all data was written"
-            assert resp.digest == image_config_desc.digest, "Data is corrupted"
-        logger.info("Created image config content %r", image_config_desc.digest)
-
-    async def _read_image_manifest(self, image: str) -> Dict[str, Any]:
-        resp = await self._stubs.images.Get(
-            GetImageRequest(name=image),
-            metadata=Metadata(namespace=self._namespace),
-        )
-        digest = resp.image.target.digest
-
-        while True:
-            data: List[bytes] = []
-            async for resp in self._stubs.content.Read(
-                ReadContentRequest(
-                    digest=digest,
-                    offset=0,  # from the start
-                    size=0,  # entire content
-                ),
-                metadata=Metadata(namespace=self._namespace),
-            ):
-                data.append(resp.data)
-
-            logger.info("Read content %s", digest)
-            content = json.loads(b"".join(data))
-            media_type = _get_value(content, "mediaType", "MediaType")
-
-            if media_type in (
-                MediaType.DOCKER_MANIFEST_V2,
-                MediaType.OCI_IMAGE_MANIFEST_V1,
-            ):
-                return content
-
-            if media_type in (
-                MediaType.DOCKER_MANIFEST_LIST_V2,
-                MediaType.OCI_IMAGE_INDEX_V1,
-            ):
-                for m in content["manifests"]:
-                    platform = _get_value(m, "platform", "Platform")
-                    os = _get_value(platform, "os", "Os")
-                    arch = _get_value(platform, "architecture", "Architecture")
-                    if os.lower() == self._os and arch.lower() == self._architecture:
-                        digest = m["digest"]
-                        break
-                else:
-                    raise ContainerdError(f"Platform ({os},{arch}) is not supported")
-                continue
-
-            raise ContainerdError(f"Media type {media_type!r} is not supported")
-
-    def _create_image_manifest(
-        self,
-        parent_image_manifest: Dict[str, Any],
-        image_config_desc: Descriptor,
-        image_diff_desc: Descriptor,
-    ) -> Dict[str, Any]:
-        layers = _get_value(parent_image_manifest, "layers", "Layers")
-        return {
-            "schemaVersion": 2,
-            "mediaType": MediaType.DOCKER_MANIFEST_V2,
-            "config": image_config_desc.to_primitive(),
-            "layers": layers + [image_diff_desc.to_primitive()],
-        }
-
-    @trace
-    async def _write_image_manifest_content(
-        self,
-        image_manifest: Dict[str, Any],
-        image_manifest_desc: Descriptor,
-        image_config_desc: Descriptor,
-        lease_id: str,
-    ) -> None:
-        labels = {"containerd.io/gc.ref.content.0": image_config_desc.digest}
-        for i, layer in enumerate(image_manifest["layers"]):
-            digest = _get_value(layer, "digest", "Digest")
-            labels[f"containerd.io/gc.ref.content.{i + 1}"] = digest
-
-        async for resp in self._stubs.content.Write(
-            [
-                WriteContentRequest(
-                    action=COMMIT,
-                    ref=image_manifest_desc.digest,
-                    data=json.dumps(image_manifest).encode(),
-                    offset=0,
-                    total=image_manifest_desc.size,
-                    expected=image_manifest_desc.digest,
-                    labels=labels,
-                ),
-            ],
-            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
-        ):
-            assert resp.action == COMMIT
-            assert resp.offset == image_manifest_desc.size, "Not all data was written"
-            assert resp.digest == image_manifest_desc.digest, "Data is corrupted"
-        logger.info("Created image manifest content %r", image_manifest_desc.digest)
-
-    @trace
-    async def _create_image(self, image: str, image_manifest_desc: Descriptor) -> None:
-        created_at = Timestamp()
-        created_at.GetCurrentTime()
-        image_pb2 = ImagePb2(
-            name=image,
-            target=DescriptorPb2(
-                media_type=image_manifest_desc.media_type,
-                digest=image_manifest_desc.digest,
-                size=image_manifest_desc.size,
-            ),
-            created_at=created_at,
-        )
-        try:
-            await self._stubs.images.Update(
-                UpdateImageRequest(image=image_pb2),
-                metadata=Metadata(namespace=self._namespace),
-            )
-            logger.info("Updated image %r", image)
-        except grpc.aio.AioRpcError as ex:
-            status = ex.code()
-            if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
-                await self._stubs.images.Create(
-                    CreateImageRequest(image=image_pb2),
-                    metadata=Metadata(namespace=self._namespace),
-                )
-                logger.info("Created image %r", image)
-                return
-            raise
 
 
 class ContainerdClient:
