@@ -85,15 +85,13 @@ class RuntimeClient:
 
         if self._containerd_client:
             try:
-                await self._containerd_client.get_container(container_id)
+                container = await self._containerd_client.get_container(container_id)
             except ContainerdContainerNotFoundError:
                 raise ContainerNotFoundError(container_id)
             yield self._create_commit_started_chunk(
                 container_id=container_id, image=image
             )
-            await self._containerd_client.commit(
-                container_id=container_id, image=str(image_ref)
-            )
+            await container.commit(image=str(image_ref))
             yield self._create_commit_finished_chunk()
             return
 

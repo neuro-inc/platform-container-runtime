@@ -2,13 +2,13 @@ import enum
 import hashlib
 import json
 import logging
-from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, AsyncIterator, Dict, List, Mapping, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 
 import grpc.aio
 from google.protobuf.timestamp_pb2 import Timestamp
+from neuro_logging import trace
 
 from containerd.services.containers.v1.containers_pb2 import GetContainerRequest
 from containerd.services.containers.v1.containers_pb2_grpc import ContainersStub
@@ -72,14 +72,6 @@ class MediaType(str, enum.Enum):
 
 
 @dataclass(frozen=True)
-class Container:
-    id: str
-    image: str
-    snapshotter: str
-    snapshot_key: str
-
-
-@dataclass(frozen=True)
 class Descriptor:
     media_type: str
     digest: str
@@ -100,190 +92,233 @@ class Descriptor:
         return self.__str__()
 
 
-class ContainerdClient:
-    def __init__(
-        self,
-        channel: grpc.aio.Channel,
-        architecture: str,
-        os: str,
-        namespace: str = "k8s.io",
-    ) -> None:
-        self._namespace = namespace
-        self._architecture = architecture.lower()
-        self._os = os.lower()
-        self._leases_stub = LeasesStub(channel)
-        self._containers_stub = ContainersStub(channel)
-        self._tasks_stub = TasksStub(channel)
-        self._snapshots_stub = SnapshotsStub(channel)
-        self._diff_stub = DiffStub(channel)
-        self._images_stub = ImagesStub(channel)
-        self._content_stub = ContentStub(channel)
+@dataclass(frozen=True)
+class Stubs:
+    leases: LeasesStub
+    containers: ContainersStub
+    tasks: TasksStub
+    snapshots: SnapshotsStub
+    diff: DiffStub
+    images: ImagesStub
+    content: ContentStub
 
-    async def get_container(self, container_id: str) -> Container:
-        try:
-            resp = await self._containers_stub.Get(
-                GetContainerRequest(id=container_id),
-                metadata=(("containerd-namespace", self._namespace),),
-            )
-            return Container(
-                id=resp.container.id,
-                image=resp.container.image,
-                snapshotter=resp.container.snapshotter,
-                snapshot_key=resp.container.snapshot_key,
-            )
-        except grpc.aio.AioRpcError as ex:
-            status = ex.code()
-            if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
-                raise ContainerNotFoundError(container_id)
-            raise
-
-    async def commit(self, container_id: str, image: str) -> None:
-        resp = await self._containers_stub.Get(
-            GetContainerRequest(id=container_id),
-            metadata=(("containerd-namespace", self._namespace),),
+    @classmethod
+    def create(cls, channel: grpc.aio.Channel) -> "Stubs":
+        return cls(
+            leases=LeasesStub(channel),
+            containers=ContainersStub(channel),
+            tasks=TasksStub(channel),
+            snapshots=SnapshotsStub(channel),
+            diff=DiffStub(channel),
+            images=ImagesStub(channel),
+            content=ContentStub(channel),
         )
-        async with self._pause_container(container_id):
-            async with self._lease(timedelta(hours=1)) as lease_id:
-                await self._commit(
-                    snapshotter=resp.container.snapshotter,
-                    snapshot_key=resp.container.snapshot_key,
-                    parent_image=resp.container.image,
-                    image=image,
-                    lease_id=lease_id,
-                )
 
-    @asynccontextmanager
-    async def _lease(self, duration: timedelta) -> AsyncIterator[str]:
-        # leases are used to tell Containerd garbage collector
-        # to not delete resources while lease exists or is not expired
-        expire = datetime.now(timezone.utc) + duration
+
+class Metadata(grpc.aio.Metadata):
+    def __init__(
+        self, *, namespace: Optional[str] = None, lease_id: Optional[str] = None
+    ) -> None:
+        super().__init__()
+        if namespace:
+            self.add("containerd-namespace", namespace)
+        if lease_id:
+            self.add("containerd-lease", lease_id)
+
+
+# leases are used to tell Containerd garbage collector
+# to not delete resources while lease exists or is not expired
+class Lease:
+    def __init__(self, stubs: Stubs, namespace: str, duration: timedelta) -> None:
+        self._leases_stub = stubs.leases
+        self._namespace = namespace
+        self._duration = duration
+        self._lease_id = ""
+
+    async def __aenter__(self) -> str:
+        expire = datetime.now(timezone.utc) + self._duration
         resp = await self._leases_stub.Create(
             CreateRequest(labels={"containerd.io/gc.expire": expire.isoformat()}),
-            metadata=(("containerd-namespace", self._namespace),),
+            metadata=Metadata(namespace=self._namespace),
         )
-        lease_id = resp.lease.id
-        logger.info("Created lease %r", lease_id)
-        yield lease_id
+        self._lease_id = resp.lease.id
+        logger.info("Created lease %r", self._lease_id)
+        return self._lease_id
+
+    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
         await self._leases_stub.Delete(
-            DeleteRequest(id=lease_id),
-            metadata=(("containerd-namespace", self._namespace),),
+            DeleteRequest(id=self._lease_id),
+            metadata=Metadata(namespace=self._namespace),
         )
-        logger.info("Removed lease %r", lease_id)
+        logger.info("Removed lease %r", self._lease_id)
 
-    @asynccontextmanager
-    async def _pause_container(self, container_id: str) -> AsyncIterator[None]:
-        resp = await self._tasks_stub.Get(
-            GetRequest(container_id=container_id),
-            metadata=(("containerd-namespace", self._namespace),),
-        )
-        if resp.process.status in (CREATED, PAUSED, STOPPED):
-            logger.info("Container %r is not running", container_id)
-            return
-        await self._tasks_stub.Pause(
-            PauseTaskRequest(container_id=container_id),
-            metadata=(("containerd-namespace", self._namespace),),
-        )
-        logger.info("Container %r paused", container_id)
-        yield
-        await self._tasks_stub.Resume(
-            ResumeTaskRequest(container_id=container_id),
-            metadata=(("containerd-namespace", self._namespace),),
-        )
-        logger.info("Container %r resumed", container_id)
 
-    async def _commit(
+@dataclass(frozen=True)
+class SnapshotDiff:
+    id: str
+    descriptor: Descriptor
+
+
+class Snapshot:
+    def __init__(
         self,
+        stubs: Stubs,
+        namespace: str,
         snapshotter: str,
         snapshot_key: str,
-        parent_image: str,
-        image: str,
-        lease_id: str,
     ) -> None:
-        image_diff_desc = await self._get_image_diff_desc(
-            snapshotter=snapshotter, snapshot_key=snapshot_key, lease_id=lease_id
-        )
-        logger.info("Created new image layer %r", image_diff_desc)
-        image_diff_id = await self._get_image_diff_id(image_diff_desc)
-        image_manifest_desc = await self._write_image_content(
-            snapshotter=snapshotter,
-            parent_image=parent_image,
-            image_diff_desc=image_diff_desc,
-            image_diff_id=image_diff_id,
-            lease_id=lease_id,
-        )
-        await self._create_image(image, image_manifest_desc)
+        self._stubs = stubs
+        self._namespace = namespace
+        self._snapshotter = snapshotter
+        self._snapshot_key = snapshot_key
 
-    async def _get_image_diff_desc(
-        self, snapshotter: str, snapshot_key: str, lease_id: str
-    ) -> Descriptor:
-        resp = await self._snapshots_stub.Stat(
-            StatSnapshotRequest(
-                snapshotter=snapshotter,
-                key=snapshot_key,
-            ),
-            metadata=(
-                ("containerd-namespace", self._namespace),
-                ("containerd-lease", lease_id),
-            ),
+    @property
+    def snapshotter(self) -> str:
+        return self._snapshotter
+
+    @property
+    def snapshot_key(self) -> str:
+        return self._snapshot_key
+
+    @trace
+    async def get_diff(self, lease_id: Optional[str] = None) -> SnapshotDiff:
+        resp = await self._stubs.snapshots.Stat(
+            StatSnapshotRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
+            metadata=Metadata(namespace=self._namespace),
         )
-        lower_key = f"{snapshot_key}-parent-view"
-        resp = await self._snapshots_stub.View(
+        lower_key = f"{self._snapshot_key}-parent-view"
+        resp = await self._stubs.snapshots.View(
             ViewSnapshotRequest(
-                snapshotter=snapshotter,
+                snapshotter=self._snapshotter,
                 key=lower_key,
                 parent=resp.info.parent,
             ),
-            metadata=(("containerd-namespace", self._namespace),),
+            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
         )
         logger.info("Created parent snapshot vew %r", lower_key)
         lower_mounts = resp.mounts
-        resp = await self._snapshots_stub.Mounts(
-            MountsRequest(snapshotter=snapshotter, key=snapshot_key),
-            metadata=(("containerd-namespace", self._namespace),),
+        resp = await self._stubs.snapshots.Mounts(
+            MountsRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
+            metadata=Metadata(namespace=self._namespace),
         )
         upper_mounts = resp.mounts
-        await self._snapshots_stub.Remove(
-            RemoveSnapshotRequest(snapshotter=snapshotter, key=lower_key),
-            metadata=(("containerd-namespace", self._namespace),),
+        await self._stubs.snapshots.Remove(
+            RemoveSnapshotRequest(snapshotter=self._snapshotter, key=lower_key),
+            metadata=Metadata(namespace=self._namespace),
         )
         logger.info("Removed parent snapshot vew %r", lower_key)
-        resp = await self._diff_stub.Diff(
+        resp = await self._stubs.diff.Diff(
             DiffRequest(left=lower_mounts, right=upper_mounts),
-            metadata=(
-                ("containerd-namespace", self._namespace),
-                ("containerd-lease", lease_id),
-            ),
+            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
         )
-        return Descriptor(
+        desc = Descriptor(
             # replace media type with docker compatible
             media_type=MediaType.DOCKER_IMAGE_LAYER_GZIP.value,
             digest=resp.diff.digest,
             size=resp.diff.size,
         )
-
-    async def _get_image_diff_id(self, desc: Descriptor) -> str:
-        resp = await self._content_stub.Info(
+        resp = await self._stubs.content.Info(
             InfoRequest(digest=desc.digest),
-            metadata=(("containerd-namespace", self._namespace),),
+            metadata=Metadata(namespace=self._namespace),
         )
-        return resp.info.labels["containerd.io/uncompressed"]
+        return SnapshotDiff(
+            id=resp.info.labels["containerd.io/uncompressed"], descriptor=desc
+        )
 
-    async def _write_image_content(
+
+class Container:
+    def __init__(
         self,
-        snapshotter: str,
-        parent_image: str,
-        image_diff_desc: Descriptor,
-        image_diff_id: str,
-        lease_id: str,
+        stubs: Stubs,
+        namespace: str,
+        architecture: str,
+        os: str,
+        id: str,
+        image: str,
+        snapshot: Snapshot,
+    ) -> None:
+        self._stubs = stubs
+        self._namespace = namespace
+        self._architecture = architecture
+        self._os = os
+        self._id = id
+        self._image = image
+        self._snapshot = snapshot
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def image(self) -> str:
+        return self._image
+
+    @property
+    def snapshotter(self) -> str:
+        return self._snapshot.snapshotter
+
+    @property
+    def snapshot_key(self) -> str:
+        return self._snapshot.snapshot_key
+
+    @trace
+    async def pause(self) -> bool:
+        resp = await self._stubs.tasks.Get(
+            GetRequest(container_id=self._id),
+            metadata=Metadata(namespace=self._namespace),
+        )
+        if resp.process.status in (CREATED, PAUSED, STOPPED):
+            logger.info("Container %r is not running", self._id)
+            return False
+        await self._stubs.tasks.Pause(
+            PauseTaskRequest(container_id=self._id),
+            metadata=Metadata(namespace=self._namespace),
+        )
+        logger.info("Container %r paused", self._id)
+        return True
+
+    @trace
+    async def resume(self) -> None:
+        await self._stubs.tasks.Resume(
+            ResumeTaskRequest(container_id=self._id),
+            metadata=Metadata(namespace=self._namespace),
+        )
+        logger.info("Container %r resumed", self._id)
+
+    @trace
+    async def commit(self, image: str) -> None:
+        paused = False
+
+        try:
+            paused = await self.pause()
+
+            async with Lease(
+                self._stubs, self._namespace, timedelta(hours=1)
+            ) as lease_id:
+                image_diff = await self._snapshot.get_diff(lease_id=lease_id)
+                logger.info("Created new image layer %r", image_diff.descriptor)
+                image_manifest_desc = await self._write_image_content(
+                    image_diff_id=image_diff.id,
+                    image_diff_desc=image_diff.descriptor,
+                    lease_id=lease_id,
+                )
+                await self._create_image(image, image_manifest_desc)
+        finally:
+            if paused:
+                await self.resume()
+
+    @trace
+    async def _write_image_content(
+        self, image_diff_id: str, image_diff_desc: Descriptor, lease_id: str
     ) -> Descriptor:
-        parent_image_manifest = await self._read_image_manifest(parent_image)
+        parent_image_manifest = await self._read_image_manifest(self._image)
         parent_image_config = await self._read_image_config(parent_image_manifest)
         image_config = self._create_image_config(parent_image_config, image_diff_id)
         image_config_desc = Descriptor.from_data(
             MediaType.DOCKER_IMAGE_CONFIG_V1, image_config
         )
         await self._write_image_config_content(
-            snapshotter=snapshotter,
+            snapshotter=self._snapshot.snapshotter,
             image_config=image_config,
             image_config_desc=image_config_desc,
             lease_id=lease_id,
@@ -304,71 +339,21 @@ class ContainerdClient:
         )
         return image_manifest_desc
 
-    async def _write_image_config_content(
-        self,
-        snapshotter: str,
-        image_config: Dict[str, Any],
-        image_config_desc: Descriptor,
-        lease_id: str,
-    ) -> None:
-        diff_ids_digest = _create_digest_chain(*image_config["rootfs"]["diff_ids"])
-        async for resp in self._content_stub.Write(
-            [
-                WriteContentRequest(
-                    action=COMMIT,
-                    ref=image_config_desc.digest,
-                    data=json.dumps(image_config).encode(),
-                    offset=0,
-                    total=image_config_desc.size,
-                    expected=image_config_desc.digest,
-                    labels={
-                        f"containerd.io/gc.ref.snapshot.{snapshotter}": diff_ids_digest
-                    },
-                ),
-            ],
-            metadata=(
-                ("containerd-namespace", self._namespace),
-                ("containerd-lease", lease_id),
+    @trace
+    async def _read_image_config(self, manifest: Dict[str, Any]) -> Dict[str, Any]:
+        config = _get_value(manifest, "config", "Config")
+        digest = _get_value(config, "digest", "Digest")
+        data: List[bytes] = []
+        async for resp in self._stubs.content.Read(
+            ReadContentRequest(
+                digest=digest,
+                offset=0,  # from the start
+                size=0,  # entire content
             ),
+            metadata=Metadata(namespace=self._namespace),
         ):
-            assert resp.action == COMMIT
-            assert resp.offset == image_config_desc.size, "Not all data was written"
-            assert resp.digest == image_config_desc.digest, "Data is corrupted"
-        logger.info("Created image config content %r", image_config_desc.digest)
-
-    async def _write_image_manifest_content(
-        self,
-        image_manifest: Dict[str, Any],
-        image_manifest_desc: Descriptor,
-        image_config_desc: Descriptor,
-        lease_id: str,
-    ) -> None:
-        labels = {"containerd.io/gc.ref.content.0": image_config_desc.digest}
-        for i, layer in enumerate(image_manifest["layers"]):
-            digest = _get_value(layer, "digest", "Digest")
-            labels[f"containerd.io/gc.ref.content.{i + 1}"] = digest
-
-        async for resp in self._content_stub.Write(
-            [
-                WriteContentRequest(
-                    action=COMMIT,
-                    ref=image_manifest_desc.digest,
-                    data=json.dumps(image_manifest).encode(),
-                    offset=0,
-                    total=image_manifest_desc.size,
-                    expected=image_manifest_desc.digest,
-                    labels=labels,
-                ),
-            ],
-            metadata=(
-                ("containerd-namespace", self._namespace),
-                ("containerd-lease", lease_id),
-            ),
-        ):
-            assert resp.action == COMMIT
-            assert resp.offset == image_manifest_desc.size, "Not all data was written"
-            assert resp.digest == image_manifest_desc.digest, "Data is corrupted"
-        logger.info("Created image manifest %r", image_manifest_desc.digest)
+            data.append(resp.data)
+        return json.loads(b"".join(data))
 
     def _create_image_config(
         self,
@@ -390,36 +375,52 @@ class ContainerdClient:
             "created": datetime.now(timezone.utc).isoformat(),
         }
 
-    def _create_image_manifest(
+    @trace
+    async def _write_image_config_content(
         self,
-        parent_image_manifest: Dict[str, Any],
+        snapshotter: str,
+        image_config: Dict[str, Any],
         image_config_desc: Descriptor,
-        image_diff_desc: Descriptor,
-    ) -> Dict[str, Any]:
-        layers = _get_value(parent_image_manifest, "layers", "Layers")
-        return {
-            "schemaVersion": 2,
-            "mediaType": MediaType.DOCKER_MANIFEST_V2,
-            "config": image_config_desc.to_primitive(),
-            "layers": layers + [image_diff_desc.to_primitive()],
-        }
+        lease_id: str,
+    ) -> None:
+        diff_ids_digest = _create_digest_chain(*image_config["rootfs"]["diff_ids"])
+        async for resp in self._stubs.content.Write(
+            [
+                WriteContentRequest(
+                    action=COMMIT,
+                    ref=image_config_desc.digest,
+                    data=json.dumps(image_config).encode(),
+                    offset=0,
+                    total=image_config_desc.size,
+                    expected=image_config_desc.digest,
+                    labels={
+                        f"containerd.io/gc.ref.snapshot.{snapshotter}": diff_ids_digest
+                    },
+                ),
+            ],
+            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
+        ):
+            assert resp.action == COMMIT
+            assert resp.offset == image_config_desc.size, "Not all data was written"
+            assert resp.digest == image_config_desc.digest, "Data is corrupted"
+        logger.info("Created image config content %r", image_config_desc.digest)
 
     async def _read_image_manifest(self, image: str) -> Dict[str, Any]:
-        resp = await self._images_stub.Get(
+        resp = await self._stubs.images.Get(
             GetImageRequest(name=image),
-            metadata=(("containerd-namespace", self._namespace),),
+            metadata=Metadata(namespace=self._namespace),
         )
         digest = resp.image.target.digest
 
         while True:
             data: List[bytes] = []
-            async for resp in self._content_stub.Read(
+            async for resp in self._stubs.content.Read(
                 ReadContentRequest(
                     digest=digest,
                     offset=0,  # from the start
                     size=0,  # entire content
                 ),
-                metadata=(("containerd-namespace", self._namespace),),
+                metadata=Metadata(namespace=self._namespace),
             ):
                 data.append(resp.data)
 
@@ -450,21 +451,53 @@ class ContainerdClient:
 
             raise ContainerdError(f"Media type {media_type!r} is not supported")
 
-    async def _read_image_config(self, manifest: Dict[str, Any]) -> Dict[str, Any]:
-        config = _get_value(manifest, "config", "Config")
-        digest = _get_value(config, "digest", "Digest")
-        data: List[bytes] = []
-        async for resp in self._content_stub.Read(
-            ReadContentRequest(
-                digest=digest,
-                offset=0,  # from the start
-                size=0,  # entire content
-            ),
-            metadata=(("containerd-namespace", self._namespace),),
-        ):
-            data.append(resp.data)
-        return json.loads(b"".join(data))
+    def _create_image_manifest(
+        self,
+        parent_image_manifest: Dict[str, Any],
+        image_config_desc: Descriptor,
+        image_diff_desc: Descriptor,
+    ) -> Dict[str, Any]:
+        layers = _get_value(parent_image_manifest, "layers", "Layers")
+        return {
+            "schemaVersion": 2,
+            "mediaType": MediaType.DOCKER_MANIFEST_V2,
+            "config": image_config_desc.to_primitive(),
+            "layers": layers + [image_diff_desc.to_primitive()],
+        }
 
+    @trace
+    async def _write_image_manifest_content(
+        self,
+        image_manifest: Dict[str, Any],
+        image_manifest_desc: Descriptor,
+        image_config_desc: Descriptor,
+        lease_id: str,
+    ) -> None:
+        labels = {"containerd.io/gc.ref.content.0": image_config_desc.digest}
+        for i, layer in enumerate(image_manifest["layers"]):
+            digest = _get_value(layer, "digest", "Digest")
+            labels[f"containerd.io/gc.ref.content.{i + 1}"] = digest
+
+        async for resp in self._stubs.content.Write(
+            [
+                WriteContentRequest(
+                    action=COMMIT,
+                    ref=image_manifest_desc.digest,
+                    data=json.dumps(image_manifest).encode(),
+                    offset=0,
+                    total=image_manifest_desc.size,
+                    expected=image_manifest_desc.digest,
+                    labels=labels,
+                ),
+            ],
+            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
+        ):
+            assert resp.action == COMMIT
+            assert resp.offset == image_manifest_desc.size, "Not all data was written"
+            assert resp.digest == image_manifest_desc.digest, "Data is corrupted"
+        logger.info("Created image manifest content %r", image_manifest_desc.digest)
+
+    @trace
     async def _create_image(self, image: str, image_manifest_desc: Descriptor) -> None:
         created_at = Timestamp()
         created_at.GetCurrentTime()
@@ -478,20 +511,61 @@ class ContainerdClient:
             created_at=created_at,
         )
         try:
-            await self._images_stub.Update(
+            await self._stubs.images.Update(
                 UpdateImageRequest(image=image_pb2),
-                metadata=(("containerd-namespace", self._namespace),),
+                metadata=Metadata(namespace=self._namespace),
             )
             logger.info("Updated image %r", image)
         except grpc.aio.AioRpcError as ex:
             status = ex.code()
             if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
-                await self._images_stub.Create(
+                await self._stubs.images.Create(
                     CreateImageRequest(image=image_pb2),
-                    metadata=(("containerd-namespace", self._namespace),),
+                    metadata=Metadata(namespace=self._namespace),
                 )
                 logger.info("Created image %r", image)
                 return
+            raise
+
+
+class ContainerdClient:
+    def __init__(
+        self,
+        channel: grpc.aio.Channel,
+        architecture: str,
+        os: str,
+        namespace: str = "k8s.io",
+    ) -> None:
+        self._namespace = namespace
+        self._architecture = architecture.lower()
+        self._os = os.lower()
+        self._stubs = Stubs.create(channel)
+
+    @trace
+    async def get_container(self, container_id: str) -> Container:
+        try:
+            resp = await self._stubs.containers.Get(
+                GetContainerRequest(id=container_id),
+                metadata=Metadata(namespace=self._namespace),
+            )
+            return Container(
+                stubs=self._stubs,
+                namespace=self._namespace,
+                architecture=self._architecture,
+                os=self._os,
+                id=resp.container.id,
+                image=resp.container.image,
+                snapshot=Snapshot(
+                    stubs=self._stubs,
+                    namespace=self._namespace,
+                    snapshotter=resp.container.snapshotter,
+                    snapshot_key=resp.container.snapshot_key,
+                ),
+            )
+        except grpc.aio.AioRpcError as ex:
+            status = ex.code()
+            if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
+                raise ContainerNotFoundError(container_id)
             raise
 
 
