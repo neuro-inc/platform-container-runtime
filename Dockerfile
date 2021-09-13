@@ -1,7 +1,5 @@
 FROM python:3.8-slim-buster AS installer
 
-ARG PIP_EXTRA_INDEX_URL
-
 # Separate step for requirements to speed up docker builds
 COPY platform_container_runtime.egg-info/requires.txt requires.txt
 RUN python -c 'from pkg_resources import Distribution, PathMetadata;\

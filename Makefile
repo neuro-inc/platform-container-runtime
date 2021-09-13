@@ -27,8 +27,6 @@ GOPATH ?= $(HOME)/go
 WAIT_FOR_IT_URL = https://raw.githubusercontent.com/eficode/wait-for/master/wait-for
 WAIT_FOR_IT = curl -s $(WAIT_FOR_IT_URL) | bash -s --
 
-export PIP_EXTRA_INDEX_URL ?= $(shell python pip_extra_index_url.py)
-
 setup:
 	pip install -U pip
 	pip install -r requirements/dev.txt
@@ -69,7 +67,6 @@ test_integration: docker_build
 docker_build:
 	python setup.py sdist
 	docker build \
-		--build-arg PIP_EXTRA_INDEX_URL \
 		--build-arg DIST_FILENAME=`python setup.py --fullname`.tar.gz \
 		-t $(IMAGE_NAME):latest .
 
