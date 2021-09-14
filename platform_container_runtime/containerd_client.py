@@ -604,12 +604,13 @@ class Container:
     def _create_commit_image_config(
         self, parent_image: Image, image_diff: SnapshotDiff
     ) -> Dict[str, Any]:
+        config = _get_value(parent_image.config, "config", "Config")
         root_fs = _get_value(parent_image.config, "rootfs", "RootFS")
         layers = _get_value(root_fs, "diff_ids", "Diff_ids")
         return {
             "architecture": self._architecture,
             "os": self._os,
-            "config": parent_image.config,
+            "config": config,
             "rootfs": {
                 "type": "layers",
                 "diff_ids": layers + [image_diff.id],
