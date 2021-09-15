@@ -4,11 +4,13 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, AsyncIterator, Dict, List, Mapping, Optional, Union
 
 import grpc.aio
+from docker_image.reference import Reference
 from google.protobuf.timestamp_pb2 import Timestamp
 from neuro_logging import trace
+from yarl import URL
 
 from containerd.services.containers.v1.containers_pb2 import GetContainerRequest
 from containerd.services.containers.v1.containers_pb2_grpc import ContainersStub
@@ -46,6 +48,9 @@ from containerd.services.tasks.v1.tasks_pb2_grpc import TasksStub
 from containerd.types.descriptor_pb2 import Descriptor as DescriptorPb2
 from containerd.types.task.task_pb2 import CREATED, PAUSED, STOPPED
 
+from .registry_client import Auth, InvalidRangeError, RegistryClient
+from .utils import asyncgeneratorcontextmanager
+
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +62,11 @@ class ContainerdError(Exception):
 class ContainerNotFoundError(ContainerdError):
     def __init__(self, container_id: str) -> None:
         super().__init__(f"Container {container_id!r} not found")
+
+
+class ImageNotFoundError(ContainerdError):
+    def __init__(self, name: str) -> None:
+        super().__init__(f"Image {name!r} not found")
 
 
 class MediaType(str, enum.Enum):
@@ -82,6 +92,14 @@ class Descriptor:
         dump = json.dumps(data).encode()
         return cls(media_type=media_type, digest=_create_digest(dump), size=len(dump))
 
+    @classmethod
+    def parse(cls, content: Dict[str, Any]) -> "Descriptor":
+        return cls(
+            media_type=content["mediaType"],
+            digest=content["digest"],
+            size=content["size"],
+        )
+
     def to_primitive(self) -> Dict[str, Any]:
         return {"mediaType": self.media_type, "digest": self.digest, "size": self.size}
 
@@ -101,9 +119,12 @@ class Clients:
     diff: DiffStub
     images: ImagesStub
     content: ContentStub
+    registry: RegistryClient
 
     @classmethod
-    def create(cls, channel: grpc.aio.Channel) -> "Clients":
+    def create(
+        cls, channel: grpc.aio.Channel, registry_client: RegistryClient
+    ) -> "Clients":
         return cls(
             leases=LeasesStub(channel),
             containers=ContainersStub(channel),
@@ -112,6 +133,7 @@ class Clients:
             diff=DiffStub(channel),
             images=ImagesStub(channel),
             content=ContentStub(channel),
+            registry=registry_client,
         )
 
 
@@ -406,6 +428,39 @@ class ImageManifest(Dict[str, Any]):
             assert resp.digest == desc.digest, "Data is corrupted"
         logger.info("Created image config content %r", desc.digest)
 
+    @trace
+    async def push(
+        self, server: str, name: str, ref: str, auth: Optional[Auth]
+    ) -> Descriptor:
+        config_desc = Descriptor.from_data(
+            MediaType.DOCKER_IMAGE_CONFIG_V1, self.config
+        )
+        upload_url = await self._clients.registry.start_layer_upload(
+            server=server, name=name, auth=auth
+        )
+        await self._clients.registry.complete_layer_upload(
+            upload_url=upload_url,
+            media_type=MediaType.DOCKER_IMAGE_CONFIG_V1.value,
+            digest=config_desc.digest,
+            offset=0,
+            chunk=json.dumps(self.config).encode(),
+            auth=auth,
+        )
+        logger.info("Pushed image %s/%s:%s config", server, name, ref)
+        manifest = dict(self)
+        manifest["config"] = config_desc.to_primitive()
+        manifest_desc = Descriptor.from_data(MediaType.DOCKER_MANIFEST_V2, manifest)
+        await self._clients.registry.update_manifest(
+            server=server,
+            name=name,
+            ref=ref,
+            media_type=MediaType.DOCKER_MANIFEST_V2.value,
+            manifest=manifest,
+            auth=auth,
+        )
+        logger.info("Pushed image %s/%s:%s manifest", server, name, ref)
+        return manifest_desc
+
 
 class Image:
     def __init__(
@@ -416,6 +471,12 @@ class Image:
         self._name = name
         self._manifest = manifest
 
+        ref = Reference.parse_normalized_named(name)
+        server, repo = ref.split_hostname()
+        self._image_server = server
+        self._image_repo = repo
+        self._image_tag = ref["tag"]
+
     @property
     def config(self) -> Dict[str, Any]:
         return self._manifest.config
@@ -423,6 +484,12 @@ class Image:
     @property
     def layers(self) -> List[Dict[str, Any]]:
         return list(_get_value(self._manifest, "layers", "Layers"))
+
+    @property
+    def diff_ids(self) -> List[Dict[str, Any]]:
+        root_fs = _get_value(self.config, "rootfs", "RootFS")
+        diff_ids = _get_value(root_fs, "diff_ids", "Diff_ids")
+        return diff_ids
 
     @classmethod
     @trace
@@ -483,6 +550,224 @@ class Image:
                 logger.info("Created image %r", self._name)
                 return
             raise
+
+    @asyncgeneratorcontextmanager
+    async def push(self, auth: Optional[Auth] = None) -> AsyncIterator[Dict[str, Any]]:
+        yield self._create_image_progress_step(
+            status=(
+                "The push refers to repository "
+                f"[{self._image_server}/{self._image_repo}]"
+            )
+        )
+        registry_api_version = await self._clients.registry.get_version(
+            self._image_server, auth
+        )
+        assert registry_api_version == "v2", "Registry API V1 is not supported"
+        for layer_diff_id, layer_desc in zip(self.diff_ids, self.layers):
+            async with self._push_layer(
+                layer_diff_id, Descriptor.parse(layer_desc), auth=auth
+            ) as it:
+                async for progress in it:
+                    yield progress
+        manifest_desc = await self._manifest.push(
+            server=self._image_server,
+            name=self._image_repo,
+            ref=self._image_tag,
+            auth=auth,
+        )
+        yield self._create_image_progress_step(
+            status=(
+                f"{self._image_tag}: "
+                f"digest: {manifest_desc.digest} "
+                f"size: {manifest_desc.size}"
+            )
+        )
+        yield self._create_image_progress_step(
+            aux={
+                "Tag": self._image_tag,
+                "Digest": manifest_desc.digest,
+                "Size": manifest_desc.size,
+            }
+        )
+
+    @asyncgeneratorcontextmanager
+    async def _push_layer(
+        self,
+        diff_id: str,
+        desc: Descriptor,
+        chunk_size: int = 1024 * 1024,  # 1 MB
+        auth: Optional[Auth] = None,
+    ) -> AsyncIterator[Dict[str, Any]]:
+        layer_id = self._create_layer_id(diff_id)
+        yield self._create_image_progress_step(layer_id=layer_id, status="Preparing")
+
+        layers_exists = await self._clients.registry.check_layer(
+            server=self._image_server,
+            name=self._image_repo,
+            digest=desc.digest,
+            auth=auth,
+        )
+
+        if layers_exists:
+            yield self._create_image_progress_step(
+                layer_id=layer_id, status="Layer already exists"
+            )
+            return
+
+        upload_url = None
+
+        try:
+            upload_url = await self._clients.registry.start_layer_upload(
+                server=self._image_server, name=self._image_repo, auth=auth
+            )
+
+            logger.info("Pushing image %s layer %s", self._name, layer_id)
+
+            try:
+                async with self._push_layer_chunked(
+                    layer_id=layer_id,
+                    desc=desc,
+                    upload_url=upload_url,
+                    offset=0,
+                    chunk_size=chunk_size,
+                    auth=auth,
+                ) as it:
+                    async for progress in it:
+                        yield progress
+            except InvalidRangeError as ex:
+                logger.warning(
+                    "Chunk size %s is invalid, switching to server chunk size %s",
+                    chunk_size,
+                    ex.last_valid_range,
+                )
+
+                async with self._push_layer_chunked(
+                    layer_id=layer_id,
+                    desc=desc,
+                    upload_url=upload_url,
+                    offset=ex.last_valid_range + 1,
+                    chunk_size=ex.last_valid_range,
+                    auth=auth,
+                ) as it:
+                    async for progress in it:
+                        yield progress
+
+            logger.info("Pushed image %s layer %s", self._name, layer_id)
+
+            upload_url = None
+        except Exception:
+            logger.info("Failed to push image %s layer %s", self._name, layer_id)
+
+            if upload_url:
+                await self._clients.registry.cancel_layer_upload(upload_url, auth)
+
+    @asyncgeneratorcontextmanager
+    async def _push_layer_chunked(
+        self,
+        layer_id: str,
+        desc: Descriptor,
+        upload_url: URL,
+        offset: int,
+        chunk_size: int,
+        auth: Optional[Auth],
+    ) -> AsyncIterator[Dict[str, Any]]:
+        yield self._create_image_progress_step(
+            layer_id=layer_id,
+            status="Pushing",
+            current=offset,
+            total=desc.size,
+        )
+
+        async with self._read_layer_chunked(desc, chunk_size) as chunks:
+            async for chunk in chunks:
+                if offset + len(chunk) == desc.size:
+                    await self._clients.registry.complete_layer_upload(
+                        upload_url=upload_url,
+                        media_type="application/octet-stream",
+                        digest=desc.digest,
+                        offset=offset,
+                        chunk=chunk,
+                        auth=auth,
+                    )
+                    yield self._create_image_progress_step(
+                        layer_id=layer_id, status="Pushed"
+                    )
+                else:
+                    upload_url = await self._clients.registry.upload_layer_chunk(
+                        upload_url=upload_url,
+                        media_type="application/octet-stream",
+                        offset=offset,
+                        chunk=chunk,
+                        auth=auth,
+                    )
+                    offset += len(chunk)
+                    yield self._create_image_progress_step(
+                        layer_id=layer_id,
+                        status="Pushing",
+                        current=offset,
+                        total=desc.size,
+                    )
+
+    @asyncgeneratorcontextmanager
+    async def _read_layer_chunked(
+        self, desc: Descriptor, chunk_size: int, offset: int = 0
+    ) -> AsyncIterator[bytes]:
+        buffer: List[bytes] = []
+        buffer_len = 0
+
+        async for resp in self._clients.content.Read(
+            ReadContentRequest(
+                digest=desc.digest,
+                offset=offset,
+                size=0,  # entire content
+            ),
+            metadata=Metadata(namespace=self._namespace),
+        ):
+            if buffer_len + len(resp.data) > chunk_size:
+                prefix_len = chunk_size - buffer_len
+                buffer.append(resp.data[0:prefix_len])
+                chunk = b"".join(buffer)
+                buffer = [resp.data[prefix_len:]]
+                buffer_len = len(buffer[0])
+                yield chunk
+            elif buffer_len + len(resp.data) == chunk_size:
+                buffer.append(resp.data)
+                chunk = b"".join(buffer)
+                buffer = []
+                buffer_len = 0
+                yield chunk
+            else:
+                buffer.append(resp.data)
+                buffer_len += len(resp.data)
+        if buffer:
+            yield b"".join(buffer)
+
+    def _create_image_progress_step(
+        self,
+        status: str = "",
+        layer_id: str = "",
+        aux: Optional[Dict[str, Any]] = None,
+        current: Optional[float] = None,
+        total: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        result: Dict[str, Any] = {}
+        if status:
+            result["status"] = status
+        if aux:
+            result["aux"] = aux
+        if layer_id:
+            result["id"] = layer_id
+        if current is not None and total is not None:
+            result["progressDetail"] = {"current": current, "total": total}
+        return result
+
+    def _create_layer_id(self, diff_id: str) -> str:
+        i = diff_id.find(":")
+        if i == -1:
+            return diff_id[:12]
+        start = i + 1
+        end = start + 12
+        return diff_id[start:end]
 
 
 class Container:
@@ -624,6 +909,7 @@ class ContainerdClient:
     def __init__(
         self,
         channel: grpc.aio.Channel,
+        registry_client: RegistryClient,
         architecture: str,
         os: str,
         namespace: str = "k8s.io",
@@ -631,7 +917,7 @@ class ContainerdClient:
         self._namespace = namespace
         self._architecture = architecture.lower()
         self._os = os.lower()
-        self._clients = Clients.create(channel)
+        self._clients = Clients.create(channel, registry_client)
 
     @trace
     async def get_container(self, container_id: str) -> Container:
@@ -658,6 +944,22 @@ class ContainerdClient:
             status = ex.code()
             if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
                 raise ContainerNotFoundError(container_id)
+            raise
+
+    @trace
+    async def get_image(self, name: str) -> Image:
+        try:
+            return await Image.read(
+                self._clients,
+                namespace=self._namespace,
+                name=name,
+                architecture=self._architecture,
+                os=self._os,
+            )
+        except grpc.aio.AioRpcError as ex:
+            status = ex.code()
+            if status == grpc.StatusCode.UNKNOWN or status == grpc.StatusCode.NOT_FOUND:
+                raise ImageNotFoundError(name)
             raise
 
 

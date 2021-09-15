@@ -414,7 +414,7 @@ class TestApi:
         registry_address: str,
         kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime != "docker":
+        if kube_container_runtime == "cri-o":
             pytest.skip("Commit is not supported")
 
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
@@ -461,7 +461,7 @@ class TestApi:
         registry_address: str,
         kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime != "docker":
+        if kube_container_runtime == "cri-o":
             pytest.skip("Commit is not supported")
 
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
@@ -492,9 +492,7 @@ class TestApi:
 
                 assert chunks[1] == {"status": "CommitFinished"}, debug
 
-        async with run(
-            image, 'bash -c "sleep infinity"', image_pull_policy="Never"
-        ) as pod:
+        async with run(image, 'bash -c "sleep infinity"', image_pull_policy="Never"):
             pass
 
     @pytest.mark.minikube
@@ -505,7 +503,7 @@ class TestApi:
         registry_address: str,
         kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime != "docker":
+        if kube_container_runtime == "cri-o":
             pytest.skip("Commit is not supported")
 
         async with client.post(
@@ -522,7 +520,7 @@ class TestApi:
         registry_address: str,
         kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime != "docker":
+        if kube_container_runtime == "cri-o":
             pytest.skip("Commit is not supported")
 
         async with client.post(
@@ -538,7 +536,7 @@ class TestApi:
         client: aiohttp.ClientSession,
         kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime != "docker":
+        if kube_container_runtime == "cri-o":
             pytest.skip("Commit is not supported")
 
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
@@ -564,4 +562,6 @@ class TestApi:
 
                 msg = "The push refers to repository [unknown.io:5000/ubuntu]"
                 assert chunks[2].get("status") == msg, debug
-                assert "no such host" in chunks[3]["error"]
+
+                error = chunks[3]["error"]
+                assert "no such host" in error or "Cannot connect to host" in error
