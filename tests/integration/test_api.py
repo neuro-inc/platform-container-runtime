@@ -450,9 +450,7 @@ class TestApi:
 
                 assert chunks[-1].get("aux", {}).get("Tag") == tag, debug
 
-        async with run(
-            image, 'bash -c "sleep infinity"', image_pull_policy="Never"
-        ) as pod:
+        async with run(image, 'bash -c "sleep infinity"') as pod:
             pass
 
     @pytest.mark.minikube
