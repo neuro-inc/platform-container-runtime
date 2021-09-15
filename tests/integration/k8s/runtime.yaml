@@ -18,7 +18,7 @@ data:
         }
 
         server {
-            listen 8000;
+            listen 8080;
             location / {
                 proxy_pass http://unix:/hrun/docker.sock:/;
                 proxy_buffering off;
@@ -42,7 +42,7 @@ data:
         error_log /dev/stderr;
 
         server {
-            listen 8000 http2;
+            listen 8080 http2;
 
             location / {
                 grpc_pass unix:/hrun/containerd/containerd.sock;
@@ -59,7 +59,7 @@ data:
         error_log /dev/stderr;
 
         server {
-            listen 8000 http2;
+            listen 8080 http2;
 
             location / {
                 grpc_pass unix:/hrun/crio/crio.sock;
@@ -105,7 +105,7 @@ spec:
 
             nginx -g "daemon off;"
         ports:
-        - containerPort: 8000
+        - containerPort: 8080
         volumeMounts:
         - name: nginx-conf
           mountPath: /etc/nginx-conf
@@ -126,7 +126,7 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 8000
-    targetPort: 8000
+  - port: 8080
+    targetPort: 8080
   selector:
     service: runtime

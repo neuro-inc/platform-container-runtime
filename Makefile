@@ -52,13 +52,13 @@ test_integration: docker_build
 	docker tag $(IMAGE_NAME):latest localhost/$(IMAGE_NAME):latest
 	minikube image load localhost/$(IMAGE_NAME):latest
 	echo tests/integration/k8s/* | xargs -n 1 kubectl --context minikube apply -f
-	docker-compose -f tests/integration/docker/docker-compose.yaml up -d
 
-	$(WAIT_FOR_IT) 0.0.0.0:5000 -- echo "registry is up"
 	export CRI_ADDRESS=$$(minikube service cri --url | sed -e "s/^http:\/\///"); \
 	$(WAIT_FOR_IT) $$CRI_ADDRESS -- echo "cri is up"
 	export RUNTIME_ADDRESS=$$(minikube service runtime --url | sed -e "s/^http:\/\///"); \
 	$(WAIT_FOR_IT) $$RUNTIME_ADDRESS -- echo "runtime is up"
+	export REGISTRY_ADDRESS=$$(minikube service registry --url | sed -e "s/^http:\/\///"); \
+	$(WAIT_FOR_IT) $$REGISTRY_ADDRESS -- echo "registry is up"
 	export SVC_ADDRESS=$$(minikube service platform-container-runtime --url | sed -e "s/^http:\/\///"); \
 	$(WAIT_FOR_IT) $$SVC_ADDRESS -- echo "service is up"
 

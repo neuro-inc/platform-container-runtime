@@ -406,9 +406,10 @@ class TestApi:
         async with client.post(api.kill("unknown")) as resp:
             assert resp.status == HTTPNotFound.status_code, await resp.text()
 
+    @pytest.mark.minikube
     async def test_commit(
         self,
-        api: ApiEndpoints,
+        api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
         kube_container_runtime: str,
@@ -422,7 +423,7 @@ class TestApi:
             image = f"{repository}:{tag}"
 
             async with client.post(
-                api.commit(pod.container_id),
+                api_minikube.commit(pod.container_id),
                 json={"image": image, "push": True},
             ) as resp:
                 assert resp.status == HTTPOk.status_code, str(resp)
@@ -449,6 +450,7 @@ class TestApi:
 
                 assert chunks[-1].get("aux", {}).get("Tag") == tag, debug
 
+    @pytest.mark.minikube
     async def test_commit_without_push(
         self,
         api_minikube: ApiEndpoints,
@@ -487,9 +489,10 @@ class TestApi:
 
                 assert chunks[1] == {"status": "CommitFinished"}, debug
 
+    @pytest.mark.minikube
     async def test_commit_invalid_image(
         self,
-        api: ApiEndpoints,
+        api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
         kube_container_runtime: str,
@@ -498,13 +501,15 @@ class TestApi:
             pytest.skip("Commit is not supported")
 
         async with client.post(
-            api.commit("unknown"), json={"image": f"_{registry_address}/ubuntu:latest"}
+            api_minikube.commit("unknown"),
+            json={"image": f"_{registry_address}/ubuntu:latest"},
         ) as resp:
             assert resp.status == HTTPBadRequest.status_code, await resp.text()
 
+    @pytest.mark.minikube
     async def test_commit_unknown_container(
         self,
-        api: ApiEndpoints,
+        api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
         kube_container_runtime: str,
@@ -513,13 +518,15 @@ class TestApi:
             pytest.skip("Commit is not supported")
 
         async with client.post(
-            api.commit("unknown"), json={"image": f"{registry_address}/ubuntu:latest"}
+            api_minikube.commit("unknown"),
+            json={"image": f"{registry_address}/ubuntu:latest"},
         ) as resp:
             assert resp.status == HTTPNotFound.status_code, await resp.text()
 
+    @pytest.mark.minikube
     async def test_commit_unknown_registry(
         self,
-        api: ApiEndpoints,
+        api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         kube_container_runtime: str,
     ) -> None:
@@ -528,7 +535,7 @@ class TestApi:
 
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
             async with client.post(
-                api.commit(pod.container_id),
+                api_minikube.commit(pod.container_id),
                 json={"image": "unknown.io:5000/ubuntu:latest", "push": True},
             ) as resp:
                 assert resp.status == HTTPOk.status_code, str(resp)

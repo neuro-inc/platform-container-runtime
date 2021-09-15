@@ -86,4 +86,4 @@ async def create_local_app_server(
         await runner.cleanup()
 
         # https://docs.aiohttp.org/en/stable/client_advanced.html#graceful-shutdown
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.35)

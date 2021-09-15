@@ -13,7 +13,7 @@ data:
         error_log /dev/stderr;
 
         server {
-            listen 9001 http2;
+            listen 8080 http2;
 
             location / {
                 grpc_pass unix:$RUNTIME_SOCK;
@@ -62,7 +62,7 @@ spec:
 
             nginx -g "daemon off;"
         ports:
-        - containerPort: 9001
+        - containerPort: 8080
         volumeMounts:
         - name: nginx-conf
           mountPath: /etc/nginx-conf
@@ -83,84 +83,7 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-  - port: 9001
-    targetPort: 9001
+  - port: 8080
+    targetPort: 8080
   selector:
     service: cri
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: platform-container-runtime
-spec:
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 0
-      maxUnavailable: 1
-  selector:
-    matchLabels:
-      service: platform-container-runtime
-  template:
-    metadata:
-      labels:
-        service: platform-container-runtime
-    spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
-      containers:
-      - name: platform-container-runtime
-        image: localhost/platformcontainerruntime:latest
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 9000
-          hostPort: 9000
-        env:
-        - name: NP_LOG_LEVEL
-          value: INFO
-        - name: NP_PORT
-          value: "9000"
-        - name: NP_NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        - name: NP_KUBE_URL
-          value: https://kubernetes.default.svc
-        - name: NP_KUBE_AUTH_TYPE
-          value: token
-        - name: NP_KUBE_CERT_AUTHORITY_PATH
-          value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        - name: NP_KUBE_TOKEN_PATH
-          value: /var/run/secrets/kubernetes.io/serviceaccount/token
-        volumeMounts:
-        - name: host-run
-          mountPath: /hrun
-      volumes:
-      - name: host-run
-        hostPath:
-          path: /var/run
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: platform-container-runtime
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 9000
-    targetPort: 9000
-  selector:
-    service: platform-container-runtime
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: platform
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
