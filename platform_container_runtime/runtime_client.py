@@ -7,7 +7,10 @@ from docker_image.reference import (
     Reference as _ImageReference,
 )
 
-from .containerd_client import ContainerdClient
+from .containerd_client import (
+    ContainerdClient,
+    ContainerNotFoundError as ContainerdContainerNotFoundError,
+)
 from .utils import asyncgeneratorcontextmanager
 
 
@@ -44,11 +47,11 @@ class ImageReference:
     @classmethod
     def parse(cls, ref_str: str) -> "ImageReference":
         try:
-            ref = _ImageReference.parse(ref_str)
+            ref = _ImageReference.parse_normalized_named(ref_str)
         except _InvalidImageReference as exc:
             raise ValueError(str(exc))
         domain, path = ref.split_hostname()
-        return cls(domain=domain or "", path=path, tag=ref["tag"] or "")
+        return cls(domain=domain, path=path, tag=ref["tag"] or "latest")
 
 
 class RuntimeClient:
@@ -81,7 +84,16 @@ class RuntimeClient:
             return
 
         if self._containerd_client:
-            await self._containerd_client.commit(container_id=container_id)
+            try:
+                container = await self._containerd_client.get_container(container_id)
+            except ContainerdContainerNotFoundError:
+                raise ContainerNotFoundError(container_id)
+            yield self._create_commit_started_chunk(
+                container_id=container_id, image=image
+            )
+            await container.commit(image=str(image_ref))
+            yield self._create_commit_finished_chunk()
+            return
 
         raise ValueError("Commit is not supported by container runtime")
 

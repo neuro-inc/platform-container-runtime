@@ -27,6 +27,8 @@ class Metadata:
 class Node:
     metadata: Metadata
     container_runtime_version: str
+    os: str
+    architecture: str
 
     @classmethod
     def from_payload(cls, payload: Dict[str, Any]) -> "Node":
@@ -35,6 +37,8 @@ class Node:
             container_runtime_version=payload["status"]["nodeInfo"][
                 "containerRuntimeVersion"
             ],
+            os=payload["status"]["nodeInfo"]["operatingSystem"],
+            architecture=payload["status"]["nodeInfo"]["architecture"],
         )
 
 
