@@ -104,13 +104,23 @@ class RuntimeClient:
         image_ref = ImageReference.parse(image)
 
         if self._docker_client:
-            async for chunk in self._docker_client.images.push(
+            async for progress in self._docker_client.images.push(
                 image_ref.repository, tag=image_ref.tag, auth=auth, stream=True
             ):
-                yield chunk
+                yield progress
 
-                if "error" in chunk:
+                if "error" in progress:
                     break
+            return
+
+        if self._containerd_client:
+            img = await self._containerd_client.get_image(image)
+            async with img.push(auth=auth) as it:
+                async for progress in it:
+                    yield progress
+
+                    if "error" in progress:
+                        break
             return
 
         raise ValueError("Push is not supported by container runtime")

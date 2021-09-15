@@ -35,6 +35,7 @@ from .config_factory import EnvironConfigFactory
 from .containerd_client import ContainerdClient
 from .cri_client import ContainerNotFoundError as CriContainerNotFoundError, CriClient
 from .kube_client import KubeClient
+from .registry_client import RegistryClient
 from .runtime_client import (
     ContainerNotFoundError as RuntimeContainerNotFoundError,
     RuntimeClient,
@@ -300,6 +301,7 @@ async def create_runtime_client(
     os: str,
     architecture: str,
     container_runtime_version: str,
+    trace_configs: Optional[List[aiohttp.TraceConfig]] = None,
 ) -> AsyncIterator[RuntimeClient]:
     logger.info("Initializing runtime client")
 
@@ -315,11 +317,15 @@ async def create_runtime_client(
         else:
             runtime_address = "unix:/hrun/containerd/containerd.sock"
         async with grpc.aio.insecure_channel(runtime_address) as channel:
-            yield RuntimeClient(
-                containerd_client=ContainerdClient(
-                    channel, os=os, architecture=architecture
+            async with aiohttp.ClientSession(trace_configs=trace_configs) as session:
+                yield RuntimeClient(
+                    containerd_client=ContainerdClient(
+                        channel,
+                        registry_client=RegistryClient(session),
+                        os=os,
+                        architecture=architecture,
+                    )
                 )
-            )
     else:
         yield RuntimeClient()
 
@@ -368,6 +374,7 @@ async def create_app(config: Config) -> aiohttp.web.Application:
                     os=node.os,
                     architecture=node.architecture,
                     container_runtime_version=node.container_runtime_version,
+                    trace_configs=trace_configs,
                 )
             )
             streaming_client = await exit_stack.enter_async_context(
