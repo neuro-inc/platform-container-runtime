@@ -11,6 +11,8 @@ import grpc.aio
 from neuro_logging import trace
 from yarl import URL
 
+from .errors import ContainerNotFoundError, ContainerRuntimeNotAvailableError
+
 
 T = TypeVar("T", bound=Callable[..., Awaitable[Any]])
 
@@ -33,7 +35,7 @@ def _handle_errors(func: T) -> T:
     async def new_func(self: "CriClient", *args: Any, **kwargs: Any) -> Any:
         try:
             if not self._cri_client:
-                raise RuntimeNotAvailableError()
+                raise ContainerRuntimeNotAvailableError()
 
             return await func(self, *args, **kwargs)
         except grpc.aio.AioRpcError as ex:
@@ -45,18 +47,6 @@ def _handle_errors(func: T) -> T:
             raise
 
     return cast(T, new_func)
-
-
-class RuntimeNotAvailableError(Exception):
-    def __init__(self) -> None:
-        super().__init__(
-            "Container runtime is not available. May CRI Api version is not supported."
-        )
-
-
-class ContainerNotFoundError(Exception):
-    def __init__(self, container_id: str) -> None:
-        super().__init__(f"Container {container_id!r} not found")
 
 
 class CriClient:

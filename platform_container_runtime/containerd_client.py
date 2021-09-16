@@ -50,25 +50,17 @@ from containerd.services.tasks.v1.tasks_pb2_grpc import TasksStub
 from containerd.types.descriptor_pb2 import Descriptor as DescriptorPb2
 from containerd.types.task.task_pb2 import CREATED, PAUSED, STOPPED
 
+from .errors import (
+    ContainerNotFoundError,
+    ImageNotFoundError,
+    MediaTypeNotSupportedError,
+    PlatformNotSupportedError,
+)
 from .registry_client import Auth, RegistryClient
 from .utils import asyncgeneratorcontextmanager
 
 
 logger = logging.getLogger(__name__)
-
-
-class ContainerdError(Exception):
-    pass
-
-
-class ContainerNotFoundError(ContainerdError):
-    def __init__(self, container_id: str) -> None:
-        super().__init__(f"Container {container_id!r} not found")
-
-
-class ImageNotFoundError(ContainerdError):
-    def __init__(self, name: str) -> None:
-        super().__init__(f"Image {name!r} not found")
 
 
 class MediaType(str, enum.Enum):
@@ -359,10 +351,10 @@ class ImageManifest(Dict[str, Any]):
                         digest = m["digest"]
                         break
                 else:
-                    raise ContainerdError(f"Platform ({os},{arch}) is not supported")
+                    raise PlatformNotSupportedError(architecture=arch, os=os)
                 continue
 
-            raise ContainerdError(f"Media type {media_type!r} is not supported")
+            raise MediaTypeNotSupportedError(media_type)
 
     @classmethod
     @trace

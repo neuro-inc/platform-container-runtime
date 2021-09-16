@@ -12,10 +12,6 @@ from yarl import URL
 logger = logging.getLogger(__name__)
 
 
-class RegistryError(Exception):
-    pass
-
-
 class Auth(abc.ABC):
     @abc.abstractproperty
     def header(self) -> str:

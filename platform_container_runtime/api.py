@@ -33,13 +33,11 @@ from yarl import URL
 from .config import Config, SentryConfig, ZipkinConfig
 from .config_factory import EnvironConfigFactory
 from .containerd_client import ContainerdClient
-from .cri_client import ContainerNotFoundError as CriContainerNotFoundError, CriClient
+from .cri_client import CriClient
+from .errors import ContainerNotFoundError, ContainerNotRunningError
 from .kube_client import KubeClient
 from .registry_client import RegistryClient
-from .runtime_client import (
-    ContainerNotFoundError as RuntimeContainerNotFoundError,
-    RuntimeClient,
-)
+from .runtime_client import RuntimeClient
 from .service import Service
 
 
@@ -182,7 +180,7 @@ class PlatformContainerRuntimeApiHandler:
             return response
         except asyncio.CancelledError:
             raise
-        except RuntimeContainerNotFoundError:
+        except ContainerNotFoundError:
             raise
         except Exception as ex:
             if response is None:
@@ -234,10 +232,7 @@ async def handle_exceptions(
 ) -> StreamResponse:
     try:
         return await handler(req)
-    except CriContainerNotFoundError as e:
-        payload = {"error": str(e)}
-        return json_response(payload, status=HTTPNotFound.status_code)
-    except RuntimeContainerNotFoundError as e:
+    except ContainerNotFoundError as e:
         payload = {"error": str(e)}
         return json_response(payload, status=HTTPNotFound.status_code)
     except ValueError as e:
@@ -412,7 +407,7 @@ def setup_tracing(config: Config) -> None:
             config.server.port,
             config.zipkin.url,
             config.zipkin.sample_rate,
-            ignored_exceptions=[CriContainerNotFoundError],
+            ignored_exceptions=[ContainerNotFoundError],
         )
 
     if config.sentry:
@@ -421,7 +416,7 @@ def setup_tracing(config: Config) -> None:
             app_name=config.sentry.app_name,
             cluster_name=config.sentry.cluster_name,
             sample_rate=config.sentry.sample_rate,
-            exclude=[CriContainerNotFoundError],
+            exclude=[ContainerNotFoundError, ContainerNotRunningError],
         )
 
 
