@@ -11,13 +11,9 @@ from .containerd_client import (
     ContainerdClient,
     ContainerNotFoundError as ContainerdContainerNotFoundError,
 )
+from .errors import ContainerNotFoundError
 from .registry_client import BasicAuth
 from .utils import asyncgeneratorcontextmanager
-
-
-class ContainerNotFoundError(Exception):
-    def __init__(self, container_id: str) -> None:
-        super().__init__(f"Container {container_id!r} not found")
 
 
 @dataclass(frozen=True)

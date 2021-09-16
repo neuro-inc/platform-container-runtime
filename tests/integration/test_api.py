@@ -203,9 +203,7 @@ class TestApi:
                 ), await resp.text()
 
                 if resp.status == HTTPBadRequest.status_code:
-                    assert (
-                        "Cannot attach to a not running container" in await resp.text()
-                    )
+                    assert "not running" in await resp.text()
 
     async def test_attach_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
@@ -345,9 +343,7 @@ class TestApi:
                 ), await resp.text()
 
                 if resp.status == HTTPBadRequest.status_code:
-                    assert (
-                        "Cannot exec into a not running container" in await resp.text()
-                    )
+                    assert "not running" in await resp.text()
 
     async def test_exec_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession

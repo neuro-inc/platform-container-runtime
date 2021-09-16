@@ -9,6 +9,7 @@ import aiohttp.web
 from yarl import URL
 
 from .cri_client import ContainerState, CriClient
+from .errors import ContainerNotRunningError
 from .runtime_client import RuntimeClient
 from .utils import asyncgeneratorcontextmanager
 
@@ -140,9 +141,7 @@ class Service:
         # ContainerNotFoundError if container does not exist.
         status = await self._cri_client.get_status(container_id)
         if status.state != ContainerState.RUNNING:
-            raise ValueError(
-                f"Cannot attach to a not running container {container_id!r}"
-            )
+            raise ContainerNotRunningError(container_id)
         url = await self._cri_client.attach(
             container_id=container_id,
             tty=tty,
@@ -167,9 +166,7 @@ class Service:
         # ContainerNotFoundError if container does not exist.
         status = await self._cri_client.get_status(container_id)
         if status.state != ContainerState.RUNNING:
-            raise ValueError(
-                "Cannot exec into a not running container {container_id!r}"
-            )
+            raise ContainerNotRunningError(container_id)
         url = await self._cri_client.exec(
             container_id=container_id,
             cmd=cmd,
