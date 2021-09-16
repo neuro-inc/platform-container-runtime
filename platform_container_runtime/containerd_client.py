@@ -1,7 +1,9 @@
+import asyncio
 import enum
 import hashlib
 import json
 import logging
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, AsyncIterator, Dict, List, Mapping, Optional, Union
@@ -48,7 +50,7 @@ from containerd.services.tasks.v1.tasks_pb2_grpc import TasksStub
 from containerd.types.descriptor_pb2 import Descriptor as DescriptorPb2
 from containerd.types.task.task_pb2 import CREATED, PAUSED, STOPPED
 
-from .registry_client import Auth, InvalidRangeError, RegistryClient
+from .registry_client import Auth, RegistryClient
 from .utils import asyncgeneratorcontextmanager
 
 
@@ -248,6 +250,40 @@ class Snapshot:
         )
 
 
+class ImageProgess:
+    def __init__(self, total: int) -> None:
+        self._next = asyncio.Event()
+        self._total = total
+        self._current = 0
+        self._stopped = False
+
+    async def __aiter__(self) -> AsyncIterator[int]:
+        while True:
+            if self._stopped:
+                break
+
+            yield self._current
+
+            if self._current >= self._total:
+                break
+            await self._next.wait()
+            self._next.clear()
+
+    @property
+    def total(self) -> int:
+        return self._total
+
+    def step(self, progress: int) -> None:
+        self._current += progress
+        self._next.set()
+
+    def stop(self) -> None:
+        if self._stopped:
+            return
+        self._stopped = True
+        self._next.set()
+
+
 class ImageManifest(Dict[str, Any]):
     def __init__(
         self, clients: Clients, namespace: str, content: Dict[str, Any]
@@ -435,21 +471,22 @@ class ImageManifest(Dict[str, Any]):
         config_desc = Descriptor.from_data(
             MediaType.DOCKER_IMAGE_CONFIG_V1, self.config
         )
-        upload_url = await self._clients.registry.start_layer_upload(
+        upload_url = await self._clients.registry.start_blob_upload(
             server=server, name=name, auth=auth
         )
-        await self._clients.registry.complete_layer_upload(
+        await self._clients.registry.upload_blob(
             upload_url=upload_url,
             media_type=MediaType.DOCKER_IMAGE_CONFIG_V1.value,
             digest=config_desc.digest,
-            offset=0,
-            chunk=json.dumps(self.config).encode(),
+            data_length=config_desc.size,
+            data=json.dumps(self.config).encode(),
             auth=auth,
         )
         logger.info("Pushed image %s/%s:%s config", server, name, ref)
         manifest = dict(self)
         manifest["config"] = config_desc.to_primitive()
         manifest_desc = Descriptor.from_data(MediaType.DOCKER_MANIFEST_V2, manifest)
+        logger.info("Manifest:\n%s", json.dumps(manifest, indent=2))
         await self._clients.registry.update_manifest(
             server=server,
             name=name,
@@ -601,7 +638,7 @@ class Image:
         layer_id = self._create_layer_id(diff_id)
         yield self._create_image_progress_step(layer_id=layer_id, status="Preparing")
 
-        layers_exists = await self._clients.registry.check_layer(
+        layers_exists = await self._clients.registry.check_blob(
             server=self._image_server,
             name=self._image_repo,
             digest=desc.digest,
@@ -609,108 +646,86 @@ class Image:
         )
 
         if layers_exists:
+            logger.info(
+                "Image %s layer (%s,%s) already exists",
+                self._name,
+                layer_id,
+                desc.digest,
+            )
+
             yield self._create_image_progress_step(
                 layer_id=layer_id, status="Layer already exists"
             )
             return
 
-        upload_url = None
-
-        try:
-            upload_url = await self._clients.registry.start_layer_upload(
-                server=self._image_server, name=self._image_repo, auth=auth
-            )
-
-            logger.info("Pushing image %s layer %s", self._name, layer_id)
-
-            try:
-                async with self._push_layer_chunked(
-                    layer_id=layer_id,
-                    desc=desc,
-                    upload_url=upload_url,
-                    offset=0,
-                    chunk_size=chunk_size,
-                    auth=auth,
-                ) as it:
-                    async for progress in it:
-                        yield progress
-            except InvalidRangeError as ex:
-                logger.warning(
-                    "Chunk size %s is invalid, switching to server chunk size %s",
-                    chunk_size,
-                    ex.last_valid_range,
-                )
-
-                async with self._push_layer_chunked(
-                    layer_id=layer_id,
-                    desc=desc,
-                    upload_url=upload_url,
-                    offset=ex.last_valid_range + 1,
-                    chunk_size=ex.last_valid_range,
-                    auth=auth,
-                ) as it:
-                    async for progress in it:
-                        yield progress
-
-            logger.info("Pushed image %s layer %s", self._name, layer_id)
-
-            upload_url = None
-        except Exception:
-            logger.info("Failed to push image %s layer %s", self._name, layer_id)
-
-            if upload_url:
-                await self._clients.registry.cancel_layer_upload(upload_url, auth)
-
-    @asyncgeneratorcontextmanager
-    async def _push_layer_chunked(
-        self,
-        layer_id: str,
-        desc: Descriptor,
-        upload_url: URL,
-        offset: int,
-        chunk_size: int,
-        auth: Optional[Auth],
-    ) -> AsyncIterator[Dict[str, Any]]:
         yield self._create_image_progress_step(
             layer_id=layer_id,
             status="Pushing",
-            current=offset,
+            current=0,
             total=desc.size,
         )
 
-        async with self._read_layer_chunked(desc, chunk_size) as chunks:
-            async for chunk in chunks:
-                if offset + len(chunk) == desc.size:
-                    await self._clients.registry.complete_layer_upload(
-                        upload_url=upload_url,
-                        media_type="application/octet-stream",
-                        digest=desc.digest,
-                        offset=offset,
-                        chunk=chunk,
-                        auth=auth,
-                    )
-                    yield self._create_image_progress_step(
-                        layer_id=layer_id, status="Pushed"
-                    )
-                else:
-                    upload_url = await self._clients.registry.upload_layer_chunk(
-                        upload_url=upload_url,
-                        media_type="application/octet-stream",
-                        offset=offset,
-                        chunk=chunk,
-                        auth=auth,
-                    )
-                    offset += len(chunk)
-                    yield self._create_image_progress_step(
-                        layer_id=layer_id,
-                        status="Pushing",
-                        current=offset,
-                        total=desc.size,
-                    )
+        logger.info("Pushing image %s layer (%s,%s)", self._name, layer_id, desc.digest)
+
+        upload_url = await self._clients.registry.start_blob_upload(
+            server=self._image_server, name=self._image_repo, auth=auth
+        )
+        push_task = None
+
+        try:
+            progress = ImageProgess(desc.size)
+            push_task = asyncio.create_task(
+                self._push_layer_monolithic(
+                    upload_url=upload_url,
+                    progress=progress,
+                    desc=desc,
+                    chunk_size=chunk_size,
+                    auth=auth,
+                )
+            )
+
+            async for current in progress:
+                yield self._create_image_progress_step(
+                    layer_id=layer_id,
+                    status="Pushing",
+                    current=current,
+                    total=progress.total,
+                )
+
+            await push_task
+        finally:
+            if push_task is not None and not push_task.done():
+                with suppress(asyncio.CancelledError):
+                    push_task.cancel()
+
+        yield self._create_image_progress_step(layer_id=layer_id, status="Pushed")
+
+        logger.info("Pushed image %s layer (%s,%s)", self._name, layer_id, desc.digest)
+
+    async def _push_layer_monolithic(
+        self,
+        upload_url: URL,
+        progress: ImageProgess,
+        desc: Descriptor,
+        chunk_size: int,
+        auth: Optional[Auth],
+    ) -> None:
+        try:
+            async with self._read_layer_chunked(desc, chunk_size, progress) as chunks:
+                await self._clients.registry.upload_blob(
+                    upload_url=upload_url,
+                    media_type="application/octet-stream",
+                    digest=desc.digest,
+                    data_length=desc.size,
+                    data=chunks,
+                    auth=auth,
+                )
+        finally:
+            progress.stop()
 
     @asyncgeneratorcontextmanager
     async def _read_layer_chunked(
-        self, desc: Descriptor, chunk_size: int, offset: int = 0
+        self, desc: Descriptor, chunk_size: int, progress: ImageProgess
     ) -> AsyncIterator[bytes]:
         buffer: List[bytes] = []
         buffer_len = 0
@@ -718,7 +733,7 @@ class Image:
         async for resp in self._clients.content.Read(
             ReadContentRequest(
                 digest=desc.digest,
-                offset=offset,
+                offset=0,
                 size=0,  # entire content
             ),
             metadata=Metadata(namespace=self._namespace),
@@ -730,17 +745,21 @@ class Image:
                 buffer = [resp.data[prefix_len:]]
                 buffer_len = len(buffer[0])
                 yield chunk
+                progress.step(chunk_size)
             elif buffer_len + len(resp.data) == chunk_size:
                 buffer.append(resp.data)
                 chunk = b"".join(buffer)
                 buffer = []
                 buffer_len = 0
                 yield chunk
+                progress.step(chunk_size)
             else:
                 buffer.append(resp.data)
                 buffer_len += len(resp.data)
         if buffer:
+            chunk = b"".join(buffer)
             yield b"".join(buffer)
+            progress.step(len(chunk))
 
     def _create_image_progress_step(
         self,
