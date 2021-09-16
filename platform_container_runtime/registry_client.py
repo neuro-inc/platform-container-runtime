@@ -1,6 +1,7 @@
 import abc
 import json
-from typing import Any, Dict, Optional, Tuple, Union
+import logging
+from typing import Any, AsyncIterator, Dict, Optional, Tuple, Union
 
 import aiohttp
 import aiohttp.hdrs
@@ -8,16 +9,11 @@ import aiohttp.web
 from yarl import URL
 
 
+logger = logging.getLogger(__name__)
+
+
 class RegistryError(Exception):
     pass
-
-
-class InvalidRangeError(RegistryError):
-    def __init__(self, last_valid_range: int) -> None:
-        super().__init__(
-            f"Invalid range uploaded, last valid range: 0-{last_valid_range}"
-        )
-        self.last_valid_range = last_valid_range
 
 
 class Auth(abc.ABC):
@@ -33,6 +29,7 @@ class BasicAuth(Auth):
         self._username = username
         self._password = password
 
+    @property
     def header(self) -> str:
         return aiohttp.BasicAuth(self._username, self._password).encode()
 
@@ -88,7 +85,7 @@ class RegistryClient:
             resp.raise_for_status()
             return "v2"
 
-    async def check_layer(
+    async def check_blob(
         self, server: str, name: str, digest: str, auth: Optional[Auth] = None
     ) -> bool:
         endpoints = V2Endpoints(server)
@@ -100,7 +97,7 @@ class RegistryClient:
             resp.raise_for_status()
             return True
 
-    async def start_layer_upload(
+    async def start_blob_upload(
         self, server: str, name: str, auth: Optional[Auth] = None
     ) -> URL:
         endpoints = V2Endpoints(server)
@@ -110,64 +107,23 @@ class RegistryClient:
             resp.raise_for_status()
             return URL(resp.headers[aiohttp.hdrs.LOCATION])
 
-    async def upload_layer_chunk(
-        self,
-        upload_url: Union[str, URL],
-        offset: int,
-        chunk: bytes,
-        media_type: str,
-        auth: Optional[Auth] = None,
-    ) -> URL:
-        range_len = len(chunk)
-        range_start = offset
-        range_end = offset + range_len - 1
-        async with self._session.patch(
-            upload_url,
-            headers={
-                **self._get_auth_header(auth),
-                aiohttp.hdrs.CONTENT_RANGE: f"{range_start}-{range_end}",
-                aiohttp.hdrs.CONTENT_LENGTH: str(range_len),
-                aiohttp.hdrs.CONTENT_TYPE: media_type,
-            },
-            data=chunk,
-        ) as resp:
-            if resp.status == aiohttp.web.HTTPRequestRangeNotSatisfiable.status_code:
-                _, last = resp.headers["Range"].split("-")
-                raise InvalidRangeError(int(last))
-            resp.raise_for_status()
-            return URL(resp.headers[aiohttp.hdrs.LOCATION])
-
-    async def complete_layer_upload(
+    async def upload_blob(
         self,
         upload_url: Union[str, URL],
         media_type: str,
         digest: str,
-        offset: int,
-        chunk: bytes,
+        data_length: int,
+        data: Union[bytes, AsyncIterator[bytes]],
         auth: Optional[Auth] = None,
     ) -> None:
-        range_len = len(chunk)
-        range_start = offset
-        range_end = offset + range_len - 1
         async with self._session.put(
             URL(upload_url).update_query(digest=digest),
             headers={
                 **self._get_auth_header(auth),
-                aiohttp.hdrs.CONTENT_RANGE: f"{range_start}-{range_end}",
-                aiohttp.hdrs.CONTENT_LENGTH: str(range_len),
+                aiohttp.hdrs.CONTENT_LENGTH: str(data_length),
                 aiohttp.hdrs.CONTENT_TYPE: media_type,
             },
-            data=chunk,
-        ) as resp:
-            resp.raise_for_status()
-
-    async def cancel_layer_upload(
-        self,
-        upload_url: Union[str, URL],
-        auth: Optional[Auth] = None,
-    ) -> None:
-        async with self._session.delete(
-            upload_url, headers=self._get_auth_header(auth)
+            data=data,
         ) as resp:
             resp.raise_for_status()
 

@@ -11,6 +11,7 @@ from .containerd_client import (
     ContainerdClient,
     ContainerNotFoundError as ContainerdContainerNotFoundError,
 )
+from .registry_client import BasicAuth
 from .utils import asyncgeneratorcontextmanager
 
 
@@ -115,7 +116,8 @@ class RuntimeClient:
 
         if self._containerd_client:
             img = await self._containerd_client.get_image(image)
-            async with img.push(auth=auth) as it:
+            basic_auth = BasicAuth(auth["username"], auth["password"]) if auth else None
+            async with img.push(auth=basic_auth) as it:
                 async for progress in it:
                     yield progress
 
