@@ -407,7 +407,7 @@ def setup_tracing(config: Config) -> None:
             config.server.port,
             config.zipkin.url,
             config.zipkin.sample_rate,
-            ignored_exceptions=[ContainerNotFoundError],
+            ignored_exceptions=[ContainerNotFoundError, ContainerNotRunningError],
         )
 
     if config.sentry:
