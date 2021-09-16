@@ -16,6 +16,8 @@ RUN pip install --user $DIST_FILENAME
 
 FROM python:3.8-slim-buster as service
 
+LABEL org.opencontainers.image.source = "https://github.com/neuro-inc/platform-container-runtime"
+
 WORKDIR /app
 
 COPY --from=installer /root/.local/ /root/.local/
