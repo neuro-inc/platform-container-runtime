@@ -52,3 +52,7 @@ repos:
   hooks:
   - id: flake8
     exclude: "^docs/|^github|^k8s|^containerd"
+- repo: https://github.com/rhysd/actionlint
+  rev: v1.6.3
+  hooks:
+  - id: actionlint-docker
