@@ -66,8 +66,8 @@ jobs:
           driver: none
         - container_runtime: containerd
           driver: docker
-        - container_runtime: cri-o
-          driver: docker
+        # - container_runtime: cri-o
+        #   driver: docker
     env:
       CLOUD_PROVIDER: ${{ secrets.CLOUD_PROVIDER_DEV }}
       MINIKUBE_DRIVER: ${{ matrix.driver }}
