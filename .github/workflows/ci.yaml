@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches: [master]
-    tags: [v*.*.*]
+    tags: [v*.*, v*.*.*]
   pull_request:
     branches: [master]
   pull_request_target:
@@ -50,6 +50,15 @@ jobs:
         file: .coverage-unit.xml
         flags: unit
         name: codecov-unit
+    - name: Build Docker image
+      run: make docker_build
+      env:
+        TAG: latest
+    - name: Upload image artifact
+      uses: neuro-inc/upload-image-action@v21.9.2
+      with:
+        image: platformcontainerruntime
+        token: ${{ secrets.GITHUB_TOKEN }}
 
   test_integration:
     name: Run integration tests
