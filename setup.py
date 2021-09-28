@@ -8,7 +8,7 @@ install_requires = (
     "aiohttp==3.7.4.post0",
     "neuro-logging==21.8.4.1",
     "aiozipkin==1.1.0",
-    "sentry-sdk==1.4.1",
+    "sentry-sdk==1.4.2",
     "grpcio==1.41.0",
     "protobuf==3.18.0",
     "aiodocker==0.21.0",
