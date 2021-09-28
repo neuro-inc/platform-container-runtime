@@ -9,7 +9,7 @@ install_requires = (
     "neuro-logging==21.8.4.1",
     "aiozipkin==1.1.0",
     "sentry-sdk==1.4.1",
-    "grpcio==1.40.0",
+    "grpcio==1.41.0",
     "protobuf==3.18.0",
     "aiodocker==0.21.0",
     "docker-image-py==0.1.12",
