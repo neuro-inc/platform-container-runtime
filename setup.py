@@ -10,7 +10,7 @@ install_requires = (
     "aiozipkin==1.1.0",
     "sentry-sdk==1.4.3",
     "grpcio==1.41.0",
-    "protobuf==3.18.0",
+    "protobuf==3.18.1",
     "aiodocker==0.21.0",
     "docker-image-py==0.1.12",
 )
