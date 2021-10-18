@@ -29,14 +29,14 @@ WAIT_FOR_IT = curl -s $(WAIT_FOR_IT_URL) | bash -s --
 
 setup:
 	pip install -U pip
-	pip install -r requirements/dev.txt
+	pip install -e .[dev]
 	pre-commit install
 
 setup_pb2:
 	scripts/genpb2.sh
 
 lint: format
-	mypy platform_container_runtime tests setup.py
+	mypy platform_container_runtime tests
 
 format:
 ifdef CI_LINT_RUN
@@ -65,9 +65,9 @@ test_integration: docker_build
 	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration
 
 docker_build:
-	python setup.py sdist
+	python -c "import setuptools; setuptools.setup()" sdist
 	docker build \
-		--build-arg DIST_FILENAME=`python setup.py --fullname`.tar.gz \
+		--build-arg DIST_FILENAME=`python -c "import setuptools; setuptools.setup()" --fullname`.tar.gz \
 		-t $(IMAGE_NAME):latest .
 
 docker_push: docker_build
