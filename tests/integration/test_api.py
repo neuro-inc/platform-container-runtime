@@ -535,10 +535,12 @@ class TestApi:
         if kube_container_runtime == "cri-o":
             pytest.skip("Commit is not supported")
 
+        domain = str(uuid.uuid4())
+
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
             async with client.post(
                 api_minikube.commit(pod.container_id),
-                json={"image": "unknown.io:5000/ubuntu:latest", "push": True},
+                json={"image": f"{domain}:5000/ubuntu:latest", "push": True},
             ) as resp:
                 assert resp.status == HTTPOk.status_code, str(resp)
                 chunks = [
@@ -556,8 +558,8 @@ class TestApi:
                 assert chunks[0]["status"] == "CommitStarted", debug
                 assert chunks[1] == {"status": "CommitFinished"}, debug
 
-                msg = "The push refers to repository [unknown.io:5000/ubuntu]"
+                msg = f"The push refers to repository [{domain}:5000/ubuntu]"
                 assert chunks[2].get("status") == msg, debug
 
                 error = chunks[3]["error"]
-                assert "no such host" in error or "Cannot connect to host" in error
+                assert "no such host" in error or "failure in name resolution" in error
