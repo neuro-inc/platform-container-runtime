@@ -1,10 +1,10 @@
 [build-system]
 requires = [
-    "pip",
-    "setuptools",
+    "setuptools>=45",
     "wheel",
+    "setuptools_scm>=6.2",
 ]
-build-backend = 'setuptools.build_meta'
+build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 git_describe_command = "git describe --dirty --tags --long --match v*.*.*"
