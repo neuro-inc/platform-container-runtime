@@ -129,6 +129,7 @@ jobs:
 
   deploy_dev:
     name: Deploy to dev
+    environment: dev
     runs-on: ubuntu-latest
     needs: test_integration
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
