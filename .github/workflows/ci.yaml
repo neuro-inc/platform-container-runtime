@@ -133,9 +133,6 @@ jobs:
     concurrency: deploy_dev
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     env:
-      ARTIFACTORY_HELM_VIRTUAL_REPO: ${{ secrets.ARTIFACTORY_HELM_VIRTUAL_REPO }}
-      ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
       AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AZURE_ACR_NAME: ${{ secrets.AZURE_DEV_ACR_NAME }}
