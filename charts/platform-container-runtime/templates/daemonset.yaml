@@ -3,13 +3,13 @@ kind: DaemonSet
 metadata:
   name: {{ include "platformContainerRuntime.fullname" . }}
   labels: {{ include "platformContainerRuntime.labels.standard" . | nindent 4 }}
-    service: container-runtime
+    service: platform-container-runtime
 spec:
   selector:
     matchLabels:
       app: {{ include "platformContainerRuntime.name" . }}
       release: {{ .Release.Name }}
-      service: container-runtime
+      service: platform-container-runtime
   updateStrategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,7 +19,7 @@ spec:
       labels:
         app: {{ include "platformContainerRuntime.name" . }}
         release: {{ .Release.Name }}
-        service: container-runtime
+        service: platform-container-runtime
     spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
@@ -37,7 +37,7 @@ spec:
         hostPath:
           path: /var/run
       containers:
-      - name: container-runtime
+      - name: platform-container-runtime
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         {{- if .Values.command }}
         command: {{ toYaml .Values.command | nindent 8 }}
