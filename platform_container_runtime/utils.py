@@ -4,7 +4,6 @@ from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from typing import Any, TypeVar
 
-
 T_co = TypeVar("T_co", covariant=True)
 
 if sys.version_info >= (3, 10):

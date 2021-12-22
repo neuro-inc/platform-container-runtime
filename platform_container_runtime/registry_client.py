@@ -9,7 +9,6 @@ import aiohttp.hdrs
 import aiohttp.web
 from yarl import URL
 
-
 logger = logging.getLogger(__name__)
 
 
