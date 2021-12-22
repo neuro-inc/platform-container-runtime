@@ -2,12 +2,13 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from containerd.services.diff.v1 import diff_pb2 as containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2
+from containerd.services.diff.v1 import (
+    diff_pb2 as containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2,
+)
 
 
-class DiffStub(object):
-    """Diff service creates and applies diffs
-    """
+class DiffStub:
+    """Diff service creates and applies diffs"""
 
     def __init__(self, channel):
         """Constructor.
@@ -16,20 +17,19 @@ class DiffStub(object):
             channel: A grpc.Channel.
         """
         self.Apply = channel.unary_unary(
-                '/containerd.services.diff.v1.Diff/Apply',
-                request_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyRequest.SerializeToString,
-                response_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyResponse.FromString,
-                )
+            "/containerd.services.diff.v1.Diff/Apply",
+            request_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyRequest.SerializeToString,
+            response_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyResponse.FromString,
+        )
         self.Diff = channel.unary_unary(
-                '/containerd.services.diff.v1.Diff/Diff',
-                request_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffRequest.SerializeToString,
-                response_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffResponse.FromString,
-                )
+            "/containerd.services.diff.v1.Diff/Diff",
+            request_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffRequest.SerializeToString,
+            response_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffResponse.FromString,
+        )
 
 
-class DiffServicer(object):
-    """Diff service creates and applies diffs
-    """
+class DiffServicer:
+    """Diff service creates and applies diffs"""
 
     def Apply(self, request, context):
         """Apply applies the content associated with the provided digests onto
@@ -37,71 +37,95 @@ class DiffServicer(object):
         decompressed if necessary.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
     def Diff(self, request, context):
         """Diff creates a diff between the given mounts and uploads the result
         to the content store.
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
+        context.set_details("Method not implemented!")
+        raise NotImplementedError("Method not implemented!")
 
 
 def add_DiffServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Apply': grpc.unary_unary_rpc_method_handler(
-                    servicer.Apply,
-                    request_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyRequest.FromString,
-                    response_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyResponse.SerializeToString,
-            ),
-            'Diff': grpc.unary_unary_rpc_method_handler(
-                    servicer.Diff,
-                    request_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffRequest.FromString,
-                    response_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffResponse.SerializeToString,
-            ),
+        "Apply": grpc.unary_unary_rpc_method_handler(
+            servicer.Apply,
+            request_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyRequest.FromString,
+            response_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyResponse.SerializeToString,
+        ),
+        "Diff": grpc.unary_unary_rpc_method_handler(
+            servicer.Diff,
+            request_deserializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffRequest.FromString,
+            response_serializer=containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffResponse.SerializeToString,
+        ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'containerd.services.diff.v1.Diff', rpc_method_handlers)
+        "containerd.services.diff.v1.Diff", rpc_method_handlers
+    )
     server.add_generic_rpc_handlers((generic_handler,))
 
 
- # This class is part of an EXPERIMENTAL API.
-class Diff(object):
-    """Diff service creates and applies diffs
-    """
+# This class is part of an EXPERIMENTAL API.
+class Diff:
+    """Diff service creates and applies diffs"""
 
     @staticmethod
-    def Apply(request,
+    def Apply(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/containerd.services.diff.v1.Diff/Apply',
+            "/containerd.services.diff.v1.Diff/Apply",
             containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyRequest.SerializeToString,
             containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.ApplyResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )
 
     @staticmethod
-    def Diff(request,
+    def Diff(
+        request,
+        target,
+        options=(),
+        channel_credentials=None,
+        call_credentials=None,
+        insecure=False,
+        compression=None,
+        wait_for_ready=None,
+        timeout=None,
+        metadata=None,
+    ):
+        return grpc.experimental.unary_unary(
+            request,
             target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/containerd.services.diff.v1.Diff/Diff',
+            "/containerd.services.diff.v1.Diff/Diff",
             containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffRequest.SerializeToString,
             containerd_dot_services_dot_diff_dot_v1_dot_diff__pb2.DiffResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+        )

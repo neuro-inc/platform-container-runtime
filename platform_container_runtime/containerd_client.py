@@ -60,7 +60,6 @@ from .errors import (
 from .registry_client import Auth, RegistryClient
 from .utils import asyncgeneratorcontextmanager
 
-
 logger = logging.getLogger(__name__)
 
 

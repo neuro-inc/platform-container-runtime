@@ -41,7 +41,6 @@ from .registry_client import RegistryClient
 from .runtime_client import RuntimeClient
 from .service import Service
 
-
 logger = logging.getLogger(__name__)
 
 

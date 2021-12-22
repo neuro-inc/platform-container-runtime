@@ -14,7 +14,6 @@ from platform_container_runtime.config import Config, KubeConfig, ServerConfig
 
 from .conftest_kube import get_service_url
 
-
 logger = logging.getLogger(__name__)
 
 
