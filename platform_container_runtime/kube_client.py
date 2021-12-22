@@ -1,9 +1,10 @@
 import logging
 import ssl
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Dict, List, Optional, Sequence, Type
+from typing import Any, Optional
 
 import aiohttp
 
@@ -16,10 +17,10 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class Metadata:
     name: str
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def from_payload(cls, payload: Dict[str, Any]) -> "Metadata":
+    def from_payload(cls, payload: dict[str, Any]) -> "Metadata":
         return cls(name=payload["name"], labels=payload.get("labels", {}))
 
 
@@ -31,7 +32,7 @@ class Node:
     architecture: str
 
     @classmethod
-    def from_payload(cls, payload: Dict[str, Any]) -> "Node":
+    def from_payload(cls, payload: dict[str, Any]) -> "Node":
         return cls(
             metadata=Metadata.from_payload(payload["metadata"]),
             container_runtime_version=payload["status"]["nodeInfo"][
@@ -46,7 +47,7 @@ class KubeClient:
     def __init__(
         self,
         config: KubeConfig,
-        trace_configs: Optional[List[aiohttp.TraceConfig]] = None,
+        trace_configs: Optional[list[aiohttp.TraceConfig]] = None,
     ) -> None:
         self._config = config
         self._trace_configs = trace_configs
@@ -72,7 +73,7 @@ class KubeClient:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:

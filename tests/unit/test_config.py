@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from yarl import URL
 
@@ -15,7 +15,7 @@ from platform_container_runtime.config_factory import EnvironConfigFactory
 
 class TestEnvironConfigFactory:
     def test_create_default(self) -> None:
-        environ: Dict[str, Any] = {
+        environ: dict[str, Any] = {
             "NP_HOST": "0.0.0.0",
             "NP_PORT": 8080,
             "NP_NODE_NAME": "minikube",
@@ -30,7 +30,7 @@ class TestEnvironConfigFactory:
         )
 
     def test_create_custom(self) -> None:
-        environ: Dict[str, Any] = {
+        environ: dict[str, Any] = {
             "NP_HOST": "0.0.0.0",
             "NP_PORT": 8080,
             "NP_NODE_NAME": "minikube",

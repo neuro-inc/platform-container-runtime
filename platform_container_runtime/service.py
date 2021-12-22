@@ -1,8 +1,9 @@
 import asyncio
 import json
 import logging
+from collections.abc import AsyncIterator, Iterable
 from contextlib import suppress
-from typing import Any, AsyncIterator, Dict, Iterable, Optional, Union
+from typing import Any, Optional, Union
 
 import aiohttp
 import aiohttp.web
@@ -87,7 +88,7 @@ class Stream:
             self._closing = True
 
     @classmethod
-    def parse_error_channel(cls, channel: bytes) -> Dict[str, Any]:
+    def parse_error_channel(cls, channel: bytes) -> dict[str, Any]:
         assert channel[0] == 3, "Non error channel received"
 
         data = channel[1:]
@@ -186,7 +187,7 @@ class Service:
     @asyncgeneratorcontextmanager
     async def commit(
         self, container_id: str, image: str
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         async with self._runtime_client.commit(
             container_id=container_id, image=image
         ) as commit:
@@ -195,8 +196,8 @@ class Service:
 
     @asyncgeneratorcontextmanager
     async def push(
-        self, image: str, auth: Optional[Dict[str, Any]] = None
-    ) -> AsyncIterator[Dict[str, Any]]:
+        self, image: str, auth: Optional[dict[str, Any]] = None
+    ) -> AsyncIterator[dict[str, Any]]:
         async with self._runtime_client.push(image, auth) as push:
             async for chunk in push:
                 yield chunk

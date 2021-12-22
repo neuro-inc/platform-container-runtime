@@ -1,8 +1,9 @@
 import asyncio
 import logging
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Callable
+from typing import Any
 
 import aiohttp
 import aiohttp.web

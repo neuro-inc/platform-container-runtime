@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional
+from typing import Optional
 
 from yarl import URL
 
@@ -14,7 +14,7 @@ from .config import (
 
 
 class EnvironConfigFactory:
-    def __init__(self, environ: Optional[Dict[str, str]] = None) -> None:
+    def __init__(self, environ: Optional[dict[str, str]] = None) -> None:
         self._environ = environ or os.environ
 
     def create(self) -> Config:
