@@ -4,10 +4,11 @@ import os
 import subprocess
 import time
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, Optional
 
 import pytest
 import yaml
@@ -30,7 +31,7 @@ class Pod:
 async def get_pod(
     pod_name: str,
     namespace: str = "default",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     process = await asyncio.create_subprocess_shell(
         f"kubectl --context=minikube -n {namespace} get pod {pod_name} -o json",
         stdout=subprocess.PIPE,
@@ -138,14 +139,14 @@ async def get_service_url(service_name: str, namespace: str = "default") -> str:
 
 
 @pytest.fixture(scope="session")
-def _kube_config_payload() -> Dict[str, Any]:
+def _kube_config_payload() -> dict[str, Any]:
     kube_config_path = os.path.expanduser("~/.kube/config")
     with open(kube_config_path) as kube_config:
         return yaml.safe_load(kube_config)
 
 
 @pytest.fixture(scope="session")
-def _kube_config_cluster_payload(_kube_config_payload: Dict[str, Any]) -> Any:
+def _kube_config_cluster_payload(_kube_config_payload: dict[str, Any]) -> Any:
     cluster_name = "minikube"
     clusters = {
         cluster["name"]: cluster["cluster"]
@@ -156,7 +157,7 @@ def _kube_config_cluster_payload(_kube_config_payload: Dict[str, Any]) -> Any:
 
 @pytest.fixture(scope="session")
 def _cert_authority_data_pem(
-    _kube_config_cluster_payload: Dict[str, Any]
+    _kube_config_cluster_payload: dict[str, Any]
 ) -> Optional[str]:
     ca_path = _kube_config_cluster_payload["certificate-authority"]
     if ca_path:
@@ -165,7 +166,7 @@ def _cert_authority_data_pem(
 
 
 @pytest.fixture(scope="session")
-def _kube_config_user_payload(_kube_config_payload: Dict[str, Any]) -> Any:
+def _kube_config_user_payload(_kube_config_payload: dict[str, Any]) -> Any:
     user_name = "minikube"
     users = {user["name"]: user["user"] for user in _kube_config_payload["users"]}
     return users[user_name]
@@ -173,8 +174,8 @@ def _kube_config_user_payload(_kube_config_payload: Dict[str, Any]) -> Any:
 
 @pytest.fixture
 def kube_config(
-    _kube_config_cluster_payload: Dict[str, Any],
-    _kube_config_user_payload: Dict[str, Any],
+    _kube_config_cluster_payload: dict[str, Any],
+    _kube_config_user_payload: dict[str, Any],
     _cert_authority_data_pem: Optional[str],
 ) -> KubeConfig:
     cluster = _kube_config_cluster_payload

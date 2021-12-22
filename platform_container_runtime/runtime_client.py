@@ -1,5 +1,6 @@
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Dict, Optional
+from typing import Any, Optional
 
 from aiodocker import Docker, DockerError
 from docker_image.reference import (
@@ -63,7 +64,7 @@ class RuntimeClient:
     @asyncgeneratorcontextmanager
     async def commit(
         self, container_id: str, image: str
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         image_ref = ImageReference.parse(image)
 
         if self._docker_client:
@@ -96,8 +97,8 @@ class RuntimeClient:
 
     @asyncgeneratorcontextmanager
     async def push(
-        self, image: str, auth: Optional[Dict[str, Any]] = None
-    ) -> AsyncIterator[Dict[str, Any]]:
+        self, image: str, auth: Optional[dict[str, Any]] = None
+    ) -> AsyncIterator[dict[str, Any]]:
         image_ref = ImageReference.parse(image)
 
         if self._docker_client:
@@ -125,11 +126,11 @@ class RuntimeClient:
 
     def _create_commit_started_chunk(
         self, container_id: str, image: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "status": "CommitStarted",
             "details": {"container": container_id, "image": image},
         }
 
-    def _create_commit_finished_chunk(self) -> Dict[str, Any]:
+    def _create_commit_finished_chunk(self) -> dict[str, Any]:
         return {"status": "CommitFinished"}

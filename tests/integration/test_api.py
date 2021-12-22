@@ -2,8 +2,8 @@ import asyncio
 import json
 import re
 import uuid
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterator
 
 import aiohttp
 import async_timeout

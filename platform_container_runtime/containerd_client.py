@@ -3,10 +3,11 @@ import enum
 import hashlib
 import json
 import logging
+from collections.abc import AsyncIterator, Mapping
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, AsyncIterator, Dict, List, Mapping, Optional, Union
+from typing import Any, Optional, Union
 
 import grpc.aio
 from docker_image.reference import Reference
@@ -82,19 +83,19 @@ class Descriptor:
     size: int
 
     @classmethod
-    def from_data(cls, media_type: str, data: Dict[str, Any]) -> "Descriptor":
+    def from_data(cls, media_type: str, data: dict[str, Any]) -> "Descriptor":
         dump = json.dumps(data).encode()
         return cls(media_type=media_type, digest=_create_digest(dump), size=len(dump))
 
     @classmethod
-    def parse(cls, content: Dict[str, Any]) -> "Descriptor":
+    def parse(cls, content: dict[str, Any]) -> "Descriptor":
         return cls(
             media_type=content["mediaType"],
             digest=content["digest"],
             size=content["size"],
         )
 
-    def to_primitive(self) -> Dict[str, Any]:
+    def to_primitive(self) -> dict[str, Any]:
         return {"mediaType": self.media_type, "digest": self.digest, "size": self.size}
 
     def __str__(self) -> str:
@@ -276,16 +277,16 @@ class ImageProgess:
         self._next.set()
 
 
-class ImageManifest(Dict[str, Any]):
+class ImageManifest(dict[str, Any]):
     def __init__(
-        self, clients: Clients, namespace: str, content: Dict[str, Any]
+        self, clients: Clients, namespace: str, content: dict[str, Any]
     ) -> None:
         super().__init__(content)
         self._clients = clients
         self._namespace = namespace
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         return _get_value(self, "config", "Config")
 
     @classmethod
@@ -316,9 +317,9 @@ class ImageManifest(Dict[str, Any]):
     @trace
     async def _read_manifest(
         cls, clients: Clients, namespace: str, architecture: str, os: str, digest: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         while True:
-            data: List[bytes] = []
+            data: list[bytes] = []
             async for resp in clients.content.Read(
                 ReadContentRequest(
                     digest=digest,
@@ -360,8 +361,8 @@ class ImageManifest(Dict[str, Any]):
     @trace
     async def _read_config(
         cls, clients: Clients, namespace: str, digest: str
-    ) -> Dict[str, Any]:
-        data: List[bytes] = []
+    ) -> dict[str, Any]:
+        data: list[bytes] = []
         async for resp in clients.content.Read(
             ReadContentRequest(
                 digest=digest,
@@ -376,7 +377,7 @@ class ImageManifest(Dict[str, Any]):
     @trace
     async def write(
         self,
-        config_labels: Optional[Dict[str, Any]] = None,
+        config_labels: Optional[dict[str, Any]] = None,
         lease_id: Optional[str] = None,
     ) -> Descriptor:
         config_desc = Descriptor.from_data(
@@ -401,7 +402,7 @@ class ImageManifest(Dict[str, Any]):
     @trace
     async def _write_manifest(
         self,
-        content: Dict[str, Any],
+        content: dict[str, Any],
         desc: Descriptor,
         lease_id: Optional[str] = None,
     ) -> None:
@@ -432,9 +433,9 @@ class ImageManifest(Dict[str, Any]):
     @trace
     async def _write_config(
         self,
-        content: Dict[str, Any],
+        content: dict[str, Any],
         desc: Descriptor,
-        labels: Optional[Dict[str, Any]] = None,
+        labels: Optional[dict[str, Any]] = None,
         lease_id: Optional[str] = None,
     ) -> None:
         async for resp in self._clients.content.Write(
@@ -507,15 +508,15 @@ class Image:
         self._image_tag = ref["tag"]
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         return self._manifest.config
 
     @property
-    def layers(self) -> List[Dict[str, Any]]:
+    def layers(self) -> list[dict[str, Any]]:
         return list(_get_value(self._manifest, "layers", "Layers"))
 
     @property
-    def diff_ids(self) -> List[Dict[str, Any]]:
+    def diff_ids(self) -> list[dict[str, Any]]:
         root_fs = _get_value(self.config, "rootfs", "RootFS")
         diff_ids = _get_value(root_fs, "diff_ids", "Diff_ids")
         return diff_ids
@@ -546,7 +547,7 @@ class Image:
     @trace
     async def write(
         self,
-        config_labels: Optional[Dict[str, Any]] = None,
+        config_labels: Optional[dict[str, Any]] = None,
         lease_id: Optional[str] = None,
     ) -> None:
         manifest_desc = await self._manifest.write(
@@ -581,7 +582,7 @@ class Image:
             raise
 
     @asyncgeneratorcontextmanager
-    async def push(self, auth: Optional[Auth] = None) -> AsyncIterator[Dict[str, Any]]:
+    async def push(self, auth: Optional[Auth] = None) -> AsyncIterator[dict[str, Any]]:
         yield self._create_image_progress_step(
             status=(
                 "The push refers to repository "
@@ -626,7 +627,7 @@ class Image:
         desc: Descriptor,
         chunk_size: int = 1024 * 1024,  # 1 MB
         auth: Optional[Auth] = None,
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[dict[str, Any]]:
         layer_id = self._create_layer_id(diff_id)
         yield self._create_image_progress_step(layer_id=layer_id, status="Preparing")
 
@@ -719,7 +720,7 @@ class Image:
     async def _read_layer_chunked(
         self, desc: Descriptor, chunk_size: int, progress: ImageProgess
     ) -> AsyncIterator[bytes]:
-        buffer: List[bytes] = []
+        buffer: list[bytes] = []
         buffer_len = 0
 
         async for resp in self._clients.content.Read(
@@ -757,11 +758,11 @@ class Image:
         self,
         status: str = "",
         layer_id: str = "",
-        aux: Optional[Dict[str, Any]] = None,
+        aux: Optional[dict[str, Any]] = None,
         current: Optional[float] = None,
         total: Optional[float] = None,
-    ) -> Dict[str, Any]:
-        result: Dict[str, Any] = {}
+    ) -> dict[str, Any]:
+        result: dict[str, Any] = {}
         if status:
             result["status"] = status
         if aux:
@@ -889,7 +890,7 @@ class Container:
 
     def _create_commit_image_manifest(
         self, parent_image: Image, image_diff: SnapshotDiff
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         return {
             "schemaVersion": 2,
             "mediaType": MediaType.DOCKER_MANIFEST_V2,
@@ -899,7 +900,7 @@ class Container:
 
     def _create_commit_image_config(
         self, parent_image: Image, image_diff: SnapshotDiff
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         config = _get_value(parent_image.config, "config", "Config")
         root_fs = _get_value(parent_image.config, "rootfs", "RootFS")
         layers = _get_value(root_fs, "diff_ids", "Diff_ids")

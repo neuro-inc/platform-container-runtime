@@ -4,7 +4,7 @@ import logging
 import shlex
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Awaitable, Callable, Optional, Type, TypeVar, cast
+from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
 
 import grpc
 import grpc.aio
@@ -69,7 +69,7 @@ class CriClient:
 
     async def __aexit__(
         self,
-        exc_type: Optional[Type[BaseException]],
+        exc_type: Optional[type[BaseException]],
         exc_value: Optional[BaseException],
         traceback: Optional[TracebackType],
     ) -> None:

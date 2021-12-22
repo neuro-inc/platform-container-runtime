@@ -1,8 +1,9 @@
 import asyncio
 import json
 import logging
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import AsyncExitStack, asynccontextmanager
-from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Optional
 
 import aiohttp
 import aiohttp.web
@@ -221,7 +222,7 @@ def _parse_bool(value: str) -> bool:
     return value.lower() in ("1", "true", "yes")
 
 
-def _serialize_chunk(chunk: Dict[str, Any], encoding: str = "utf-8") -> bytes:
+def _serialize_chunk(chunk: dict[str, Any], encoding: str = "utf-8") -> bytes:
     chunk_str = json.dumps(chunk) + "\r\n"
     return chunk_str.encode(encoding)
 
@@ -247,13 +248,13 @@ async def handle_exceptions(
         return json_response(payload, status=HTTPInternalServerError.status_code)
 
 
-def make_logging_trace_configs() -> List[aiohttp.TraceConfig]:
+def make_logging_trace_configs() -> list[aiohttp.TraceConfig]:
     return [make_request_logging_trace_config()]
 
 
 def make_tracing_trace_configs(
     zipkin: Optional[ZipkinConfig], sentry: Optional[SentryConfig]
-) -> List[aiohttp.TraceConfig]:
+) -> list[aiohttp.TraceConfig]:
     trace_configs = []
 
     if zipkin:
@@ -296,7 +297,7 @@ async def create_runtime_client(
     os: str,
     architecture: str,
     container_runtime_version: str,
-    trace_configs: Optional[List[aiohttp.TraceConfig]] = None,
+    trace_configs: Optional[list[aiohttp.TraceConfig]] = None,
 ) -> AsyncIterator[RuntimeClient]:
     logger.info("Initializing runtime client")
 

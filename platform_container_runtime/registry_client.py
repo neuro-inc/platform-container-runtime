@@ -1,7 +1,8 @@
 import abc
 import json
 import logging
-from typing import Any, AsyncIterator, Dict, Optional, Tuple, Union
+from collections.abc import AsyncIterator
+from typing import Any, Optional, Union
 
 import aiohttp
 import aiohttp.hdrs
@@ -40,7 +41,7 @@ class V2Endpoints:
         else:
             self._url = URL.build(scheme="https", host=host, port=port)
 
-    def _split_server(self, server: str) -> Tuple[str, Optional[int]]:
+    def _split_server(self, server: str) -> tuple[str, Optional[int]]:
         parts = server.split(":")
         if len(parts) == 1:
             return parts[0], None
@@ -68,7 +69,7 @@ class RegistryClient:
     def __init__(self, session: aiohttp.ClientSession) -> None:
         self._session = session
 
-    def _get_auth_header(self, auth: Optional[Auth]) -> Dict[str, str]:
+    def _get_auth_header(self, auth: Optional[Auth]) -> dict[str, str]:
         return {aiohttp.hdrs.AUTHORIZATION: auth.header} if auth else {}
 
     async def get_version(self, server: str, auth: Optional[Auth] = None) -> str:
@@ -129,7 +130,7 @@ class RegistryClient:
         name: str,
         ref: str,
         media_type: str,
-        manifest: Dict[str, Any],
+        manifest: dict[str, Any],
         auth: Optional[Auth] = None,
     ) -> None:
         endpoints = V2Endpoints(server)
