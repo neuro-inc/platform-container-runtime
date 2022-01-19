@@ -17,8 +17,6 @@ from platform_container_runtime.config import Config
 from .conftest import create_local_app_server
 from .conftest_kube import get_pod, get_service_url, run
 
-pytestmark = pytest.mark.asyncio
-
 
 @dataclass(frozen=True)
 class ApiEndpoints:

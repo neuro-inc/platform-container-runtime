@@ -1,8 +1,4 @@
-import pytest
-
 from platform_container_runtime.kube_client import KubeClient
-
-pytestmark = pytest.mark.asyncio
 
 
 class TestKubeClient:
