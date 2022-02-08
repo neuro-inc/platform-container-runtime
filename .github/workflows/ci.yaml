@@ -125,45 +125,23 @@ jobs:
         file: .coverage-integration.xml
         flags: integration
         name: codecov-integration
-  deploy_dev:
-    name: Deploy to dev
-    environment: dev
-    runs-on: ubuntu-latest
+
+  release:
+    name: Create release
     needs: test_integration
-    concurrency: deploy_dev
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    env:
-      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-      AWS_REGION: us-east-1
-      CLUSTER_NAME: aws-dev
-      HELM_ENV: dev
-      IMAGE_REGISTRY: aws
-    steps:
-    - name: Checkout commit
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - name: Install python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9.9
-    - name: Install Helm
-      uses: azure/setup-helm@v1
-      with:
-        version: v3.7.0
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
-    - name: Login to AWS ECR
-      uses: aws-actions/amazon-ecr-login@v1
-    - name: Set image tag
-      run: echo "IMAGE_TAG=$GITHUB_SHA" >> $GITHUB_ENV
-    - name: Push image to registry
-      run: make docker_push
-    - name: Update kube config
-      run: aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
-    - name: Deploy to kubernetes
-      run: make helm_deploy
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    uses: neuro-inc/reuse/.github/workflows/release-service.yaml@v0.0.24
+    with:
+      image: platformcontainerruntime
+      helm_charts: platform-container-runtime
+
+  deploy_dev:
+    name: Deploy on dev
+    needs: release
+    uses: neuro-inc/reuse/.github/workflows/deploy-dev.yaml@v0.0.24
+    with:
+      helm_charts: platform-container-runtime
+      version: ${{ needs.release.outputs.version }}
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
