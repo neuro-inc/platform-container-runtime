@@ -68,7 +68,7 @@ async def api_minikube() -> ApiEndpoints:
 async def receive_tty_prompt(
     ws: aiohttp.ClientWebSocketResponse, timeout: float = 5
 ) -> bytes:
-    ansi_re = re.compile(br"\033\[[;?0-9]*[a-zA-Z]")
+    ansi_re = re.compile(rb"\033\[[;?0-9]*[a-zA-Z]")
 
     try:
         ret: bytes = b""
@@ -90,7 +90,7 @@ async def receive_tty_prompt(
 async def receive_tty_bytes(
     ws: aiohttp.ClientWebSocketResponse, timeout: float = 5
 ) -> bytes:
-    ansi_re = re.compile(br"\033\[[;?0-9]*[a-zA-Z]")
+    ansi_re = re.compile(rb"\033\[[;?0-9]*[a-zA-Z]")
     data = await ws.receive_bytes(timeout=timeout)
     return ansi_re.sub(b"", data)
 
