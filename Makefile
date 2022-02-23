@@ -24,9 +24,7 @@ endif
 test_unit:
 	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-unit.xml tests/unit
 
-test_integration: docker_build
-	docker tag platformcontainerruntime:latest localhost/platformcontainerruntime:latest
-	minikube image load localhost/platformcontainerruntime:latest
+test_integration: minikube_image_load
 	echo tests/integration/k8s/* | xargs -n 1 kubectl --context minikube apply -f
 
 	export CRI_ADDRESS=$$(minikube service cri --url | sed -e "s/^http:\/\///"); \
@@ -38,10 +36,14 @@ test_integration: docker_build
 	export SVC_ADDRESS=$$(minikube service platform-container-runtime --url | sed -e "s/^http:\/\///"); \
 	$(WAIT_FOR_IT) $$SVC_ADDRESS -- echo "service is up"
 
-	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration
+	pytest -vv tests/integration
 
 docker_build:
 	rm -rf build dist
 	pip install -U build
 	python -m build
 	docker build -t platformcontainerruntime:latest .
+
+minikube_image_load: docker_build
+	docker tag platformcontainerruntime:latest localhost/platformcontainerruntime:latest
+	minikube image load localhost/platformcontainerruntime:latest
