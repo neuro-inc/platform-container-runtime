@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import asyncio
 import enum
 import hashlib
 import json
 import logging
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Union
+from typing import Any
 
 import grpc.aio
 from docker_image.reference import Reference
@@ -82,12 +84,12 @@ class Descriptor:
     size: int
 
     @classmethod
-    def from_data(cls, media_type: str, data: dict[str, Any]) -> "Descriptor":
+    def from_data(cls, media_type: str, data: dict[str, Any]) -> Descriptor:
         dump = json.dumps(data).encode()
         return cls(media_type=media_type, digest=_create_digest(dump), size=len(dump))
 
     @classmethod
-    def parse(cls, content: dict[str, Any]) -> "Descriptor":
+    def parse(cls, content: dict[str, Any]) -> Descriptor:
         return cls(
             media_type=content["mediaType"],
             digest=content["digest"],
@@ -118,7 +120,7 @@ class Clients:
     @classmethod
     def create(
         cls, channel: grpc.aio.Channel, registry_client: RegistryClient
-    ) -> "Clients":
+    ) -> Clients:
         return cls(
             leases=LeasesStub(channel),
             containers=ContainersStub(channel),
@@ -133,7 +135,7 @@ class Clients:
 
 class Metadata(grpc.aio.Metadata):
     def __init__(
-        self, *, namespace: Optional[str] = None, lease_id: Optional[str] = None
+        self, *, namespace: str | None = None, lease_id: str | None = None
     ) -> None:
         super().__init__()
         if namespace:
@@ -173,6 +175,7 @@ class Lease:
 class SnapshotDiff:
     id: str
     descriptor: Descriptor
+    parent_key: str | None = None
 
 
 class Snapshot:
@@ -182,11 +185,13 @@ class Snapshot:
         namespace: str,
         snapshotter: str,
         snapshot_key: str,
+        is_active: bool = False,
     ) -> None:
         self._clients = clients
         self._namespace = namespace
         self._snapshotter = snapshotter
         self._snapshot_key = snapshot_key
+        self._is_active = is_active
 
     @property
     def snapshotter(self) -> str:
@@ -197,34 +202,15 @@ class Snapshot:
         return self._snapshot_key
 
     @trace
-    async def get_diff(self, lease_id: Optional[str] = None) -> SnapshotDiff:
-        resp = await self._clients.snapshots.Stat(
-            StatSnapshotRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
-            metadata=Metadata(namespace=self._namespace),
-        )
-        lower_key = f"{self._snapshot_key}-parent-view"
-        resp = await self._clients.snapshots.View(
-            ViewSnapshotRequest(
-                snapshotter=self._snapshotter,
-                key=lower_key,
-                parent=resp.info.parent,
-            ),
-            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
-        )
-        logger.info("Created parent snapshot vew %r", lower_key)
-        lower_mounts = resp.mounts
-        resp = await self._clients.snapshots.Mounts(
-            MountsRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
-            metadata=Metadata(namespace=self._namespace),
-        )
-        upper_mounts = resp.mounts
-        await self._clients.snapshots.Remove(
-            RemoveSnapshotRequest(snapshotter=self._snapshotter, key=lower_key),
-            metadata=Metadata(namespace=self._namespace),
-        )
-        logger.info("Removed parent snapshot vew %r", lower_key)
+    async def get_diff(self, *, lease_id: str | None = None) -> SnapshotDiff:
+        parent_snapshot = await self._get_parent()
+        if parent_snapshot:
+            left_mounts = await parent_snapshot._get_mounts(lease_id=lease_id)
+        else:
+            left_mounts = None
+        right_mounts = await self._get_mounts(lease_id=lease_id)
         resp = await self._clients.diff.Diff(
-            DiffRequest(left=lower_mounts, right=upper_mounts),
+            DiffRequest(left=left_mounts, right=right_mounts),
             metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
         )
         desc = Descriptor(
@@ -238,8 +224,58 @@ class Snapshot:
             metadata=Metadata(namespace=self._namespace),
         )
         return SnapshotDiff(
-            id=resp.info.labels["containerd.io/uncompressed"], descriptor=desc
+            id=resp.info.labels["containerd.io/uncompressed"],
+            descriptor=desc,
+            parent_key=parent_snapshot.snapshot_key if parent_snapshot else None,
         )
+
+    @trace
+    async def _get_parent(self) -> Snapshot | None:
+        resp = await self._clients.snapshots.Stat(
+            StatSnapshotRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
+            metadata=Metadata(namespace=self._namespace),
+        )
+        if not resp.info.parent:
+            return None
+        return self.__class__(
+            clients=self._clients,
+            namespace=self._namespace,
+            snapshotter=self._snapshotter,
+            snapshot_key=resp.info.parent,
+        )
+
+    @trace
+    async def _get_mounts(self, *, lease_id: str | None = None) -> list[Any]:
+        if self._is_active:
+            resp = await self._clients.snapshots.Mounts(
+                MountsRequest(snapshotter=self._snapshotter, key=self._snapshot_key),
+                metadata=Metadata(namespace=self._namespace),
+            )
+            return resp.mounts
+        return await self._get_committed_snapshot_mounts(
+            self._snapshot_key, lease_id=lease_id
+        )
+
+    @trace
+    async def _get_committed_snapshot_mounts(
+        self, snapshot_key: str, *, lease_id: str | None = None
+    ) -> list[Any]:
+        view_key = f"{self._snapshot_key}-parent-view"
+        resp = await self._clients.snapshots.View(
+            ViewSnapshotRequest(
+                snapshotter=self._snapshotter,
+                key=view_key,
+                parent=snapshot_key,
+            ),
+            metadata=Metadata(namespace=self._namespace, lease_id=lease_id),
+        )
+        logger.info("Created parent snapshot view %r", view_key)
+        await self._clients.snapshots.Remove(
+            RemoveSnapshotRequest(snapshotter=self._snapshotter, key=view_key),
+            metadata=Metadata(namespace=self._namespace),
+        )
+        logger.info("Removed parent snapshot view %r", view_key)
+        return resp.mounts
 
 
 class ImageProgess:
@@ -267,7 +303,8 @@ class ImageProgess:
 
     def step(self, progress: int) -> None:
         self._current += progress
-        self._next.set()
+        if progress:
+            self._next.set()
 
     def stop(self) -> None:
         if self._stopped:
@@ -317,6 +354,7 @@ class ImageManifest(dict[str, Any]):
     async def _read_manifest(
         cls, clients: Clients, namespace: str, architecture: str, os: str, digest: str
     ) -> dict[str, Any]:
+        logger.info("Reading manifest %r", digest)
         while True:
             data: list[bytes] = []
             async for resp in clients.content.Read(
@@ -329,7 +367,7 @@ class ImageManifest(dict[str, Any]):
             ):
                 data.append(resp.data)
 
-            logger.info("Read content %s", digest)
+            logger.info("Read content %r", digest)
             content = json.loads(b"".join(data))
             media_type = _get_value(content, "mediaType", "MediaType")
 
@@ -337,7 +375,13 @@ class ImageManifest(dict[str, Any]):
                 MediaType.DOCKER_MANIFEST_V2,
                 MediaType.OCI_IMAGE_MANIFEST_V1,
             ):
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(
+                        "Reading image manifest:\n%s", json.dumps(content, indent=2)
+                    )
                 return content
+
+            logger.debug("Searching for '%s/%s' manifest", architecture, os)
 
             if media_type in (
                 MediaType.DOCKER_MANIFEST_LIST_V2,
@@ -345,13 +389,17 @@ class ImageManifest(dict[str, Any]):
             ):
                 for m in content["manifests"]:
                     platform = _get_value(m, "platform", "Platform")
-                    os = _get_value(platform, "os", "Os")
-                    arch = _get_value(platform, "architecture", "Architecture")
-                    if os.lower() == os and arch.lower() == architecture:
+                    manifest_os = _get_value(platform, "os", "Os")
+                    manifest_arch = _get_value(platform, "architecture", "Architecture")
+                    if (
+                        manifest_os.lower() == os
+                        and manifest_arch.lower() == architecture
+                    ):
                         digest = m["digest"]
                         break
                 else:
-                    raise PlatformNotSupportedError(architecture=arch, os=os)
+                    raise PlatformNotSupportedError(architecture=architecture, os=os)
+                logger.debug("Found '%s/%s' manifest %r", architecture, os, digest)
                 continue
 
             raise MediaTypeNotSupportedError(media_type)
@@ -371,13 +419,17 @@ class ImageManifest(dict[str, Any]):
             metadata=Metadata(namespace=namespace),
         ):
             data.append(resp.data)
-        return json.loads(b"".join(data))
+        content = json.loads(b"".join(data))
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Reading image config:\n%s", json.dumps(content, indent=2))
+        return content
 
     @trace
     async def write(
         self,
-        config_labels: Optional[dict[str, Any]] = None,
-        lease_id: Optional[str] = None,
+        *,
+        config_labels: dict[str, Any] | None = None,
+        lease_id: str | None = None,
     ) -> Descriptor:
         config_desc = Descriptor.from_data(
             MediaType.DOCKER_IMAGE_CONFIG_V1, self.config
@@ -403,12 +455,15 @@ class ImageManifest(dict[str, Any]):
         self,
         content: dict[str, Any],
         desc: Descriptor,
-        lease_id: Optional[str] = None,
+        *,
+        lease_id: str | None = None,
     ) -> None:
-        labels = {"containerd.io/gc.ref.content.0": content["config"]["digest"]}
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Writing image manifest:\n%s", json.dumps(content, indent=2))
+        labels = {"containerd.io/gc.ref.content.config": content["config"]["digest"]}
         for i, layer in enumerate(content["layers"]):
             digest = _get_value(layer, "digest", "Digest")
-            labels[f"containerd.io/gc.ref.content.{i + 1}"] = digest
+            labels[f"containerd.io/gc.ref.content.l.{i}"] = digest
 
         async for resp in self._clients.content.Write(
             [
@@ -434,9 +489,12 @@ class ImageManifest(dict[str, Any]):
         self,
         content: dict[str, Any],
         desc: Descriptor,
-        labels: Optional[dict[str, Any]] = None,
-        lease_id: Optional[str] = None,
+        *,
+        labels: dict[str, Any] | None = None,
+        lease_id: str | None = None,
     ) -> None:
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("Writing image config:\n%s", json.dumps(content, indent=2))
         async for resp in self._clients.content.Write(
             [
                 WriteContentRequest(
@@ -458,8 +516,9 @@ class ImageManifest(dict[str, Any]):
 
     @trace
     async def push(
-        self, server: str, name: str, ref: str, auth: Optional[Auth]
+        self, server: str, name: str, ref: str, auth: Auth | None
     ) -> Descriptor:
+        logger.info("Pushing image '%s/%s:%s' manifest", server, name, ref)
         config_desc = Descriptor.from_data(
             MediaType.DOCKER_IMAGE_CONFIG_V1, self.config
         )
@@ -474,11 +533,12 @@ class ImageManifest(dict[str, Any]):
             data=json.dumps(self.config).encode(),
             auth=auth,
         )
-        logger.info("Pushed image %s/%s:%s config", server, name, ref)
+        logger.info("Pushed image '%s/%s:%s' config", server, name, ref)
         manifest = dict(self)
         manifest["config"] = config_desc.to_primitive()
         manifest_desc = Descriptor.from_data(MediaType.DOCKER_MANIFEST_V2, manifest)
-        logger.info("Manifest:\n%s", json.dumps(manifest, indent=2))
+        if logger.isEnabledFor(logging.INFO):
+            logger.info("Updating manifest:\n%s", json.dumps(manifest, indent=2))
         await self._clients.registry.update_manifest(
             server=server,
             name=name,
@@ -487,7 +547,7 @@ class ImageManifest(dict[str, Any]):
             manifest=manifest,
             auth=auth,
         )
-        logger.info("Pushed image %s/%s:%s manifest", server, name, ref)
+        logger.info("Pushed image '%s/%s:%s' manifest", server, name, ref)
         return manifest_desc
 
 
@@ -520,6 +580,10 @@ class Image:
         diff_ids = _get_value(root_fs, "diff_ids", "Diff_ids")
         return diff_ids
 
+    @property
+    def url(self) -> str:
+        return f"{self._image_server}/{self._image_repo}:{self._image_tag}"
+
     @classmethod
     @trace
     async def read(
@@ -546,8 +610,9 @@ class Image:
     @trace
     async def write(
         self,
-        config_labels: Optional[dict[str, Any]] = None,
-        lease_id: Optional[str] = None,
+        config_labels: dict[str, Any] | None = None,
+        *,
+        lease_id: str | None = None,
     ) -> None:
         manifest_desc = await self._manifest.write(
             config_labels=config_labels, lease_id=lease_id
@@ -581,7 +646,7 @@ class Image:
             raise
 
     @asyncgeneratorcontextmanager
-    async def push(self, auth: Optional[Auth] = None) -> AsyncIterator[dict[str, Any]]:
+    async def push(self, auth: Auth | None = None) -> AsyncIterator[dict[str, Any]]:
         yield self._create_image_progress_step(
             status=(
                 "The push refers to repository "
@@ -592,10 +657,9 @@ class Image:
             self._image_server, auth
         )
         assert registry_api_version == "v2", "Registry API V1 is not supported"
-        for layer_diff_id, layer_desc in zip(self.diff_ids, self.layers):
-            async with self._push_layer(
-                layer_diff_id, Descriptor.parse(layer_desc), auth=auth
-            ) as it:
+        for layer_diff_id, layer in zip(self.diff_ids, self.layers):
+            layer_desc = Descriptor.parse(layer)
+            async with self._push_layer(layer_diff_id, layer_desc, auth=auth) as it:
                 async for progress in it:
                     yield progress
         manifest_desc = await self._manifest.push(
@@ -625,7 +689,7 @@ class Image:
         diff_id: str,
         desc: Descriptor,
         chunk_size: int = 1024 * 1024,  # 1 MB
-        auth: Optional[Auth] = None,
+        auth: Auth | None = None,
     ) -> AsyncIterator[dict[str, Any]]:
         layer_id = self._create_layer_id(diff_id)
         yield self._create_image_progress_step(layer_id=layer_id, status="Preparing")
@@ -639,7 +703,7 @@ class Image:
 
         if layers_exists:
             logger.info(
-                "Image %s layer (%s,%s) already exists",
+                "Image %r layer (%s,%s) already exists",
                 self._name,
                 layer_id,
                 desc.digest,
@@ -650,14 +714,7 @@ class Image:
             )
             return
 
-        yield self._create_image_progress_step(
-            layer_id=layer_id,
-            status="Pushing",
-            current=0,
-            total=desc.size,
-        )
-
-        logger.info("Pushing image %s layer (%s,%s)", self._name, layer_id, desc.digest)
+        logger.info("Pushing image %r layer (%s,%s)", self._name, layer_id, desc.digest)
 
         upload_url = await self._clients.registry.start_blob_upload(
             server=self._image_server, name=self._image_repo, auth=auth
@@ -692,7 +749,7 @@ class Image:
 
         yield self._create_image_progress_step(layer_id=layer_id, status="Pushed")
 
-        logger.info("Pushed image %s layer (%s,%s)", self._name, layer_id, desc.digest)
+        logger.info("Pushed image %r layer (%s,%s)", self._name, layer_id, desc.digest)
 
     async def _push_layer_monolithic(
         self,
@@ -700,7 +757,7 @@ class Image:
         progress: ImageProgess,
         desc: Descriptor,
         chunk_size: int,
-        auth: Optional[Auth],
+        auth: Auth | None,
     ) -> None:
         try:
             async with self._read_layer_chunked(desc, chunk_size, progress) as chunks:
@@ -757,9 +814,9 @@ class Image:
         self,
         status: str = "",
         layer_id: str = "",
-        aux: Optional[dict[str, Any]] = None,
-        current: Optional[float] = None,
-        total: Optional[float] = None,
+        aux: dict[str, Any] | None = None,
+        current: float | None = None,
+        total: float | None = None,
     ) -> dict[str, Any]:
         result: dict[str, Any] = {}
         if status:
@@ -857,17 +914,16 @@ class Container:
                     architecture=self._architecture,
                     os=self._os,
                 )
-                image_diff = await self._snapshot.get_diff(lease_id=lease_id)
-                logger.info("Created new image layer %r", image_diff.descriptor)
+                snapshot_diffs = await self._get_snapshot_diffs(lease_id=lease_id)
                 new_image_manifest = ImageManifest(
                     self._clients,
                     namespace=self._namespace,
                     content=self._create_commit_image_manifest(
-                        parent_image, image_diff
+                        parent_image, snapshot_diffs
                     ),
                 )
                 new_image_diff_ids_digest = _create_digest_chain(
-                    *new_image_manifest.config["rootfs"]["diff_ids"]
+                    *(d.id for d in snapshot_diffs)
                 )
                 new_image = Image(
                     self._clients,
@@ -887,29 +943,47 @@ class Container:
             if paused:
                 await self.resume()
 
+    async def _get_snapshot_diffs(
+        self, *, lease_id: str | None = None
+    ) -> list[SnapshotDiff]:
+        result = []
+        snapshot = self._snapshot
+        while snapshot:
+            snapshot_diff = await snapshot.get_diff(lease_id=lease_id)
+            result.append(snapshot_diff)
+            logger.info("Created image layer %r", snapshot_diff.descriptor)
+            if not snapshot_diff.parent_key:
+                break
+            snapshot = Snapshot(
+                clients=self._clients,
+                namespace=self._namespace,
+                snapshotter=self.snapshotter,
+                snapshot_key=snapshot_diff.parent_key,
+            )
+        result.reverse()
+        return result
+
     def _create_commit_image_manifest(
-        self, parent_image: Image, image_diff: SnapshotDiff
+        self, parent_image: Image, snapshot_diffs: Sequence[SnapshotDiff]
     ) -> dict[str, Any]:
         return {
             "schemaVersion": 2,
             "mediaType": MediaType.DOCKER_MANIFEST_V2,
-            "config": self._create_commit_image_config(parent_image, image_diff),
-            "layers": parent_image.layers + [image_diff.descriptor.to_primitive()],
+            "config": self._create_commit_image_config(parent_image, snapshot_diffs),
+            "layers": [d.descriptor.to_primitive() for d in snapshot_diffs],
         }
 
     def _create_commit_image_config(
-        self, parent_image: Image, image_diff: SnapshotDiff
+        self, parent_image: Image, snapshot_diffs: Sequence[SnapshotDiff]
     ) -> dict[str, Any]:
         config = _get_value(parent_image.config, "config", "Config")
-        root_fs = _get_value(parent_image.config, "rootfs", "RootFS")
-        layers = _get_value(root_fs, "diff_ids", "Diff_ids")
         return {
             "architecture": self._architecture,
             "os": self._os,
             "config": config,
             "rootfs": {
                 "type": "layers",
-                "diff_ids": layers + [image_diff.id],
+                "diff_ids": [d.id for d in snapshot_diffs],
             },
             "author": "",
             "created": datetime.now(timezone.utc).isoformat(),
@@ -949,6 +1023,7 @@ class ContainerdClient:
                     namespace=self._namespace,
                     snapshotter=resp.container.snapshotter,
                     snapshot_key=resp.container.snapshot_key,
+                    is_active=True,
                 ),
             )
         except grpc.aio.AioRpcError as ex:
@@ -982,13 +1057,13 @@ def _get_value(d: Mapping[str, Any], *key: str) -> Any:
     raise ValueError(f"Dictionary has no keys {key!r}")
 
 
-def _create_digest(value: Union[str, bytes]) -> str:
+def _create_digest(value: str | bytes) -> str:
     data = value.encode() if isinstance(value, str) else value
     digest = hashlib.sha256(data).hexdigest()
     return "sha256:" + digest
 
 
-def _create_digest_chain(*data: Union[str, bytes]) -> str:
+def _create_digest_chain(*data: str | bytes) -> str:
     data0 = data[0].encode() if isinstance(data[0], str) else data[0]
     if len(data) == 1:
         return data0.decode()

@@ -559,4 +559,8 @@ class TestApi:
                 assert chunks[2].get("status") == msg, debug
 
                 error = chunks[3]["error"]
-                assert "no such host" in error or "failure in name resolution" in error
+                assert (
+                    "no such host" in error
+                    or "failure in name resolution" in error
+                    or "Name or service not known" in error
+                )
