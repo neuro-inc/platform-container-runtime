@@ -9,14 +9,14 @@ repos:
   hooks:
   - id: yesqa
 - repo: https://github.com/sondrelg/pep585-upgrade
-  rev: v1
+  rev: v1.0
   hooks:
   - id: upgrade-type-hints
     args:
     - --futures=true
     exclude: "^github|^k8s|^containerd"
 - repo: https://github.com/Zac-HD/shed
-  rev: 0.9.1
+  rev: 0.9.4
   hooks:
   - id: shed
     args:
@@ -66,7 +66,7 @@ repos:
 #     - -ignore
 #     - 'SC1004:'
 - repo: https://github.com/sirosen/check-jsonschema
-  rev: 0.13.0
+  rev: 0.14.2
   hooks:
   - id: check-github-actions
   - id: check-github-workflows
