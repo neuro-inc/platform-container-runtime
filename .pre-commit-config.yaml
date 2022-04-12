@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: 'v4.1.0'
+  rev: 'v4.2.0'
   hooks:
   - id: check-merge-conflict
     exclude: "rst$"
@@ -33,7 +33,7 @@ repos:
   - id: flake8
     exclude: "^github|^k8s|^containerd"
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: 'v4.1.0'
+  rev: 'v4.2.0'
   hooks:
   - id: check-case-conflict
   - id: check-json
@@ -48,7 +48,7 @@ repos:
   - id: debug-statements
 # Another entry is required to apply file-contents-sorter to another file
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: 'v4.1.0'
+  rev: 'v4.2.0'
   hooks:
   - id: file-contents-sorter
     files: |
