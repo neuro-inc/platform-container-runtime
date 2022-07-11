@@ -2,9 +2,10 @@ import enum
 import functools
 import logging
 import shlex
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Awaitable, Callable, Optional, TypeVar, cast
+from typing import Any, Optional, TypeVar, cast
 
 import grpc
 import grpc.aio
