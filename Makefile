@@ -5,11 +5,10 @@ WAIT_FOR_IT = curl -s $(WAIT_FOR_IT_URL) | bash -s --
 
 setup:
 	pip install -U pip
+	pip install -e .[build-tools]
+	scripts/genpb2.sh
 	pip install -e .[dev]
 	pre-commit install
-
-setup_pb2:
-	scripts/genpb2.sh
 
 lint: format
 	mypy platform_container_runtime tests
