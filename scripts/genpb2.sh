@@ -35,7 +35,7 @@ function _protobuf_generate_client {
         cd $TARGET_DIR
         python3 -m grpc.tools.protoc \
             -I="$GOPATH" \
-            --python_out=. --grpc_python_out=. \
+            --python_out=. --grpc_python_out=. --pyi_out=. \
             $PROTOBUF_DIR/gogoproto/*.proto
     )
 
@@ -54,14 +54,15 @@ function _cri_generate_client {
     rm -rf "$TARGET_DIR/k8s.io"
     rm -rf "$TARGET_DIR/k8s/io/cri_api"
 
-    git clone --depth 1 https://github.com/kubernetes/cri-api "$CRI_DIR"
+    git clone -c advice.detachedHead=false --branch "release-1.22" --depth 1 \
+        https://github.com/kubernetes/cri-api "$CRI_DIR"
 
     echo "generating CRI modules..."
     (
         cd $TARGET_DIR
         python3 -m grpc.tools.protoc \
             -I="$GOPATH" \
-            --python_out=. --grpc_python_out=. \
+            --python_out=. --grpc_python_out=. --pyi_out=. \
             $CRI_DIR/pkg/apis/runtime/**/*.proto
     )
 
@@ -73,7 +74,7 @@ function _cri_generate_client {
     done
 }
 
-function _containerd_update_rotos {
+function _containerd_update_protos {
     # Make sure that the directory path to the source .proto files always has
     # a trailing "/". Same for the destination directory.
     DIR=$1
@@ -122,10 +123,10 @@ function _containerd_generate_client () {
     git clone -c advice.detachedHead=false --branch "v$API_VERSION.0" --depth 1 \
         https://github.com/containerd/containerd.git "$CONTAINERD_DIR"
 
-    _containerd_update_rotos "$CONTAINERD_DIR/api/services" "$PROTO_DIR" "containerd/services"
-    _containerd_update_rotos "$CONTAINERD_DIR/api/types" "$PROTO_DIR" "containerd/types"
-    _containerd_update_rotos "$CONTAINERD_DIR/api/events" "$PROTO_DIR" "containerd/events"
-    _containerd_update_rotos "$CONTAINERD_DIR/protobuf" "$PROTO_DIR" "containerd/protobuf"
+    _containerd_update_protos "$CONTAINERD_DIR/api/services" "$PROTO_DIR" "containerd/services"
+    _containerd_update_protos "$CONTAINERD_DIR/api/types" "$PROTO_DIR" "containerd/types"
+    _containerd_update_protos "$CONTAINERD_DIR/api/events" "$PROTO_DIR" "containerd/events"
+    _containerd_update_protos "$CONTAINERD_DIR/protobuf" "$PROTO_DIR" "containerd/protobuf"
     # We need the google/rpc .proto definitions in order to compile everything,
     # but we don't want to get packages for them generated, as these are to be
     # supplied by the existing pip grpcio and protobuf packages instead.
@@ -137,7 +138,7 @@ function _containerd_generate_client () {
         python3 -m grpc.tools.protoc \
             -I="$PROTO_DIR" \
             -I="$GOPATH" \
-            --python_out=. --grpc_python_out=. \
+            --python_out=. --grpc_python_out=. --pyi_out=. \
             $PROTO_DIR/containerd/**/*.proto
     )
 

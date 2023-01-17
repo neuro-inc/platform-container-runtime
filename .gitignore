@@ -132,6 +132,9 @@ dmypy.json
 # VSCode
 .vscode/
 
+containerd/
+github/
+k8s/
 scripts/temp/
 
 temp_deploy/
