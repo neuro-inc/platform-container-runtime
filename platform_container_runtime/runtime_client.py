@@ -102,7 +102,7 @@ class RuntimeClient:
         image_ref = ImageReference.parse(image)
 
         if self._docker_client:
-            async for progress in self._docker_client.images.push(
+            async for progress in self._docker_client.images.push(  # type: ignore
                 image_ref.repository, tag=image_ref.tag, auth=auth, stream=True
             ):
                 yield progress
