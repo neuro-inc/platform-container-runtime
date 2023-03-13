@@ -101,3 +101,6 @@ spec:
         volumeMounts:
         - name: host-run
           mountPath: /hrun
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
