@@ -36,6 +36,17 @@ spec:
       - name: host-run
         hostPath:
           path: /var/run
+      - name: kube-api-data
+        projected:
+          sources:
+          - serviceAccountToken:
+              expirationSeconds: 3600
+              path: token
+          - configMap:
+              name: kube-root-ca.crt
+              items:
+              - key: ca.crt
+                path: ca.crt
       containers:
       - name: platform-container-runtime
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
@@ -81,9 +92,9 @@ spec:
         - name: NP_KUBE_AUTH_TYPE
           value: token
         - name: NP_KUBE_CERT_AUTHORITY_PATH
-          value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          value: {{ include "platformContainerRuntime.kubeAuthMountRoot" . }}/ca.crt
         - name: NP_KUBE_TOKEN_PATH
-          value: /var/run/secrets/kubernetes.io/serviceaccount/token
+          value: {{ include "platformContainerRuntime.kubeAuthMountRoot" . }}/token
         {{- if .Values.zipkin }}
         - name: NP_ZIPKIN_URL
           value: {{ .Values.zipkin.url }}
@@ -101,6 +112,9 @@ spec:
         volumeMounts:
         - name: host-run
           mountPath: /hrun
+        - name: kube-api-token
+          mountPath: {{ include "platformBuckets.kubeAuthMountRoot" . }}
+          readOnly: true
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}

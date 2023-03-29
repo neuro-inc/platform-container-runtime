@@ -25,3 +25,7 @@ chart: {{ include "platformContainerRuntime.chart" . }}
 heritage: {{ .Release.Service | quote }}
 release: {{ .Release.Name | quote }}
 {{- end -}}
+
+{{- define "platformContainerRuntime.kubeAuthMountRoot" -}}
+{{- printf "/var/run/secrets/kubernetes.io/serviceaccount" -}}
+{{- end -}}
