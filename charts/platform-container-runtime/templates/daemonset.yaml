@@ -112,8 +112,8 @@ spec:
         volumeMounts:
         - name: host-run
           mountPath: /hrun
-        - name: kube-api-token
-          mountPath: {{ include "platformBuckets.kubeAuthMountRoot" . }}
+        - name: kube-api-data
+          mountPath: {{ include "platformContainerRuntime.kubeAuthMountRoot" . }}
           readOnly: true
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
