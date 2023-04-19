@@ -42,6 +42,13 @@ jobs:
         make lint
     - name: Run unit tests
       run: make test_unit
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: .coverage-unit.xml
+        flags: unit
+        name: codecov-unit
     - name: Build Docker image
       run: make docker_build
       env:
@@ -105,6 +112,13 @@ jobs:
         sudo find /root/.minikube -name id_rsa -exec chmod 600 {} \;
     - name: Run integration tests
       run: make test_integration
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: .coverage-integration.xml
+        flags: integration
+        name: codecov-integration
 
   release:
     name: Create release

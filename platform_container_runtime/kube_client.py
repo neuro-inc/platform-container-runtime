@@ -117,11 +117,16 @@ class KubeClient:
         self._token = None
         self._client = await self._create_http_client()
 
+    async def init_if_needed(self) -> None:
+        if not self._client or self._client.closed:
+            await self._reload_http_client()
+
     async def aclose(self) -> None:
         assert self._client
         await self._client.close()
 
     async def request(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        await self.init_if_needed()
         assert self._client, "client is not intialized"
         doing_retry = kwargs.pop("doing_retry", False)
 

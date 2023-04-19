@@ -35,7 +35,7 @@ test_integration: minikube_image_load
 	export SVC_ADDRESS=$$(minikube service platform-container-runtime --url | sed -e "s/^http:\/\///"); \
 	$(WAIT_FOR_IT) $$SVC_ADDRESS -- echo "service is up"
 
-	pytest -vv tests/integration
+	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration
 
 docker_build:
 	rm -rf build dist
