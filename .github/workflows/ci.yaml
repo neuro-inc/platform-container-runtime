@@ -106,7 +106,8 @@ jobs:
           --force="true" \
           --driver="$MINIKUBE_DRIVER" \
           --kubernetes-version="$MINIKUBE_K8S_VERSION" \
-          --container-runtime="$MINIKUBE_CONTAINER_RUNTIME"
+          --container-runtime="$MINIKUBE_CONTAINER_RUNTIME" \
+          --addons="registry"
         sudo chown -R $USER $HOME/.kube /root/.minikube
         sudo chmod -R a+r $HOME/.kube /root/.minikube
         sudo find /root/.minikube -name id_rsa -exec chmod 600 {} \;
