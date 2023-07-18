@@ -21,8 +21,6 @@ jobs:
     steps:
     - name: Checkout commit
       uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
     - name: Install python
       uses: actions/setup-python@v2
       with:
@@ -76,13 +74,11 @@ jobs:
           driver: docker
     env:
       MINIKUBE_DRIVER: ${{ matrix.driver }}
-      MINIKUBE_K8S_VERSION: 1.20.9
+      MINIKUBE_K8S_VERSION: 1.23.6
       MINIKUBE_CONTAINER_RUNTIME: ${{ matrix.container_runtime }}
     steps:
     - name: Checkout commit
       uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
     - name: Install python
       uses: actions/setup-python@v2
       with:
