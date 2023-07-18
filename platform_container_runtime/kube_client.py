@@ -96,21 +96,15 @@ class KubeClient:
             force_close=self._config.conn_force_close,
             ssl=self._create_ssl_context(),
         )
-        if self._config.auth_type == KubeClientAuthType.TOKEN:
-            token = self._token
-            if not token:
-                assert self._config.token_path is not None
-                token = Path(self._config.token_path).read_text()
-            headers = {"Authorization": "Bearer " + token}
-        else:
-            headers = {}
+        if self._config.token_path:
+            self._token = Path(self._config.token_path).read_text()
+            self._token_updater_task = asyncio.create_task(self._start_token_updater())
         timeout = aiohttp.ClientTimeout(
             connect=self._config.conn_timeout_s, total=self._config.read_timeout_s
         )
         self._client = aiohttp.ClientSession(
             connector=connector,
             timeout=timeout,
-            headers=headers,
             trace_configs=self._trace_configs,
         )
 
