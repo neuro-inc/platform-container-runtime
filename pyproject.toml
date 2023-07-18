@@ -20,3 +20,4 @@ exclude = '''
 [tool.isort]
 profile = "black"
 combine_as_imports = true
+known_third_party = ["containerd"]
