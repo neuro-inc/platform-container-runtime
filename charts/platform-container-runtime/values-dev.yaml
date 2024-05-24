@@ -11,4 +11,4 @@ sentry:
   clusterName: dev
   sampleRate: 0.01
 
-priorityClassName: ""
+priorityClassName: "platform-services"
