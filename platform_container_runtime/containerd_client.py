@@ -334,7 +334,7 @@ class ImageManifest(dict[str, Any]):
         architecture: str,
         os: str,
         descriptor: Descriptor,
-    ) -> "ImageManifest":
+    ) -> ImageManifest:
         manifest = await cls._read_manifest(
             clients,
             namespace=namespace,
@@ -588,7 +588,7 @@ class Image:
     @trace
     async def read(
         cls, clients: Clients, namespace: str, name: str, architecture: str, os: str
-    ) -> "Image":
+    ) -> Image:
         resp = await clients.images.Get(
             GetImageRequest(name=name),
             metadata=Metadata(namespace=namespace),

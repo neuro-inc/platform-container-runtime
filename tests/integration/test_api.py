@@ -563,4 +563,5 @@ class TestApi:
                     "no such host" in error
                     or "failure in name resolution" in error
                     or "Name or service not known" in error
+                    or "server misbehaving" in error
                 )

@@ -52,7 +52,7 @@ def _handle_errors(func: T) -> T:
 class CriClient:
     def __init__(self, channel: grpc.aio.Channel) -> None:
         self._channel = channel
-        self._cri_client: Optional["CriClient"] = None
+        self._cri_client: Optional[CriClient] = None
 
     async def __aenter__(self) -> "CriClient":
         try:
