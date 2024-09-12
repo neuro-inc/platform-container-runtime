@@ -120,7 +120,7 @@ jobs:
     name: Create release
     needs: test_integration
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    uses: neuro-inc/reuse/.github/workflows/release-service.yaml@v0.0.31
+    uses: neuro-inc/reuse/.github/workflows/release-service.yaml@v24.9.0
     with:
       image: platformcontainerruntime
       helm_charts: platform-container-runtime
@@ -128,7 +128,7 @@ jobs:
   deploy_dev:
     name: Deploy on dev
     needs: release
-    uses: neuro-inc/reuse/.github/workflows/deploy-dev.yaml@v0.0.31
+    uses: neuro-inc/reuse/.github/workflows/deploy-dev.yaml@v24.9.0
     with:
       helm_charts: platform-container-runtime
       version: ${{ needs.release.outputs.version }}
