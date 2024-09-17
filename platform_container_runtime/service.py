@@ -178,6 +178,9 @@ class Service:
         return Stream(self._streaming_client, url=url)
 
     async def kill(self, container_id: str, timeout_s: int = 0) -> None:
+        # NOTE: For Containerd the StopContainer RPC is idempotent, and doesn't
+        # raise an error if the container has already been stopped.
+        # For Docker it raises an error.
         await self._cri_client.stop_container(
             container_id=container_id,
             timeout_s=timeout_s,

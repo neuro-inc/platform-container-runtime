@@ -3,10 +3,8 @@ name: CI
 on:
   push:
     branches: [master]
-    tags: [v*.*, v*.*.*]
+    tags: [v*]
   pull_request:
-    branches: [master]
-  pull_request_target:
     branches: [master]
   schedule:
   - cron: 0 4 * * *
@@ -15,14 +13,11 @@ jobs:
   test:
     name: Run tests
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]') ||
-      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
     steps:
     - name: Checkout commit
       uses: actions/checkout@v2
     - name: Install python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.9
     - name: Cache packages
