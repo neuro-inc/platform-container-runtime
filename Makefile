@@ -27,6 +27,8 @@ test_integration: minikube_image_load
 
 	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration
 
+	kubectl --context minikube get po -o name | xargs -n 1 kubectl --context minikube logs
+
 docker_build:
 	rm -rf build dist
 	pip install -U build
