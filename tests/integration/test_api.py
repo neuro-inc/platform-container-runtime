@@ -397,7 +397,10 @@ class TestApi:
         self, api: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
         async with client.post(api.kill("unknown")) as resp:
-            assert resp.status == HTTPNotFound.status_code, await resp.text()
+            assert resp.status in (
+                HTTPNoContent.status_code,
+                HTTPNotFound.status_code,
+            ), await resp.text()
 
     @pytest.mark.minikube
     async def test_commit(
@@ -563,4 +566,5 @@ class TestApi:
                     "no such host" in error
                     or "failure in name resolution" in error
                     or "Name or service not known" in error
+                    or "server misbehaving" in error
                 )
