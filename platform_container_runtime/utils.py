@@ -22,7 +22,7 @@ else:
 
 
 def asyncgeneratorcontextmanager(
-    func: Callable[..., T_co]
+    func: Callable[..., T_co],
 ) -> Callable[..., AbstractAsyncContextManager[T_co]]:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> AbstractAsyncContextManager[T_co]:
