@@ -78,7 +78,7 @@ class RegistryClient:
         ) as resp:
             if resp.status == 404:
                 return "v1"
-            resp.raise_for_status()
+            await self._raise_for_status(resp)
             return "v2"
 
     async def check_blob(
@@ -90,7 +90,7 @@ class RegistryClient:
         ) as resp:
             if resp.status == 404:
                 return False
-            resp.raise_for_status()
+            await self._raise_for_status(resp)
             return True
 
     async def start_blob_upload(
@@ -100,7 +100,7 @@ class RegistryClient:
         async with self._session.post(
             endpoints.blob_uploads(name), headers=self._get_auth_header(auth)
         ) as resp:
-            resp.raise_for_status()
+            await self._raise_for_status(resp)
             return URL(resp.headers[aiohttp.hdrs.LOCATION])
 
     async def upload_blob(
@@ -121,7 +121,7 @@ class RegistryClient:
             },
             data=data,
         ) as resp:
-            resp.raise_for_status()
+            await self._raise_for_status(resp)
 
     async def update_manifest(
         self,
@@ -141,4 +141,13 @@ class RegistryClient:
             },
             data=json.dumps(manifest),
         ) as resp:
-            resp.raise_for_status()
+            await self._raise_for_status(resp)
+
+    @classmethod
+    async def _raise_for_status(cls, response: aiohttp.ClientResponse) -> None:
+        try:
+            response.raise_for_status()
+        except aiohttp.ClientResponseError as exc:
+            content = await response.text()
+            exc.message += f"\n\n{content}"
+            raise exc
