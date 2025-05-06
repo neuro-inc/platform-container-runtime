@@ -1,0 +1,178 @@
+on:
+  workflow_call: {}
+
+jobs:
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: Checkout commit
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+    - name: Cache packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: make setup
+    - name: Lint
+      run: |
+        echo "::add-matcher::.github/actionlint-matcher.json"
+        make lint
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout commit
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+    - name: Cache packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: make setup
+    - name: Run unit tests
+      run: make test_unit
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: .coverage-unit.xml
+        flags: unit
+        name: codecov-unit
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - container_runtime: docker
+          driver: none
+        - container_runtime: containerd
+          driver: docker
+    env:
+      # keep Minikube state out of /home/runner
+      MINIKUBE_HOME: ${{ github.workspace }}/.minikube
+      MINIKUBE_DRIVER: ${{ matrix.driver }}
+      MINIKUBE_K8S_VERSION: 1.23.6
+      MINIKUBE_CONTAINER_RUNTIME: ${{ matrix.container_runtime }}
+    steps:
+    - name: Checkout commit
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+    - name: Cache packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: make setup
+    - name: Fix minikube home permissions
+      run: |
+        mkdir -p "$MINIKUBE_HOME"
+        sudo chown -R "$USER:$USER" "$MINIKUBE_HOME"
+        chmod -R u+rwX "$MINIKUBE_HOME"
+    - name: Start minikube
+      run: |
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        sudo apt-get update
+        sudo apt-get install -y conntrack
+        sudo install minikube-linux-amd64 /usr/local/bin/minikube
+        minikube start \
+          --wait=all \
+          --wait-timeout=10m0s \
+          --force="true" \
+          --driver="$MINIKUBE_DRIVER" \
+          --kubernetes-version="$MINIKUBE_K8S_VERSION" \
+          --container-runtime="$MINIKUBE_CONTAINER_RUNTIME"
+        sudo chown -R $USER $HOME/.kube /root/.minikube
+        sudo chmod -R a+r $HOME/.kube /root/.minikube
+        sudo find /root/.minikube -name id_rsa -exec chmod 600 {} \;
+    - name: Run integration tests
+      run: make test_integration
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: .coverage-integration.xml
+        flags: integration
+        name: codecov-integration
+
+  image-upload:
+    name: Upload image artifact
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout commit
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+    - name: Cache packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install dependencies
+      run: make setup
+    - name: Build Docker image
+      run: make docker_build
+      env:
+        IMAGE_TAG: latest
+    - name: Upload image artifact
+      uses: neuro-inc/upload-image-action@v24.4.0
+      with:
+        image: platformcontainerruntime
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  check:
+    name: Check
+    needs:
+    - lint
+    - unit
+    - integration
+    - image-upload
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@release/v1
+      with:
+        jobs: ${{ toJSON(needs) }}

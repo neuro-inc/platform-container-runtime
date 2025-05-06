@@ -11,119 +11,27 @@ on:
 
 jobs:
   test:
-    name: Run tests
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout commit
-      uses: actions/checkout@v2
-    - name: Install python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.9
-    - name: Cache packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Install dependencies
-      run: make setup
-    - name: Lint
-      run: |
-        echo "::add-matcher::.github/actionlint-matcher.json"
-        make lint
-    - name: Run unit tests
-      run: make test_unit
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: .coverage-unit.xml
-        flags: unit
-        name: codecov-unit
-    - name: Build Docker image
-      run: make docker_build
-      env:
-        IMAGE_TAG: latest
-    - name: Upload image artifact
-      uses: neuro-inc/upload-image-action@v24.4.0
-      with:
-        image: platformcontainerruntime
-        token: ${{ secrets.GITHUB_TOKEN }}
-
-  test_integration:
-    name: Run integration tests
-    runs-on: ubuntu-latest
-    if: |
-      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]') ||
-      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]')
-    needs: test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - container_runtime: docker
-          driver: none
-        - container_runtime: containerd
-          driver: docker
-    env:
-      MINIKUBE_DRIVER: ${{ matrix.driver }}
-      MINIKUBE_K8S_VERSION: 1.23.6
-      MINIKUBE_CONTAINER_RUNTIME: ${{ matrix.container_runtime }}
-    steps:
-    - name: Checkout commit
-      uses: actions/checkout@v2
-    - name: Install python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    - name: Cache packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
-    - name: Install dependencies
-      run: make setup
-    - name: Start minikube
-      run: |
-        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-        sudo apt-get update
-        sudo apt-get install -y conntrack
-        sudo install minikube-linux-amd64 /usr/local/bin/minikube
-        minikube start \
-          --wait=all \
-          --wait-timeout=10m0s \
-          --force="true" \
-          --driver="$MINIKUBE_DRIVER" \
-          --kubernetes-version="$MINIKUBE_K8S_VERSION" \
-          --container-runtime="$MINIKUBE_CONTAINER_RUNTIME"
-        sudo chown -R $USER $HOME/.kube /root/.minikube
-        sudo chmod -R a+r $HOME/.kube /root/.minikube
-        sudo find /root/.minikube -name id_rsa -exec chmod 600 {} \;
-    - name: Run integration tests
-      run: make test_integration
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: .coverage-integration.xml
-        flags: integration
-        name: codecov-integration
+    name: All checks are passed
+    uses: ./.github/workflows/test.yaml
 
   release:
     name: Create release
-    needs: test_integration
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    uses: neuro-inc/reuse/.github/workflows/release-service.yaml@v24.9.0
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/'))
+    uses: neuro-inc/reuse/.github/workflows/release-service.yaml@v25.4.0
     with:
       image: platformcontainerruntime
       helm_charts: platform-container-runtime
 
-  deploy_dev:
-    name: Deploy on dev
+  deploy:
+    name: Deploy
     needs: release
-    uses: neuro-inc/reuse/.github/workflows/deploy-dev.yaml@v24.9.0
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    uses: neuro-inc/reuse/.github/workflows/deploy-service.yaml@v25.4.0
+    secrets:
+      tf_api_token: ${{ secrets.TF_API_TOKEN }}
     with:
-      helm_charts: platform-container-runtime
-      version: ${{ needs.release.outputs.version }}
+      environment: dev
+      dev_workspace: ${{ vars.DEV_TFC_WORKSPACE_JSON }}
+      variables: |
+        platform_container_runtime=${{ needs.release.outputs.version }}
