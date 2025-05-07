@@ -130,17 +130,18 @@ jobs:
     - name: Configure containerd for insecure registry
       if: matrix.container_runtime == 'containerd'
       run: |
-        cat << 'EOF' | minikube ssh
-        sudo mkdir -p /etc/containerd
-        sudo tee /etc/containerd/config.toml << 'EOC'
+        cat > containerd-config.toml << 'EOF'
         version = 2
 
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
             endpoint = ["http://localhost:5000"]
-        EOC
-        sudo systemctl restart containerd
         EOF
+
+        minikube cp containerd-config.toml /home/docker/config.toml
+        minikube ssh -- sudo mkdir -p /etc/containerd
+        minikube ssh -- sudo mv /home/docker/config.toml /etc/containerd/config.toml
+        minikube ssh -- sudo systemctl restart containerd
     - name: Run integration tests
       run: make test_integration
 
