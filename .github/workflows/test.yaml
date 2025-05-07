@@ -130,7 +130,7 @@ jobs:
     - name: Configure containerd for insecure registry
       if: matrix.container_runtime == 'containerd'
       run: |
-        minikube ssh << 'EOF'
+        cat << 'EOF' | minikube ssh
         sudo mkdir -p /etc/containerd
         sudo tee /etc/containerd/config.toml << 'EOC'
         version = 2
