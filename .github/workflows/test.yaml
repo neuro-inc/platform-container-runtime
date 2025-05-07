@@ -86,10 +86,12 @@ jobs:
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
+
     - name: Install Python
       uses: actions/setup-python@v5
       with:
         python-version-file: .python-version
+
     - name: Cache packages
       uses: actions/cache@v4
       with:
@@ -97,13 +99,16 @@ jobs:
         key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
         restore-keys: |
           ${{ runner.os }}-pip-
+
     - name: Install dependencies
       run: make setup
+
     - name: Fix minikube home permissions
       run: |
         mkdir -p "$MINIKUBE_HOME"
         sudo chown -R "$USER:$USER" "$MINIKUBE_HOME"
         chmod -R u+rwX "$MINIKUBE_HOME"
+
     - name: Start minikube
       run: |
         curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
@@ -121,8 +126,24 @@ jobs:
         sudo chown -R $USER $HOME/.kube /root/.minikube
         sudo chmod -R a+r $HOME/.kube /root/.minikube
         sudo find /root/.minikube -name id_rsa -exec chmod 600 {} \;
+
+    - name: Configure containerd for insecure registry
+      if: matrix.container_runtime == 'containerd'
+      run: |
+        minikube ssh << 'EOF'
+        sudo mkdir -p /etc/containerd
+        sudo tee /etc/containerd/config.toml << 'EOC'
+        version = 2
+
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+        endpoint = ["http://localhost:5000"]
+        EOC
+        sudo systemctl restart containerd
+        EOF
     - name: Run integration tests
       run: make test_integration
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
