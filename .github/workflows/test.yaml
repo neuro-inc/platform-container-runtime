@@ -130,17 +130,11 @@ jobs:
     - name: Configure containerd for insecure registry
       if: matrix.container_runtime == 'containerd'
       run: |
-        cat > containerd-config.toml << 'EOF'
-        version = 2
-
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
-            endpoint = ["http://localhost:5000"]
-        EOF
-
-        minikube cp containerd-config.toml /home/docker/config.toml
-        minikube ssh -- sudo mkdir -p /etc/containerd
-        minikube ssh -- sudo mv /home/docker/config.toml /etc/containerd/config.toml
+        # 1) Create a supplemental TOML with your mirror
+        minikube ssh -- sudo bash -lc 'sudo tee /etc/containerd/config.minikube.toml <<< "[plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors]\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"localhost:5000\"]\n    endpoint = [\"http://localhost:5000\"]"'
+        # 2) Tell containerd to import it
+        minikube ssh -- sudo bash -lc 'echo imports = [\"/etc/containerd/config.minikube.toml\"] | sudo tee -a /etc/containerd/config.toml'
+        # 3) Restart containerd so it picks up the mirror
         minikube ssh -- sudo systemctl restart containerd
     - name: Run integration tests
       run: make test_integration
