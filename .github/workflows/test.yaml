@@ -18,7 +18,7 @@ jobs:
       with:
         python-version-file: .python-version
     - name: Cache packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
@@ -45,7 +45,7 @@ jobs:
       with:
         python-version-file: .python-version
     - name: Cache packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
@@ -91,7 +91,7 @@ jobs:
       with:
         python-version-file: .python-version
     - name: Cache packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
@@ -144,7 +144,7 @@ jobs:
       with:
         python-version-file: .python-version
     - name: Cache packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
