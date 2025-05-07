@@ -136,8 +136,8 @@ jobs:
         version = 2
 
         [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
-        endpoint = ["http://localhost:5000"]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+            endpoint = ["http://localhost:5000"]
         EOC
         sudo systemctl restart containerd
         EOF
