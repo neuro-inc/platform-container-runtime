@@ -122,20 +122,9 @@ jobs:
           --driver="$MINIKUBE_DRIVER" \
           --kubernetes-version="$MINIKUBE_K8S_VERSION" \
           --container-runtime="$MINIKUBE_CONTAINER_RUNTIME" \
-          --insecure-registry="localhost:5000"
         sudo chown -R $USER $HOME/.kube /root/.minikube
         sudo chmod -R a+r $HOME/.kube /root/.minikube
         sudo find /root/.minikube -name id_rsa -exec chmod 600 {} \;
-
-    - name: Configure containerd for insecure registry
-      if: matrix.container_runtime == 'containerd'
-      run: |
-        # 1) Create a supplemental TOML with your mirror
-        minikube ssh -- sudo bash -lc 'sudo tee /etc/containerd/config.minikube.toml <<< "[plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors]\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"localhost:5000\"]\n    endpoint = [\"http://localhost:5000\"]"'
-        # 2) Tell containerd to import it
-        minikube ssh -- sudo bash -lc 'echo imports = [\"/etc/containerd/config.minikube.toml\"] | sudo tee -a /etc/containerd/config.toml'
-        # 3) Restart containerd so it picks up the mirror
-        minikube ssh -- sudo systemctl restart containerd
     - name: Run integration tests
       run: make test_integration
 

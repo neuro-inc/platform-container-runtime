@@ -410,7 +410,7 @@ class TestApi:
         registry_address: str,
         kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime == "cri-o":
+        if kube_container_runtime in ("cri-o", "containerd"):
             pytest.skip("Commit is not supported")
 
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
