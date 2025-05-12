@@ -14,8 +14,19 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only"
 ]
-packages = [{ include = "platform_container_runtime" }]
-include = ["LICENSE"]
+packages = [
+    { include = "platform_container_runtime" },
+    { include = "containerd" },
+    { include = "k8s" },
+    { include = "github" }
+]
+
+include = [
+    "LICENSE",
+    "containerd/**/*",
+    "k8s/**/*",
+    "github/**/*"
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9"

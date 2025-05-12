@@ -4,8 +4,9 @@ IMAGE_NAME   ?= platformcontainerruntime
 .PHONY: venv
 venv:
 	poetry lock
-	poetry install --with dev
+	poetry install --with dev --no-root
 	poetry run bash scripts/genpb2.sh
+	poetry install --only-root
 
 .PHONY: build
 build: venv poetry-plugins
@@ -35,8 +36,15 @@ endif
 test_unit:
 	poetry run pytest -vv --cov-config=pyproject.toml --cov-report xml:.coverage-unit.xml tests/unit
 
+.PHONY: ensure-minikube
+ensure-minikube:
+	@kubectl config get-contexts minikube >/dev/null 2>&1 || ( \
+	  echo "⏳ Starting Minikube…" && \
+	  minikube start \
+	)
+
 .PHONY: test_integration
-test_integration: minikube_image_load
+test_integration: ensure-minikube minikube_image_load
 	echo tests/integration/k8s/* | xargs -n 1 kubectl --context minikube apply -f
 	kubectl --context minikube get po -o name | xargs -n 1 kubectl --context minikube wait --for=jsonpath='{.status.phase}'=Running
 	kubectl --context minikube get po
@@ -60,8 +68,11 @@ dist: build
 
 .PHONY: minikube_image_load
 minikube_image_load: docker_build
-	docker tag $(IMAGE_NAME):latest localhost/$(IMAGE_NAME):latest
-	minikube image load localhost/$(IMAGE_NAME):latest
+	@echo "💾 Saving $(IMAGE_NAME):latest to tar…"
+	docker save $(IMAGE_NAME):latest -o $(IMAGE_NAME).tar
+	@echo "🚚 Loading into Minikube…"
+	minikube image load $(IMAGE_NAME).tar
+	@rm -f $(IMAGE_NAME).tar
 
 .PHONY: clean-protos
 clean-protos:

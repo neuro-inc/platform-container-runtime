@@ -22,7 +22,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
       - name: platform-container-runtime
-        image: localhost/platformcontainerruntime:latest
+        image: platformcontainerruntime:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 9000
