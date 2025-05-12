@@ -22,10 +22,7 @@ packages = [
 ]
 
 include = [
-    "LICENSE",
-    "containerd/**/*",
-    "k8s/**/*",
-    "github/**/*"
+    "LICENSE"
 ]
 
 [tool.poetry.dependencies]
