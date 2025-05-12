@@ -30,9 +30,6 @@ docker-image-py = "0.1.12"
 [tool.poetry.scripts]
 platform-container-runtime = "platform_container_runtime.api:main"
 
-[tool.poetry.extras]
-build-tools = ["grpcio-tools"]
-
 [tool.poetry.group.dev.dependencies]
 mypy = "1.6.1"
 mypy-protobuf = "3.5.0"

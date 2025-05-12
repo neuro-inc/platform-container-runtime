@@ -1536,10 +1536,7 @@ files = [
 idna = ">=2.0"
 multidict = ">=4.0"
 
-[extras]
-build-tools = []
-
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9"
-content-hash = "c28e5e0d103f653028ee8420e5eed9a141ccc73180d5a5c5d5d9a319edec8bc0"
+content-hash = "185e2ca6ae2e310f26244e9312c7138a13c9d560d6a85f16e18df77092a03938"
