@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-shopt -s globstar
 set -e
 set -u
 
@@ -42,9 +41,7 @@ function _protobuf_generate_client {
     rsync -a $TARGET_DIR/github.com/ $TARGET_DIR/github/com/
     rm -rf "$TARGET_DIR/github.com"
 
-    for package in $(find $TARGET_DIR/github/com/gogo/protobuf -type d) ; do
-        touch ${package}/__init__.py
-    done
+    find "$TARGET_DIR/github/com/gogo/protobuf" -type d -exec touch {}/__init__.py \;
 }
 
 function _cri_generate_client {
@@ -59,11 +56,11 @@ function _cri_generate_client {
 
     echo "generating CRI modules..."
     (
-        cd $TARGET_DIR
+        cd "$TARGET_DIR"
         python3 -m grpc.tools.protoc \
             -I="$GOPATH" \
             --python_out=. --grpc_python_out=. --pyi_out=. \
-            $CRI_DIR/pkg/apis/runtime/**/*.proto
+            $(find "$CRI_DIR/pkg/apis/runtime" -type f -name '*.proto')
     )
 
     rsync -a $TARGET_DIR/k8s.io/ $TARGET_DIR/k8s/io/
@@ -93,13 +90,13 @@ function _containerd_update_protos {
 
     echo "preparing .proto files from $DIR..."
 
-    for PROTO in $DIR**/*.proto; do
+    find "$DIR" -type f -name '*.proto' | while read -r PROTO; do
         RELPROTO=${PROTO#"$DIR"}
         NEWPROTO="$DESTDIR$REBASE$RELPROTO"
-        NEWDIR=${NEWPROTO%/*}
+        NEWDIR=$(dirname "$NEWPROTO")
         echo "  ... $RELPROTO --> $NEWPROTO"
-        mkdir -p $NEWDIR
-        sed -r "${VENDORIZE[@]}" "$PROTO" > "$NEWPROTO"
+        mkdir -p "$NEWDIR"
+        sed -E "${VENDORIZE[@]}" "$PROTO" > "$NEWPROTO"
     done
 }
 
@@ -134,17 +131,15 @@ function _containerd_generate_client () {
 
     echo "generating Containerd modules..."
     (
-        cd $TARGET_DIR
+        cd "$TARGET_DIR"
         python3 -m grpc.tools.protoc \
             -I="$PROTO_DIR" \
             -I="$GOPATH" \
             --python_out=. --grpc_python_out=. --pyi_out=. \
-            $PROTO_DIR/containerd/**/*.proto
+            $(find "$PROTO_DIR/containerd" -type f -name '*.proto')
     )
 
-    for package in $(find $TARGET_DIR/containerd -type d) ; do
-        touch ${package}/__init__.py
-    done
+    find "$TARGET_DIR/containerd" -type d -exec touch {}/__init__.py \;
 }
 
 BASE_DIR="$(dirname $(_readlink $0))"
