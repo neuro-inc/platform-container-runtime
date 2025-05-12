@@ -64,8 +64,7 @@ docker_build: dist
 dist: build
 	rm -rf build dist; \
 	poetry export -f requirements.txt --without-hashes -o requirements.txt; \
-	poetry build -f wheel; \
-	$(MAKE) clean-protos
+	poetry build -f wheel;
 
 .PHONY: minikube_image_load
 minikube_image_load: docker_build
@@ -77,4 +76,4 @@ minikube_image_load: docker_build
 
 .PHONY: clean-protos
 clean-protos:
-	rm -rf scripts/temp containerd k8s github
+	rm -rf scripts/temp
