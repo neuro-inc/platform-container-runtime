@@ -13,7 +13,6 @@ from typing import Any
 
 import grpc.aio
 from docker_image.reference import Reference
-from google.protobuf.timestamp_pb2 import Timestamp
 from neuro_logging import trace
 from yarl import URL
 
@@ -52,6 +51,7 @@ from containerd.services.tasks.v1.tasks_pb2 import (
 from containerd.services.tasks.v1.tasks_pb2_grpc import TasksStub
 from containerd.types.descriptor_pb2 import Descriptor as DescriptorPb2
 from containerd.types.task.task_pb2 import CREATED, PAUSED, STOPPED
+from google.protobuf.timestamp_pb2 import Timestamp
 
 from .errors import (
     ContainerNotFoundError,

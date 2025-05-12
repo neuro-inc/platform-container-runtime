@@ -1,38 +1,68 @@
 GOPATH ?= $(HOME)/go
+IMAGE_NAME   ?= platformcontainerruntime
 
-setup:
-	pip install -U pip
-	pip install -e .[build-tools]
-	scripts/genpb2.sh
-	pip install -e .[dev]
-	pre-commit install
+.PHONY: venv
+venv:
+	poetry lock
+	poetry install --extras build-tools --with dev
+	poetry run bash scripts/genpb2.sh
 
+.PHONY: build
+build: venv poetry-plugins
+
+.PHONY: poetry-plugins
+poetry-plugins:
+	poetry self add "poetry-dynamic-versioning[plugin]"; \
+    poetry self add "poetry-plugin-export";
+
+.PHONY: setup
+setup: venv
+	poetry run pre-commit install;
+
+.PHONY: lint
 lint: format
-	mypy platform_container_runtime tests
+	poetry run mypy platform_container_runtime tests
 
+.PHONY: format
 format:
 ifdef CI
-	pre-commit run --all-files --show-diff-on-failure
+	poetry run pre-commit run --all-files --show-diff-on-failure
 else
-	pre-commit run --all-files
+	poetry run pre-commit run --all-files
 endif
 
+.PHONY: test_unit
 test_unit:
-	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-unit.xml tests/unit
+	poetry run pytest -vv --cov-config=pyproject.toml --cov-report xml:.coverage-unit.xml tests/unit
 
+.PHONY: test_integration
 test_integration: minikube_image_load
 	echo tests/integration/k8s/* | xargs -n 1 kubectl --context minikube apply -f
 	kubectl --context minikube get po -o name | xargs -n 1 kubectl --context minikube wait --for=jsonpath='{.status.phase}'=Running
 	kubectl --context minikube get po
 
-	pytest -vv --cov=platform_container_runtime --cov-report xml:.coverage-integration.xml tests/integration
+	poetry run pytest -vv --cov-config=pyproject.toml --cov-report xml:.coverage-integration.xml tests/integration
 
-docker_build:
-	rm -rf build dist
-	pip install -U build
-	python -m build
-	docker build -t platformcontainerruntime:latest .
+.PHONY: docker_build
+docker_build: dist
+	docker build \
+		--build-arg PY_VERSION=$$(cat .python-version) \
+		-t $(IMAGE_NAME):latest .
 
+.python-version:
+	@echo "Error: .python-version file is missing!" && exit 1
+
+.PHONY: dist
+dist: build
+	rm -rf build dist; \
+	poetry export -f requirements.txt --without-hashes -o requirements.txt; \
+	poetry build -f wheel;
+
+.PHONY: minikube_image_load
 minikube_image_load: docker_build
-	docker tag platformcontainerruntime:latest localhost/platformcontainerruntime:latest
-	minikube image load localhost/platformcontainerruntime:latest
+	docker tag $(IMAGE_NAME):latest localhost/$(IMAGE_NAME):latest
+	minikube image load localhost/$(IMAGE_NAME):latest
+
+.PHONY: clean-protos
+clean-protos:
+	rm -rf scripts/temp

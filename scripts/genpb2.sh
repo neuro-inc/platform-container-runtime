@@ -1,17 +1,12 @@
 #!/usr/bin/env bash
-
-shopt -s globstar
-set -e
-set -u
+set -euo pipefail
 
 function _readlink {
     TARGET="$1"
-
     cd "$(dirname "$TARGET")"
     TARGET="$(basename "$TARGET")"
 
-    while [ -L "$TARGET" ]
-    do
+    while [ -L "$TARGET" ]; do
         TARGET="$(readlink "$TARGET")"
         cd "$(dirname "$TARGET")"
         TARGET="$(basename "$TARGET")"
@@ -39,12 +34,9 @@ function _protobuf_generate_client {
             $PROTOBUF_DIR/gogoproto/*.proto
     )
 
-    rsync -a $TARGET_DIR/github.com/ $TARGET_DIR/github/com/
+    rsync -a "$TARGET_DIR/github.com/" "$TARGET_DIR/github/com/"
     rm -rf "$TARGET_DIR/github.com"
-
-    for package in $(find $TARGET_DIR/github/com/gogo/protobuf -type d) ; do
-        touch ${package}/__init__.py
-    done
+    find "$TARGET_DIR/github/com/gogo/protobuf" -type d -exec touch {}/__init__.py \;
 }
 
 function _cri_generate_client {
@@ -59,32 +51,27 @@ function _cri_generate_client {
 
     echo "generating CRI modules..."
     (
-        cd $TARGET_DIR
-        python3 -m grpc.tools.protoc \
+        cd "$TARGET_DIR"
+        python3 -m grpc_tools.protoc \
             -I="$GOPATH" \
             --python_out=. --grpc_python_out=. --pyi_out=. \
-            $CRI_DIR/pkg/apis/runtime/**/*.proto
+            $(find "$CRI_DIR/pkg/apis/runtime" -type f -name '*.proto')
     )
 
-    rsync -a $TARGET_DIR/k8s.io/ $TARGET_DIR/k8s/io/
+    rsync -a "$TARGET_DIR/k8s.io/" "$TARGET_DIR/k8s/io/"
     rm -rf "$TARGET_DIR/k8s.io"
-
-    for package in $(find $TARGET_DIR/k8s/io/cri_api/pkg/apis/runtime -type d) ; do
-        touch ${package}/__init__.py
-    done
+    find "$TARGET_DIR/k8s/io/cri_api/pkg/apis/runtime" -type d -exec touch {}/__init__.py \;
 }
 
 function _containerd_update_protos {
-    # Make sure that the directory path to the source .proto files always has
-    # a trailing "/". Same for the destination directory.
-    DIR=$1
-    [[ "$DIR" != */ ]] && DIR="$DIR/"
-    DESTDIR=$2
-    [[ "$DESTDIR" != */ ]] && DESTDIR="$DESTDIR/"
-    REBASE=$3
-    [[ -n "$REBASE" && "$REBASE" != */ ]] && REBASE="$REBASE/"
+    local DIR="$1"
+    [[ "$DIR" != */ ]] && DIR="${DIR}/"
+    local DESTDIR="$2"
+    [[ "$DESTDIR" != */ ]] && DESTDIR="${DESTDIR}/"
+    local REBASE="$3"
+    [[ -n "$REBASE" && "$REBASE" != */ ]] && REBASE="${REBASE}/"
 
-    VENDORIZE=(
+    local VENDORIZE=(
         "-e" 's/import( weak)? "containerd\/api\//import\1 "containerd\//g'
         "-e" 's/import( weak)? "github.com\/containerd\/containerd\/api\//import\1 "containerd\//g'
         "-e" 's/import( weak)? "github.com\/containerd\/containerd\/protobuf\//import\1 "containerd\/protobuf\//g'
@@ -92,22 +79,20 @@ function _containerd_update_protos {
     )
 
     echo "preparing .proto files from $DIR..."
-
-    for PROTO in $DIR**/*.proto; do
+    find "$DIR" -type f -name '*.proto' | while read -r PROTO; do
         RELPROTO=${PROTO#"$DIR"}
         NEWPROTO="$DESTDIR$REBASE$RELPROTO"
-        NEWDIR=${NEWPROTO%/*}
-        echo "  ... $RELPROTO --> $NEWPROTO"
-        mkdir -p $NEWDIR
+        NEWDIR=$(dirname "$NEWPROTO")
+        echo "  … $RELPROTO → $NEWPROTO"
+        mkdir -p "$NEWDIR"
         sed -r "${VENDORIZE[@]}" "$PROTO" > "$NEWPROTO"
     done
 }
 
-function _containerd_generate_client () {
-    API_VERSION="$1"
-
-    CONTAINERD_DIR="$GOPATH/containerd"
-    PROTO_DIR="$TEMP_DIR/protos/containerd"
+function _containerd_generate_client {
+    local API_VERSION="$1"
+    local CONTAINERD_DIR="$GOPATH/containerd"
+    local PROTO_DIR="$TEMP_DIR/protos/containerd"
 
     rm -rf "$CONTAINERD_DIR"
     rm -rf "$PROTO_DIR"
@@ -115,39 +100,30 @@ function _containerd_generate_client () {
     mkdir -p "$CONTAINERD_DIR"
     mkdir -p "$PROTO_DIR"
 
-    # Fetches a specificly tagged release version of containerd and clones into
-    # our temporary working area. Usually, we will only need vx.y.0 releases, as
-    # containerd keeps its service API locked during the lifecycle of a specific
-    # minor version, regardless of the patch series. See also:
-    # https://github.com/containerd/containerd/blob/master/api/README.md
     git clone -c advice.detachedHead=false --branch "v$API_VERSION.0" --depth 1 \
         https://github.com/containerd/containerd.git "$CONTAINERD_DIR"
 
     _containerd_update_protos "$CONTAINERD_DIR/api/services" "$PROTO_DIR" "containerd/services"
-    _containerd_update_protos "$CONTAINERD_DIR/api/types" "$PROTO_DIR" "containerd/types"
-    _containerd_update_protos "$CONTAINERD_DIR/api/events" "$PROTO_DIR" "containerd/events"
-    _containerd_update_protos "$CONTAINERD_DIR/protobuf" "$PROTO_DIR" "containerd/protobuf"
-    # We need the google/rpc .proto definitions in order to compile everything,
-    # but we don't want to get packages for them generated, as these are to be
-    # supplied by the existing pip grpcio and protobuf packages instead.
+    _containerd_update_protos "$CONTAINERD_DIR/api/types"    "$PROTO_DIR" "containerd/types"
+    _containerd_update_protos "$CONTAINERD_DIR/api/events"   "$PROTO_DIR" "containerd/events"
+    _containerd_update_protos "$CONTAINERD_DIR/protobuf"    "$PROTO_DIR" "containerd/protobuf"
     cp -R "$CONTAINERD_DIR/vendor/github.com/gogo/googleapis/google" "$PROTO_DIR"
 
     echo "generating Containerd modules..."
     (
-        cd $TARGET_DIR
-        python3 -m grpc.tools.protoc \
+        cd "$TARGET_DIR"
+        python3 -m grpc_tools.protoc \
             -I="$PROTO_DIR" \
             -I="$GOPATH" \
             --python_out=. --grpc_python_out=. --pyi_out=. \
-            $PROTO_DIR/containerd/**/*.proto
+            $(find "$PROTO_DIR" -type f -name '*.proto')
     )
 
-    for package in $(find $TARGET_DIR/containerd -type d) ; do
-        touch ${package}/__init__.py
-    done
+    find "$TARGET_DIR/containerd" -type d -exec touch {}/__init__.py \;
 }
 
-BASE_DIR="$(dirname $(_readlink $0))"
+# Entry point
+BASE_DIR="$(dirname "$(_readlink "$0")")"
 TARGET_DIR="$(pwd)"
 TEMP_DIR="$BASE_DIR/temp"
 GOPATH="$TEMP_DIR/go"

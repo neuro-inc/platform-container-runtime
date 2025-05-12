@@ -17,13 +17,18 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version-file: .python-version
-    - name: Cache packages
+    - name: Install pipx
+      run: python3 -m pip install --user pipx && python3 -m pipx ensurepath
+    - name: Install Poetry with pipx
+      run: |
+        pipx install poetry
+    - name: Setup Python dependencies cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        path: ~/.cache/pypoetry
+        key: poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
+          poetry-
     - name: Install dependencies
       run: make setup
     - name: Lint
@@ -44,13 +49,18 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version-file: .python-version
-    - name: Cache packages
+    - name: Install pipx
+      run: python3 -m pip install --user pipx && python3 -m pipx ensurepath
+    - name: Install Poetry with pipx
+      run: |
+        pipx install poetry
+    - name: Setup Python dependencies cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        path: ~/.cache/pypoetry
+        key: poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
+          poetry-
     - name: Install dependencies
       run: make setup
     - name: Run unit tests
@@ -91,15 +101,18 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version-file: .python-version
-
-    - name: Cache packages
+    - name: Install pipx
+      run: python3 -m pip install --user pipx && python3 -m pipx ensurepath
+    - name: Install Poetry with pipx
+      run: |
+        pipx install poetry
+    - name: Setup Python dependencies cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        path: ~/.cache/pypoetry
+        key: poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
-
+          poetry-
     - name: Install dependencies
       run: make setup
 
@@ -149,13 +162,18 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version-file: .python-version
-    - name: Cache packages
+    - name: Install pipx
+      run: python3 -m pip install --user pipx && python3 -m pipx ensurepath
+    - name: Install Poetry with pipx
+      run: |
+        pipx install poetry
+    - name: Setup Python dependencies cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-py-3.9-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('setup.cfg') }}
+        path: ~/.cache/pypoetry
+        key: poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
+          poetry-
     - name: Install dependencies
       run: make setup
     - name: Build Docker image
