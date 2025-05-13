@@ -77,7 +77,7 @@ combine_as_imports = true
 exclude = '''
 /(
     \.git
-  | venv
+  | .venv
   | __pycache__
 )/
 '''
