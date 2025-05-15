@@ -40,7 +40,7 @@ platform-container-runtime = "platform_container_runtime.api:main"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "1.6.1"
-mypy-protobuf = "3.5.0"
+mypy-protobuf = "3.6.0"
 pre-commit = "4.2.0"
 pytest = "7.4.0"
 pytest-asyncio = "0.23.8"
