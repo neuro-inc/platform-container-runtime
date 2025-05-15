@@ -29,7 +29,7 @@ include = [
 python = ">=3.9"
 aiohttp = "3.8.6"
 yarl = "1.9.2"
-neuro-logging = "21.12.2"
+neuro-logging = "25.1.0"
 grpcio = "1.68.1"
 protobuf = "5.27.2"
 aiodocker = "0.21.0"
