@@ -1,24 +1,156 @@
 [build-system]
-requires = [
-    "setuptools>=45",
-    "wheel",
-    "setuptools_scm>=6.2",
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[tool.poetry]
+name = "platform-container-runtime"
+version = "0.0.0"
+description = "Apolo.us platform container runtime"
+readme = "README.md"
+license = "Proprietary"
+authors = ["Apolo.us"]
+homepage = "https://github.com/neuro-inc/platform-container-runtime"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only"
 ]
-build-backend = "setuptools.build_meta"
+packages = [
+    { include = "platform_container_runtime" },
+    { include = "containerd" },
+    { include = "k8s" },
+    { include = "github" }
+]
 
-[tool.setuptools_scm]
+include = [
+    "LICENSE"
+]
 
-[tool.black]
-exclude = '''
-/(
-      \.git
-    | venv
-    | __pycache__
-)/
-'''
+[tool.poetry.dependencies]
+python = ">=3.9"
+aiohttp = "3.8.6"
+yarl = "1.9.2"
+neuro-logging = "21.12.2"
+grpcio = "1.68.1"
+protobuf = "5.27.2"
+aiodocker = "0.21.0"
+docker-image-py = "0.1.12"
+
+[tool.poetry.scripts]
+platform-container-runtime = "platform_container_runtime.api:main"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "1.6.1"
+mypy-protobuf = "3.5.0"
+pre-commit = "4.2.0"
+pytest = "7.4.0"
+pytest-asyncio = "0.21.1"
+pytest-cov = "4.1.0"
+types-protobuf = "4.24.0.20240106"
+grpcio-tools = "1.66.1"
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:jose",
+    "ignore:returning HTTPException object is deprecated:DeprecationWarning:aiohttp",
+    "ignore:The loop argument is deprecated:DeprecationWarning:"
+]
+markers = ["minikube"]
+
+[tool.coverage.run]
+branch = true
+source = ["platform_container_runtime"]
 
 [tool.isort]
 line_length = 88
 include_trailing_comma = true
 multi_line_output = 3
 combine_as_imports = true
+
+[tool.black]
+exclude = '''
+/(
+    \.git
+  | .venv
+  | __pycache__
+)/
+'''
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+follow_imports = "silent"
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "github.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "k8s.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "containerd.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "aiohttp_security"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aiohttp_security.api"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "jose"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "neuro_auth_client.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pytest"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "setuptools"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "trafaret"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aiohttp_cors"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aiohttp_apispec"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "yaml.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "grpc.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "aiodocker.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "docker_image.*"
+ignore_missing_imports = true

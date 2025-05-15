@@ -34,4 +34,4 @@ jobs:
       environment: dev
       dev_workspace: ${{ vars.DEV_TFC_WORKSPACE_JSON }}
       variables: |
-        platform_container_runtime=${{ needs.release.outputs.version }}
+        platform_container_runtime_version=${{ needs.release.outputs.version }}
