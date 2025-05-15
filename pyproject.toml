@@ -27,7 +27,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = ">=3.9"
-aiohttp = "3.8.6"
+aiohttp = "3.10.5"
 yarl = "1.9.2"
 neuro-logging = "21.12.2"
 grpcio = "1.68.1"
