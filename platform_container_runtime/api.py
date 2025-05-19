@@ -11,6 +11,7 @@ import grpc.aio
 from aiodocker import Docker
 from aiohttp.typedefs import Handler
 from aiohttp.web import (
+    AppKey,
     HTTPBadRequest,
     HTTPInternalServerError,
     HTTPNoContent,
@@ -37,6 +38,12 @@ from .runtime_client import RuntimeClient
 from .service import Service
 
 logger = logging.getLogger(__name__)
+
+
+PLATFORM_CONTAINER_RUNTIME_APP_KEY = AppKey("platform_container_runtime_app")
+SERVICE_KEY = AppKey("service")
+CONFIG_KEY = AppKey("config")
+API_V1_APP_KEY = AppKey("api_v1_app")
 
 
 class ApiHandler:
@@ -71,7 +78,7 @@ class PlatformContainerRuntimeApiHandler:
 
     @property
     def _service(self) -> Service:
-        return self._app["service"]
+        return self._app[SERVICE_KEY]
 
     async def ws_attach(self, req: Request) -> StreamResponse:
         container_id = self._get_container_id(req)
@@ -347,8 +354,8 @@ async def create_app(config: Config) -> aiohttp.web.Application:
                 aiohttp.ClientSession()
             )
 
-            app["platform_container_runtime_app"]["config"] = config
-            app["platform_container_runtime_app"]["service"] = Service(
+            app[PLATFORM_CONTAINER_RUNTIME_APP_KEY][CONFIG_KEY] = config
+            app[PLATFORM_CONTAINER_RUNTIME_APP_KEY][SERVICE_KEY] = Service(
                 cri_client=cri_client,
                 runtime_client=runtime_client,
                 streaming_client=streaming_client,
@@ -360,10 +367,10 @@ async def create_app(config: Config) -> aiohttp.web.Application:
     app.cleanup_ctx.append(_init_app)
 
     api_v1_app = await create_api_v1_app()
-    app["api_v1_app"] = api_v1_app
+    app[API_V1_APP_KEY] = api_v1_app
 
     platform_container_runtime_app = await create_platform_container_runtime_app(config)
-    app["platform_container_runtime_app"] = platform_container_runtime_app
+    app[PLATFORM_CONTAINER_RUNTIME_APP_KEY] = platform_container_runtime_app
     api_v1_app.add_subapp("/containers", platform_container_runtime_app)
 
     app.add_subapp("/api/v1", api_v1_app)
