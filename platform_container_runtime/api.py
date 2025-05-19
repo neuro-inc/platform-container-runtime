@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, MutableMapping
 from contextlib import AsyncExitStack, asynccontextmanager
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import aiohttp.web
@@ -39,11 +41,12 @@ from .service import Service
 
 logger = logging.getLogger(__name__)
 
-
-PLATFORM_CONTAINER_RUNTIME_APP_KEY = AppKey("platform_container_runtime_app")
-SERVICE_KEY = AppKey("service")
-CONFIG_KEY = AppKey("config")
-API_V1_APP_KEY = AppKey("api_v1_app")
+PLATFORM_CONTAINER_RUNTIME_APP_KEY: AppKey[str] = AppKey(
+    "platform_container_runtime_app"
+)
+SERVICE_KEY: AppKey[str] = AppKey("service")
+CONFIG_KEY: AppKey[str] = AppKey("config")
+API_V1_APP_KEY: AppKey[str] = AppKey("api_v1_app")
 
 
 class ApiHandler:
@@ -78,7 +81,7 @@ class PlatformContainerRuntimeApiHandler:
 
     @property
     def _service(self) -> Service:
-        return self._app[SERVICE_KEY]
+        return cast(Service, self._app[SERVICE_KEY])
 
     async def ws_attach(self, req: Request) -> StreamResponse:
         container_id = self._get_container_id(req)
@@ -329,6 +332,10 @@ async def add_version_to_header(request: Request, response: StreamResponse) -> N
 async def create_app(config: Config) -> aiohttp.web.Application:
     app = aiohttp.web.Application(middlewares=[handle_exceptions])  # type: ignore
 
+    app_kv: MutableMapping[AppKey[str], Any] = cast(
+        MutableMapping[AppKey[str], Any], app
+    )
+
     async def _init_app(app: aiohttp.web.Application) -> AsyncIterator[None]:
         async with AsyncExitStack() as exit_stack:
             logger.info("Initializing Service")
@@ -354,23 +361,30 @@ async def create_app(config: Config) -> aiohttp.web.Application:
                 aiohttp.ClientSession()
             )
 
-            app[PLATFORM_CONTAINER_RUNTIME_APP_KEY][CONFIG_KEY] = config
-            app[PLATFORM_CONTAINER_RUNTIME_APP_KEY][SERVICE_KEY] = Service(
+            platform_app = cast(
+                aiohttp.web.Application,
+                app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY],
+            )
+            platform_app_kv: MutableMapping[AppKey[str], Any] = cast(
+                MutableMapping[AppKey[str], Any], platform_app
+            )
+            platform_app_kv[CONFIG_KEY] = config
+            platform_app_kv[SERVICE_KEY] = Service(
                 cri_client=cri_client,
                 runtime_client=runtime_client,
                 streaming_client=streaming_client,
             )
-            app.on_response_prepare.append(add_version_to_header)
+            platform_app.on_response_prepare.append(add_version_to_header)
 
             yield
 
     app.cleanup_ctx.append(_init_app)
 
     api_v1_app = await create_api_v1_app()
-    app[API_V1_APP_KEY] = api_v1_app
+    app_kv[API_V1_APP_KEY] = api_v1_app
 
     platform_container_runtime_app = await create_platform_container_runtime_app(config)
-    app[PLATFORM_CONTAINER_RUNTIME_APP_KEY] = platform_container_runtime_app
+    app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY] = platform_container_runtime_app
     api_v1_app.add_subapp("/containers", platform_container_runtime_app)
 
     app.add_subapp("/api/v1", api_v1_app)
