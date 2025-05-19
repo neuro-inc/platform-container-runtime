@@ -17,7 +17,13 @@ resources:
     cpu: "0.4"
     memory: 600Mi
 
-affinity: {}
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: platform.neuromation.io/job
+          operator: Exists
 
 tolerations:
 - effect: NoExecute
@@ -29,8 +35,8 @@ logLevel: ERROR
 
 secrets: []
 
-zipkin: {}
-
-sentry: {}
+sentry:
+  appName: platform-container-runtime
+  sampleRate: 0.01
 
 priorityClassName: ""

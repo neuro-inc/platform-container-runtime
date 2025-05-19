@@ -94,7 +94,7 @@ class KubeClient:
         connector = aiohttp.TCPConnector(
             limit=self._config.conn_pool_size,
             force_close=self._config.conn_force_close,
-            ssl=self._create_ssl_context(),
+            ssl_context=self._create_ssl_context(),
         )
         if self._config.token_path:
             self._token = Path(self._config.token_path).read_text()

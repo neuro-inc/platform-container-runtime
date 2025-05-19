@@ -83,13 +83,13 @@ class RuntimeClient:
 
         if self._containerd_client:
             try:
-                container = await self._containerd_client.get_container(container_id)
+                container = await self._containerd_client.get_container(container_id)  # type: ignore
             except ContainerdContainerNotFoundError:
                 raise ContainerNotFoundError(container_id)
             yield self._create_commit_started_chunk(
                 container_id=container_id, image=image
             )
-            await container.commit(image=str(image_ref))
+            await container.commit(image=str(image_ref))  # type: ignore
             yield self._create_commit_finished_chunk()
             return
 
@@ -102,7 +102,7 @@ class RuntimeClient:
         image_ref = ImageReference.parse(image)
 
         if self._docker_client:
-            async for progress in self._docker_client.images.push(  # type: ignore
+            async for progress in self._docker_client.images.push(
                 image_ref.repository, tag=image_ref.tag, auth=auth, stream=True
             ):
                 yield progress

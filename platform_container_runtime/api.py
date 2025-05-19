@@ -1,14 +1,15 @@
 import asyncio
 import json
 import logging
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 import aiohttp.web
 import grpc.aio
 from aiodocker import Docker
+from aiohttp.typedefs import Handler
 from aiohttp.web import (
     HTTPBadRequest,
     HTTPInternalServerError,
@@ -18,24 +19,16 @@ from aiohttp.web import (
     Response,
     StreamResponse,
     json_response,
-    middleware,
 )
-from neuro_logging import (
-    init_logging,
-    make_request_logging_trace_config,
-    make_sentry_trace_config,
-    make_zipkin_trace_config,
-    notrace,
-    setup_sentry,
-    setup_zipkin_tracer,
-)
+from aiohttp.web_middlewares import middleware
+from neuro_logging import init_logging, notrace, setup_sentry
 from yarl import URL
 
-from .config import Config, SentryConfig, ZipkinConfig
+from .config import Config
 from .config_factory import EnvironConfigFactory
 from .containerd_client import ContainerdClient
 from .cri_client import CriClient
-from .errors import ContainerNotFoundError, ContainerNotRunningError
+from .errors import ContainerNotFoundError
 from .kube_client import KubeClient
 from .registry_client import RegistryClient
 from .runtime_client import RuntimeClient
@@ -227,9 +220,7 @@ def _serialize_chunk(chunk: dict[str, Any], encoding: str = "utf-8") -> bytes:
 
 
 @middleware
-async def handle_exceptions(
-    req: Request, handler: Callable[[Request], Awaitable[StreamResponse]]
-) -> StreamResponse:
+async def handle_exceptions(req: Request, handler: Handler) -> StreamResponse:
     try:
         return await handler(req)
     except ContainerNotFoundError as e:
@@ -245,24 +236,6 @@ async def handle_exceptions(
         logging.exception(msg_str)
         payload = {"error": msg_str}
         return json_response(payload, status=HTTPInternalServerError.status_code)
-
-
-def make_logging_trace_configs() -> list[aiohttp.TraceConfig]:
-    return [make_request_logging_trace_config()]
-
-
-def make_tracing_trace_configs(
-    zipkin: Optional[ZipkinConfig], sentry: Optional[SentryConfig]
-) -> list[aiohttp.TraceConfig]:
-    trace_configs = []
-
-    if zipkin:
-        trace_configs.append(make_zipkin_trace_config())
-
-    if sentry:
-        trace_configs.append(make_sentry_trace_config())
-
-    return trace_configs
 
 
 @asynccontextmanager
@@ -296,7 +269,6 @@ async def create_runtime_client(
     os: str,
     architecture: str,
     container_runtime_version: str,
-    trace_configs: Optional[list[aiohttp.TraceConfig]] = None,
 ) -> AsyncIterator[RuntimeClient]:
     logger.info("Initializing runtime client")
 
@@ -312,7 +284,7 @@ async def create_runtime_client(
         else:
             runtime_address = "unix:/hrun/containerd/containerd.sock"
         async with grpc.aio.insecure_channel(runtime_address) as channel:
-            async with aiohttp.ClientSession(trace_configs=trace_configs) as session:
+            async with aiohttp.ClientSession() as session:
                 yield RuntimeClient(
                     containerd_client=ContainerdClient(
                         channel,
@@ -342,20 +314,14 @@ async def create_platform_container_runtime_app(
 
 
 async def create_app(config: Config) -> aiohttp.web.Application:
-    app = aiohttp.web.Application(middlewares=[handle_exceptions])
-
-    trace_configs = make_logging_trace_configs() + make_tracing_trace_configs(
-        config.zipkin, config.sentry
-    )
+    app = aiohttp.web.Application(middlewares=[handle_exceptions])  # type: ignore
 
     async def _init_app(app: aiohttp.web.Application) -> AsyncIterator[None]:
         async with AsyncExitStack() as exit_stack:
             logger.info("Initializing Service")
 
             logger.info("Initializing kube client")
-            kube_client = await exit_stack.enter_async_context(
-                KubeClient(config.kube, trace_configs=trace_configs)
-            )
+            kube_client = await exit_stack.enter_async_context(KubeClient(config.kube))
 
             node = await kube_client.get_node(config.node_name)
             logger.info("Container runtime version: %s", node.container_runtime_version)
@@ -369,11 +335,10 @@ async def create_app(config: Config) -> aiohttp.web.Application:
                     os=node.os,
                     architecture=node.architecture,
                     container_runtime_version=node.container_runtime_version,
-                    trace_configs=trace_configs,
                 )
             )
             streaming_client = await exit_stack.enter_async_context(
-                aiohttp.ClientSession(trace_configs=trace_configs)
+                aiohttp.ClientSession()
             )
 
             app["platform_container_runtime_app"]["config"] = config
@@ -399,32 +364,11 @@ async def create_app(config: Config) -> aiohttp.web.Application:
     return app
 
 
-def setup_tracing(config: Config) -> None:
-    if config.zipkin:
-        setup_zipkin_tracer(
-            config.zipkin.app_name,
-            config.server.host,
-            config.server.port,
-            config.zipkin.url,
-            config.zipkin.sample_rate,
-            ignored_exceptions=[ContainerNotFoundError, ContainerNotRunningError],
-        )
-
-    if config.sentry:
-        setup_sentry(
-            config.sentry.dsn,
-            app_name=config.sentry.app_name,
-            cluster_name=config.sentry.cluster_name,
-            sample_rate=config.sentry.sample_rate,
-            exclude=[ContainerNotFoundError, ContainerNotRunningError],
-        )
-
-
 def main() -> None:  # pragma: no coverage
     init_logging()
     config = EnvironConfigFactory().create()
     logging.info("Loaded config: %r", config)
-    setup_tracing(config)
+    setup_sentry()
     aiohttp.web.run_app(
         create_app(config), host=config.server.host, port=config.server.port
     )

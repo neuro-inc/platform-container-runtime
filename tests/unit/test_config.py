@@ -6,9 +6,7 @@ from platform_container_runtime.config import (
     Config,
     KubeClientAuthType,
     KubeConfig,
-    SentryConfig,
     ServerConfig,
-    ZipkinConfig,
 )
 from platform_container_runtime.config_factory import EnvironConfigFactory
 
@@ -20,7 +18,7 @@ class TestEnvironConfigFactory:
             "NP_PORT": 8080,
             "NP_NODE_NAME": "minikube",
             "NP_KUBE_URL": "https://kubernetes.default.svc",
-            "NP_SENTRY_CLUSTER_NAME": "test",
+            "SENTRY_CLUSTER_NAME": "test",
         }
         config = EnvironConfigFactory(environ).create()
         assert config == Config(
@@ -37,9 +35,8 @@ class TestEnvironConfigFactory:
             "NP_KUBE_URL": "https://kubernetes.default.svc",
             "NP_CRI_ADDRESS": "unix://var/run/dockershim.sock",
             "NP_RUNTIME_ADDRESS": "unix://var/run/docker.sock",
-            "NP_ZIPKIN_URL": "http://zipkin:9411",
-            "NP_SENTRY_DSN": "https://test.com",
-            "NP_SENTRY_CLUSTER_NAME": "test",
+            "SENTRY_DSN": "https://test.com",
+            "SENTRY_CLUSTER_NAME": "test",
         }
         config = EnvironConfigFactory(environ).create()
         assert config == Config(
@@ -48,8 +45,6 @@ class TestEnvironConfigFactory:
             cri_address="unix://var/run/dockershim.sock",
             runtime_address="unix://var/run/docker.sock",
             kube=KubeConfig(url=URL("https://kubernetes.default.svc")),
-            zipkin=ZipkinConfig(url=URL("http://zipkin:9411")),
-            sentry=SentryConfig(dsn=URL("https://test.com"), cluster_name="test"),
         )
 
     def test_create_kube(self) -> None:

@@ -36,26 +36,9 @@ class KubeConfig:
 
 
 @dataclass(frozen=True)
-class ZipkinConfig:
-    url: URL
-    app_name: str = "platform-container-runtime"
-    sample_rate: float = 0.0
-
-
-@dataclass(frozen=True)
-class SentryConfig:
-    dsn: URL
-    cluster_name: str
-    app_name: str = "platform-container-runtime"
-    sample_rate: float = 0.0
-
-
-@dataclass(frozen=True)
 class Config:
     server: ServerConfig
     node_name: str
     kube: KubeConfig
     cri_address: Optional[str] = None
     runtime_address: Optional[str] = None
-    zipkin: Optional[ZipkinConfig] = None
-    sentry: Optional[SentryConfig] = None
