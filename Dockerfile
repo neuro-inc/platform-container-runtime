@@ -1,4 +1,4 @@
-ARG PY_VERSION=3.9.18
+ARG PY_VERSION=3.13.3
 
 FROM python:${PY_VERSION}-slim-bullseye AS builder
 
