@@ -3,9 +3,9 @@ from __future__ import annotations
 import asyncio
 import os
 import tempfile
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator, MutableMapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import aiohttp.web
@@ -24,15 +24,26 @@ TOKEN_KEY: AppKey[str] = AppKey("token")
 class TestKubeClientTokenUpdater:
     @pytest.fixture
     async def kube_app(self) -> aiohttp.web.Application:
+        app = aiohttp.web.Application()
+        app_kv: MutableMapping[AppKey[str], Any] = cast(
+            MutableMapping[AppKey[str], Any], app
+        )
+        app_kv[TOKEN_KEY] = {"value": ""}
+
         async def _get_nodes(request: Request) -> aiohttp.web.Response:
             auth = request.headers["Authorization"]
             token = auth.split()[-1]
-            request.app[TOKEN_KEY]["value"] = token
+            # Retrieve and update the token state
+            req_kv = cast(MutableMapping[AppKey[str], Any], request.app)
+            state = cast(MutableMapping[str, str], req_kv[TOKEN_KEY])
+            state["value"] = token
             return aiohttp.web.json_response({"kind": "NodeList", "items": []})
 
-        app = aiohttp.web.Application()
-        app[TOKEN_KEY] = {"value": ""}
-        app.router.add_routes([aiohttp.web.get("/api/v1/nodes", _get_nodes)])
+        app.router.add_routes(
+            [
+                aiohttp.web.get("/api/v1/nodes", _get_nodes),
+            ]
+        )
         return app
 
     @pytest.fixture
@@ -72,13 +83,17 @@ class TestKubeClientTokenUpdater:
         kube_token_path: str,
     ) -> None:
         await kube_client.get_nodes()
-        assert kube_app[TOKEN_KEY]["value"] == "token-1"
+        app_kv = cast(MutableMapping[AppKey[str], Any], kube_app)
+        token_state = cast(MutableMapping[str, str], app_kv[TOKEN_KEY])
+        assert token_state["value"] == "token-1"
 
         Path(kube_token_path).write_text("token-2")
         await asyncio.sleep(2)
 
         await kube_client.get_nodes()
-        assert kube_app[TOKEN_KEY]["value"] == "token-2"
+        app_kv = cast(MutableMapping[AppKey[str], Any], kube_app)
+        token_state = cast(MutableMapping[str, str], app_kv[TOKEN_KEY])
+        assert token_state["value"] == "token-2"
 
 
 class TestKubeClient:

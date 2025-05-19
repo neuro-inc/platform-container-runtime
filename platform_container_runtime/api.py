@@ -331,7 +331,7 @@ async def add_version_to_header(request: Request, response: StreamResponse) -> N
 
 async def create_app(config: Config) -> aiohttp.web.Application:
     app = aiohttp.web.Application(middlewares=[handle_exceptions])  # type: ignore
-
+    app.on_response_prepare.append(add_version_to_header)
     app_kv: MutableMapping[AppKey[str], Any] = cast(
         MutableMapping[AppKey[str], Any], app
     )
@@ -339,10 +339,7 @@ async def create_app(config: Config) -> aiohttp.web.Application:
     async def _init_app(app: aiohttp.web.Application) -> AsyncIterator[None]:
         async with AsyncExitStack() as exit_stack:
             logger.info("Initializing Service")
-
-            logger.info("Initializing kube client")
             kube_client = await exit_stack.enter_async_context(KubeClient(config.kube))
-
             node = await kube_client.get_node(config.node_name)
             logger.info("Container runtime version: %s", node.container_runtime_version)
 
@@ -362,8 +359,7 @@ async def create_app(config: Config) -> aiohttp.web.Application:
             )
 
             platform_app = cast(
-                aiohttp.web.Application,
-                app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY],
+                aiohttp.web.Application, app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY]
             )
             platform_app_kv: MutableMapping[AppKey[str], Any] = cast(
                 MutableMapping[AppKey[str], Any], platform_app
@@ -374,7 +370,6 @@ async def create_app(config: Config) -> aiohttp.web.Application:
                 runtime_client=runtime_client,
                 streaming_client=streaming_client,
             )
-            platform_app.on_response_prepare.append(add_version_to_header)
 
             yield
 
@@ -383,10 +378,9 @@ async def create_app(config: Config) -> aiohttp.web.Application:
     api_v1_app = await create_api_v1_app()
     app_kv[API_V1_APP_KEY] = api_v1_app
 
-    platform_container_runtime_app = await create_platform_container_runtime_app(config)
-    app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY] = platform_container_runtime_app
-    api_v1_app.add_subapp("/containers", platform_container_runtime_app)
-
+    platform_app = await create_platform_container_runtime_app(config)
+    app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY] = platform_app
+    api_v1_app.add_subapp("/containers", platform_app)
     app.add_subapp("/api/v1", api_v1_app)
 
     return app
