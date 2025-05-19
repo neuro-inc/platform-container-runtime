@@ -10,6 +10,7 @@ from typing import Any
 import aiohttp
 import aiohttp.web
 import pytest
+from aiohttp.web import AppKey, Request
 from yarl import URL
 
 from platform_container_runtime.config import KubeClientAuthType, KubeConfig
@@ -17,18 +18,20 @@ from platform_container_runtime.kube_client import KubeClient
 
 from .conftest import create_local_app_server
 
+TOKEN_KEY: AppKey[str] = AppKey("token")
+
 
 class TestKubeClientTokenUpdater:
     @pytest.fixture
     async def kube_app(self) -> aiohttp.web.Application:
-        async def _get_nodes(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        async def _get_nodes(request: Request) -> aiohttp.web.Response:
             auth = request.headers["Authorization"]
             token = auth.split()[-1]
-            app["token"]["value"] = token
+            request.app[TOKEN_KEY]["value"] = token
             return aiohttp.web.json_response({"kind": "NodeList", "items": []})
 
         app = aiohttp.web.Application()
-        app["token"] = {"value": ""}
+        app[TOKEN_KEY] = {"value": ""}
         app.router.add_routes([aiohttp.web.get("/api/v1/nodes", _get_nodes)])
         return app
 
@@ -69,13 +72,13 @@ class TestKubeClientTokenUpdater:
         kube_token_path: str,
     ) -> None:
         await kube_client.get_nodes()
-        assert kube_app["token"]["value"] == "token-1"
+        assert kube_app[TOKEN_KEY]["value"] == "token-1"
 
         Path(kube_token_path).write_text("token-2")
         await asyncio.sleep(2)
 
         await kube_client.get_nodes()
-        assert kube_app["token"]["value"] == "token-2"
+        assert kube_app[TOKEN_KEY]["value"] == "token-2"
 
 
 class TestKubeClient:
