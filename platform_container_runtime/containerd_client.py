@@ -13,7 +13,11 @@ from typing import Any
 
 import grpc.aio
 from docker_image.reference import Reference
+
+# isort: off
 from google.protobuf.timestamp_pb2 import Timestamp
+
+# isort: on
 from neuro_logging import trace
 from yarl import URL
 
