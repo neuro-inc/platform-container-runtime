@@ -326,7 +326,7 @@ async def create_platform_container_runtime_app(
 
 
 async def add_version_to_header(request: Request, response: StreamResponse) -> None:
-    response.headers["X-Service-Version"] = f"platform-neuro-flow-api/{__version__}"
+    response.headers["X-Service-Version"] = f"platform-container-runtime/{__version__}"
 
 
 async def create_app(config: Config) -> aiohttp.web.Application:

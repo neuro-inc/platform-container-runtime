@@ -17,13 +17,7 @@ resources:
     cpu: "0.4"
     memory: 600Mi
 
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: platform.neuromation.io/job
-          operator: Exists
+affinity: {}
 
 tolerations:
 - effect: NoExecute
