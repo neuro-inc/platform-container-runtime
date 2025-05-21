@@ -10,3 +10,9 @@ updates:
   ignore:
   - dependency-name: protobuf
     versions: ['>4.0dev']
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: daily
+    time: "03:00"
+  open-pull-requests-limit: 10
