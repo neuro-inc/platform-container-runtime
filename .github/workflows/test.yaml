@@ -66,7 +66,7 @@ jobs:
     - name: Run unit tests
       run: make test_unit
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: .coverage-unit.xml
@@ -151,7 +151,7 @@ jobs:
           echo
         done
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: .coverage-integration.xml
