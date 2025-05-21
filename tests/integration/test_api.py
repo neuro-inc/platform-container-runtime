@@ -6,7 +6,6 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 import aiohttp
-import async_timeout
 import pytest
 from aiohttp.web import HTTPBadRequest, HTTPNoContent, HTTPNotFound, HTTPOk
 from yarl import URL
@@ -73,7 +72,7 @@ async def receive_tty_prompt(
     try:
         ret: bytes = b""
 
-        async with async_timeout.timeout(timeout):
+        async with asyncio.timeout(timeout):
             while not ret.strip().endswith(b"#"):
                 data = await ws.receive_bytes()
 

@@ -1,15 +1,19 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterator, MutableMapping
 from contextlib import AsyncExitStack, asynccontextmanager
-from typing import Any, Optional
+from typing import Any, cast
 
 import aiohttp
 import aiohttp.web
 import grpc.aio
 from aiodocker import Docker
+from aiohttp.typedefs import Handler
 from aiohttp.web import (
+    AppKey,
     HTTPBadRequest,
     HTTPInternalServerError,
     HTTPNoContent,
@@ -18,30 +22,31 @@ from aiohttp.web import (
     Response,
     StreamResponse,
     json_response,
-    middleware,
 )
-from neuro_logging import (
-    init_logging,
-    make_request_logging_trace_config,
-    make_sentry_trace_config,
-    make_zipkin_trace_config,
-    notrace,
-    setup_sentry,
-    setup_zipkin_tracer,
-)
+from aiohttp.web_middlewares import middleware
+from neuro_logging import init_logging, notrace, setup_sentry
 from yarl import URL
 
-from .config import Config, SentryConfig, ZipkinConfig
+from platform_container_runtime import __version__
+
+from .config import Config
 from .config_factory import EnvironConfigFactory
 from .containerd_client import ContainerdClient
 from .cri_client import CriClient
-from .errors import ContainerNotFoundError, ContainerNotRunningError
+from .errors import ContainerNotFoundError
 from .kube_client import KubeClient
 from .registry_client import RegistryClient
 from .runtime_client import RuntimeClient
 from .service import Service
 
 logger = logging.getLogger(__name__)
+
+PLATFORM_CONTAINER_RUNTIME_APP_KEY: AppKey[str] = AppKey(
+    "platform_container_runtime_app"
+)
+SERVICE_KEY: AppKey[str] = AppKey("service")
+CONFIG_KEY: AppKey[str] = AppKey("config")
+API_V1_APP_KEY: AppKey[str] = AppKey("api_v1_app")
 
 
 class ApiHandler:
@@ -76,7 +81,7 @@ class PlatformContainerRuntimeApiHandler:
 
     @property
     def _service(self) -> Service:
-        return self._app["service"]
+        return cast(Service, self._app[SERVICE_KEY])
 
     async def ws_attach(self, req: Request) -> StreamResponse:
         container_id = self._get_container_id(req)
@@ -227,9 +232,7 @@ def _serialize_chunk(chunk: dict[str, Any], encoding: str = "utf-8") -> bytes:
 
 
 @middleware
-async def handle_exceptions(
-    req: Request, handler: Callable[[Request], Awaitable[StreamResponse]]
-) -> StreamResponse:
+async def handle_exceptions(req: Request, handler: Handler) -> StreamResponse:
     try:
         return await handler(req)
     except ContainerNotFoundError as e:
@@ -245,24 +248,6 @@ async def handle_exceptions(
         logging.exception(msg_str)
         payload = {"error": msg_str}
         return json_response(payload, status=HTTPInternalServerError.status_code)
-
-
-def make_logging_trace_configs() -> list[aiohttp.TraceConfig]:
-    return [make_request_logging_trace_config()]
-
-
-def make_tracing_trace_configs(
-    zipkin: Optional[ZipkinConfig], sentry: Optional[SentryConfig]
-) -> list[aiohttp.TraceConfig]:
-    trace_configs = []
-
-    if zipkin:
-        trace_configs.append(make_zipkin_trace_config())
-
-    if sentry:
-        trace_configs.append(make_sentry_trace_config())
-
-    return trace_configs
 
 
 @asynccontextmanager
@@ -296,7 +281,6 @@ async def create_runtime_client(
     os: str,
     architecture: str,
     container_runtime_version: str,
-    trace_configs: Optional[list[aiohttp.TraceConfig]] = None,
 ) -> AsyncIterator[RuntimeClient]:
     logger.info("Initializing runtime client")
 
@@ -312,7 +296,7 @@ async def create_runtime_client(
         else:
             runtime_address = "unix:/hrun/containerd/containerd.sock"
         async with grpc.aio.insecure_channel(runtime_address) as channel:
-            async with aiohttp.ClientSession(trace_configs=trace_configs) as session:
+            async with aiohttp.ClientSession() as session:
                 yield RuntimeClient(
                     containerd_client=ContainerdClient(
                         channel,
@@ -341,22 +325,21 @@ async def create_platform_container_runtime_app(
     return app
 
 
-async def create_app(config: Config) -> aiohttp.web.Application:
-    app = aiohttp.web.Application(middlewares=[handle_exceptions])
+async def add_version_to_header(request: Request, response: StreamResponse) -> None:
+    response.headers["X-Service-Version"] = f"platform-container-runtime/{__version__}"
 
-    trace_configs = make_logging_trace_configs() + make_tracing_trace_configs(
-        config.zipkin, config.sentry
+
+async def create_app(config: Config) -> aiohttp.web.Application:
+    app = aiohttp.web.Application(middlewares=[handle_exceptions])  # type: ignore
+    app.on_response_prepare.append(add_version_to_header)
+    app_kv: MutableMapping[AppKey[str], Any] = cast(
+        MutableMapping[AppKey[str], Any], app
     )
 
     async def _init_app(app: aiohttp.web.Application) -> AsyncIterator[None]:
         async with AsyncExitStack() as exit_stack:
             logger.info("Initializing Service")
-
-            logger.info("Initializing kube client")
-            kube_client = await exit_stack.enter_async_context(
-                KubeClient(config.kube, trace_configs=trace_configs)
-            )
-
+            kube_client = await exit_stack.enter_async_context(KubeClient(config.kube))
             node = await kube_client.get_node(config.node_name)
             logger.info("Container runtime version: %s", node.container_runtime_version)
 
@@ -369,15 +352,20 @@ async def create_app(config: Config) -> aiohttp.web.Application:
                     os=node.os,
                     architecture=node.architecture,
                     container_runtime_version=node.container_runtime_version,
-                    trace_configs=trace_configs,
                 )
             )
             streaming_client = await exit_stack.enter_async_context(
-                aiohttp.ClientSession(trace_configs=trace_configs)
+                aiohttp.ClientSession()
             )
 
-            app["platform_container_runtime_app"]["config"] = config
-            app["platform_container_runtime_app"]["service"] = Service(
+            platform_app = cast(
+                aiohttp.web.Application, app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY]
+            )
+            platform_app_kv: MutableMapping[AppKey[str], Any] = cast(
+                MutableMapping[AppKey[str], Any], platform_app
+            )
+            platform_app_kv[CONFIG_KEY] = config
+            platform_app_kv[SERVICE_KEY] = Service(
                 cri_client=cri_client,
                 runtime_client=runtime_client,
                 streaming_client=streaming_client,
@@ -388,43 +376,21 @@ async def create_app(config: Config) -> aiohttp.web.Application:
     app.cleanup_ctx.append(_init_app)
 
     api_v1_app = await create_api_v1_app()
-    app["api_v1_app"] = api_v1_app
+    app_kv[API_V1_APP_KEY] = api_v1_app
 
-    platform_container_runtime_app = await create_platform_container_runtime_app(config)
-    app["platform_container_runtime_app"] = platform_container_runtime_app
-    api_v1_app.add_subapp("/containers", platform_container_runtime_app)
-
+    platform_app = await create_platform_container_runtime_app(config)
+    app_kv[PLATFORM_CONTAINER_RUNTIME_APP_KEY] = platform_app
+    api_v1_app.add_subapp("/containers", platform_app)
     app.add_subapp("/api/v1", api_v1_app)
 
     return app
-
-
-def setup_tracing(config: Config) -> None:
-    if config.zipkin:
-        setup_zipkin_tracer(
-            config.zipkin.app_name,
-            config.server.host,
-            config.server.port,
-            config.zipkin.url,
-            config.zipkin.sample_rate,
-            ignored_exceptions=[ContainerNotFoundError, ContainerNotRunningError],
-        )
-
-    if config.sentry:
-        setup_sentry(
-            config.sentry.dsn,
-            app_name=config.sentry.app_name,
-            cluster_name=config.sentry.cluster_name,
-            sample_rate=config.sentry.sample_rate,
-            exclude=[ContainerNotFoundError, ContainerNotRunningError],
-        )
 
 
 def main() -> None:  # pragma: no coverage
     init_logging()
     config = EnvironConfigFactory().create()
     logging.info("Loaded config: %r", config)
-    setup_tracing(config)
+    setup_sentry()
     aiohttp.web.run_app(
         create_app(config), host=config.server.host, port=config.server.port
     )

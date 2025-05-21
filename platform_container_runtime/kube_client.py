@@ -12,6 +12,7 @@ import aiohttp
 
 from .config import KubeClientAuthType, KubeConfig
 
+SSLContext = ssl.SSLContext
 logger = logging.getLogger(__name__)
 
 
@@ -64,9 +65,9 @@ class KubeClient:
         self._client: Optional[aiohttp.ClientSession] = None
         self._token_updater_task: Optional[asyncio.Task[None]] = None
 
-    def _create_ssl_context(self) -> Optional[ssl.SSLContext]:
+    def _create_ssl_context(self) -> bool | SSLContext:
         if self._config.url.scheme != "https":
-            return None
+            return False
         ssl_context = ssl.create_default_context(
             cafile=self._config.cert_authority_path,
             cadata=self._config.cert_authority_data_pem,

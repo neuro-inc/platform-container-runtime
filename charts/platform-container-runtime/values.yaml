@@ -41,8 +41,8 @@ externalSecrets:
         key: kv-v2/platform
         property: API_KEY
 
-zipkin: {}
-
-sentry: {}
+sentry:
+  appName: platform-container-runtime
+  sampleRate: 0.01
 
 priorityClassName: ""
