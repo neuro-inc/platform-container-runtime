@@ -130,9 +130,9 @@ dmypy.json
 .vscode/
 .idea/
 
-!containerd/
-!github/
-!k8s/
+containerd/
+github/
+k8s/
 scripts/temp/
 
 temp_deploy/
