@@ -53,7 +53,7 @@ docker_build: dist
 	@echo "Error: .python-version file is missing!" && exit 1
 
 .PHONY: dist
-dist:
+dist: venv
 	rm -rf build dist; \
 	poetry export -f requirements.txt --without-hashes -o requirements.txt; \
 	poetry build -f wheel;

@@ -183,8 +183,6 @@ jobs:
         key: poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
           poetry-
-    - name: Install Poetry plugins
-      run: poetry install --dry-run
     - name: Build Docker image
       run: make docker_build
     - name: Upload image artifact
