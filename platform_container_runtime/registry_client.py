@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class Auth(abc.ABC):
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def header(self) -> str:
         pass
 
@@ -112,13 +113,27 @@ class RegistryClient:
         data: Union[bytes, AsyncIterator[bytes]],
         auth: Optional[Auth] = None,
     ) -> None:
+        headers = {
+            aiohttp.hdrs.CONTENT_LENGTH: str(data_length),
+            aiohttp.hdrs.CONTENT_TYPE: media_type,
+        }
+        upload_url = URL(upload_url).update_query(digest=digest)
+
+        # Google returns an error if the Authorization header is included.
+        # The upload URL is a signed URL that already contains authentication
+        # credentials, so adding extra credentials (like an Authorization header)
+        # causes a conflict.
+        # Response returned from POST /v2/{name}/blobs/uploads/ doesn't have
+        # any Google related headers headers (like X-Goog-*).
+        if (
+            not upload_url.host_subcomponent
+            or not upload_url.host_subcomponent.endswith(".pkg.dev")
+        ):
+            headers.update(**self._get_auth_header(auth))
+
         async with self._session.put(
-            URL(upload_url).update_query(digest=digest),
-            headers={
-                **self._get_auth_header(auth),
-                aiohttp.hdrs.CONTENT_LENGTH: str(data_length),
-                aiohttp.hdrs.CONTENT_TYPE: media_type,
-            },
+            upload_url,
+            headers=headers,
             data=data,
         ) as resp:
             await self._raise_for_status(resp)

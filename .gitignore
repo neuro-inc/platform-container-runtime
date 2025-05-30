@@ -135,4 +135,4 @@ github/
 k8s/
 scripts/temp/
 
-temp_deploy/
+requirements.txt
