@@ -124,7 +124,7 @@ class RegistryClient:
         # credentials, so adding extra credentials (like an Authorization header)
         # causes a conflict.
         # Response returned from POST /v2/{name}/blobs/uploads/ doesn't have
-        # any Google related headers headers (like X-Goog-*).
+        # any Google related headers (like X-Goog-*).
         if (
             not upload_url.host_subcomponent
             or not upload_url.host_subcomponent.endswith(".pkg.dev")
