@@ -4,8 +4,9 @@ IMAGE_NAME   ?= platformcontainerruntime
 .PHONY: venv
 venv:
 	poetry lock
-	poetry install --with dev
+	poetry install --with dev --no-root
 	poetry run scripts/genpb2.sh
+	poetry install --only-root
 
 .PHONY: setup
 setup: venv
