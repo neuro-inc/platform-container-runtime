@@ -1,4 +1,4 @@
-ARG PY_VERSION=3.13.3
+ARG PY_VERSION=3.13
 
 FROM python:${PY_VERSION}-slim-bullseye AS builder
 
@@ -15,7 +15,7 @@ RUN pip install --user --no-cache-dir --find-links /tmp/dist platform-container-
 
 FROM python:${PY_VERSION}-slim-bullseye AS runtime
 
-LABEL org.opencontainers.image.source = "https://github.com/neuro-inc/platform-container-runtime"
+LABEL org.opencontainers.image.source="https://github.com/neuro-inc/platform-container-runtime"
 
 # Name of your service (folder under /home)
 ARG SERVICE_NAME="platform-container-runtime"

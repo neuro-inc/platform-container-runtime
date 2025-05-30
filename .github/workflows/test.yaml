@@ -183,12 +183,8 @@ jobs:
         key: poetry-${{ hashFiles('**/poetry.lock') }}
         restore-keys: |
           poetry-
-    - name: Install dependencies
-      run: make setup
     - name: Build Docker image
       run: make docker_build
-      env:
-        IMAGE_TAG: latest
     - name: Upload image artifact
       uses: neuro-inc/upload-image-action@v24.4.0
       with:

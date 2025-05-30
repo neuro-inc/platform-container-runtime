@@ -29,7 +29,7 @@ logLevel: ERROR
 
 secrets: []
 
-externalSecrets:
+externalSecrets: []
   # - name: platform-admin-secret
   #   secretStoreName: vault-backend
   #   secretStoreKind: ClusterSecretStore
