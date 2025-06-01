@@ -2,6 +2,7 @@ import abc
 import json
 import logging
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import Any, Optional, Union
 
 import aiohttp
@@ -17,6 +18,12 @@ class Auth(abc.ABC):
     @abc.abstractmethod
     def header(self) -> str:
         pass
+
+
+@dataclass(frozen=True)
+class StartBlobUploadResult:
+    upload_url: URL
+    is_signed_url: bool
 
 
 class BasicAuth(Auth):
@@ -96,17 +103,23 @@ class RegistryClient:
 
     async def start_blob_upload(
         self, server: str, name: str, auth: Optional[Auth] = None
-    ) -> URL:
+    ) -> StartBlobUploadResult:
         endpoints = V2Endpoints(server)
         async with self._session.post(
             endpoints.blob_uploads(name), headers=self._get_auth_header(auth)
         ) as resp:
             await self._raise_for_status(resp)
-            return URL(resp.headers[aiohttp.hdrs.LOCATION])
+            upload_url = URL(resp.headers[aiohttp.hdrs.LOCATION])
+            return StartBlobUploadResult(
+                upload_url=upload_url,
+                # If the upload URL host differs, assume it's a signed URL.
+                # Authorization headers usually don't apply across different hosts.
+                is_signed_url=endpoints.url.host != upload_url.host,
+            )
 
     async def upload_blob(
         self,
-        upload_url: Union[str, URL],
+        start_blob_upload_result: StartBlobUploadResult,
         media_type: str,
         digest: str,
         data_length: int,
@@ -117,22 +130,14 @@ class RegistryClient:
             aiohttp.hdrs.CONTENT_LENGTH: str(data_length),
             aiohttp.hdrs.CONTENT_TYPE: media_type,
         }
-        upload_url = URL(upload_url).update_query(digest=digest)
 
-        # Google returns an error if the Authorization header is included.
-        # The upload URL is a signed URL that already contains authentication
-        # credentials, so adding extra credentials (like an Authorization header)
-        # causes a conflict.
-        # Response returned from POST /v2/{name}/blobs/uploads/ doesn't have
-        # any Google related headers (like X-Goog-*).
-        if (
-            not upload_url.host_subcomponent
-            or not upload_url.host_subcomponent.endswith(".pkg.dev")
-        ):
+        # Signed URLs include embedded credentials, so no additional
+        # authentication is needed.
+        if not start_blob_upload_result.is_signed_url:
             headers.update(**self._get_auth_header(auth))
 
         async with self._session.put(
-            upload_url,
+            start_blob_upload_result.upload_url.update_query(digest=digest),
             headers=headers,
             data=data,
         ) as resp:
