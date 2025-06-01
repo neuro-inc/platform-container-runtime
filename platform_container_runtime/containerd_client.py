@@ -19,7 +19,6 @@ from google.protobuf.timestamp_pb2 import Timestamp
 
 # isort: on
 from neuro_logging import trace
-from yarl import URL
 
 from containerd.services.containers.v1.containers_pb2 import GetContainerRequest
 from containerd.services.containers.v1.containers_pb2_grpc import ContainersStub
@@ -63,7 +62,7 @@ from .errors import (
     MediaTypeNotSupportedError,
     PlatformNotSupportedError,
 )
-from .registry_client import Auth, RegistryClient
+from .registry_client import Auth, RegistryClient, StartBlobUploadResult
 from .utils import asyncgeneratorcontextmanager
 
 logger = logging.getLogger(__name__)
@@ -526,11 +525,11 @@ class ImageManifest(dict[str, Any]):
         config_desc = Descriptor.from_data(
             MediaType.DOCKER_IMAGE_CONFIG_V1, self.config
         )
-        upload_url = await self._clients.registry.start_blob_upload(
+        start_blob_upload_result = await self._clients.registry.start_blob_upload(
             server=server, name=name, auth=auth
         )
         await self._clients.registry.upload_blob(
-            upload_url=upload_url,
+            start_blob_upload_result=start_blob_upload_result,
             media_type=MediaType.DOCKER_IMAGE_CONFIG_V1.value,
             digest=config_desc.digest,
             data_length=config_desc.size,
@@ -720,7 +719,7 @@ class Image:
 
         logger.info("Pushing image %r layer (%s,%s)", self._name, layer_id, desc.digest)
 
-        upload_url = await self._clients.registry.start_blob_upload(
+        start_blob_upload_result = await self._clients.registry.start_blob_upload(
             server=self._image_server, name=self._image_repo, auth=auth
         )
         push_task = None
@@ -729,7 +728,7 @@ class Image:
             progress = ImageProgess(desc.size)
             push_task = asyncio.create_task(
                 self._push_layer_monolithic(
-                    upload_url=upload_url,
+                    start_blob_upload_result=start_blob_upload_result,
                     progress=progress,
                     desc=desc,
                     chunk_size=chunk_size,
@@ -757,7 +756,7 @@ class Image:
 
     async def _push_layer_monolithic(
         self,
-        upload_url: URL,
+        start_blob_upload_result: StartBlobUploadResult,
         progress: ImageProgess,
         desc: Descriptor,
         chunk_size: int,
@@ -766,7 +765,7 @@ class Image:
         try:
             async with self._read_layer_chunked(desc, chunk_size, progress) as chunks:
                 await self._clients.registry.upload_blob(
-                    upload_url=upload_url,
+                    start_blob_upload_result=start_blob_upload_result,
                     media_type="application/octet-stream",
                     digest=desc.digest,
                     data_length=desc.size,

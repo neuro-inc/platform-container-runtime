@@ -407,11 +407,7 @@ class TestApi:
         api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
-        kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime in ("cri-o", "containerd"):
-            pytest.skip("Commit is not supported")
-
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
             repository = f"{registry_address}/ubuntu"
             tag = str(uuid.uuid4())
@@ -454,11 +450,7 @@ class TestApi:
         api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
-        kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime == "cri-o":
-            pytest.skip("Commit is not supported")
-
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:
             repository = f"{registry_address}/ubuntu"
             tag = str(uuid.uuid4())
@@ -496,11 +488,7 @@ class TestApi:
         api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
-        kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime == "cri-o":
-            pytest.skip("Commit is not supported")
-
         async with client.post(
             api_minikube.commit("unknown"),
             json={"image": f"_{registry_address}/ubuntu:latest"},
@@ -513,11 +501,7 @@ class TestApi:
         api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
         registry_address: str,
-        kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime == "cri-o":
-            pytest.skip("Commit is not supported")
-
         async with client.post(
             api_minikube.commit("unknown"),
             json={"image": f"{registry_address}/ubuntu:latest"},
@@ -529,11 +513,7 @@ class TestApi:
         self,
         api_minikube: ApiEndpoints,
         client: aiohttp.ClientSession,
-        kube_container_runtime: str,
     ) -> None:
-        if kube_container_runtime == "cri-o":
-            pytest.skip("Commit is not supported")
-
         domain = str(uuid.uuid4())
 
         async with run("ubuntu:20.10", 'bash -c "sleep infinity"') as pod:

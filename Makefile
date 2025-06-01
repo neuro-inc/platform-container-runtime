@@ -8,14 +8,6 @@ venv:
 	poetry run scripts/genpb2.sh
 	poetry install --only-root
 
-.PHONY: build
-build: venv poetry-plugins
-
-.PHONY: poetry-plugins
-poetry-plugins:
-	poetry self add "poetry-dynamic-versioning[plugin]"; \
-    poetry self add "poetry-plugin-export";
-
 .PHONY: setup
 setup: venv
 	poetry run pre-commit install;
@@ -61,7 +53,7 @@ docker_build: dist
 	@echo "Error: .python-version file is missing!" && exit 1
 
 .PHONY: dist
-dist: build
+dist: venv
 	rm -rf build dist; \
 	poetry export -f requirements.txt --without-hashes -o requirements.txt; \
 	poetry build -f wheel;
