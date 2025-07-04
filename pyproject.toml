@@ -47,7 +47,7 @@ pre-commit = "4.2.0"
 pytest = "8.4.1"
 pytest-asyncio = "1.0.0"
 pytest-cov = "6.2.1"
-types-protobuf = "6.30.2.20250516"
+types-protobuf = "6.30.2.20250703"
 grpcio-tools = "1.71.2"
 
 [tool.poetry.requires-plugins]
