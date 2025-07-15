@@ -41,7 +41,7 @@ docker-image-py = "0.1.13"
 platform-container-runtime = "platform_container_runtime.api:main"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "1.16.1"
+mypy = "1.17.0"
 mypy-protobuf = "3.6.0"
 pre-commit = "4.2.0"
 pytest = "8.4.1"
