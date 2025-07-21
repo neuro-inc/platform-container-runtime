@@ -8,6 +8,7 @@ from typing import Any, Optional, Union
 import aiohttp
 import aiohttp.hdrs
 import aiohttp.web
+from multidict import CIMultiDict
 from yarl import URL
 
 logger = logging.getLogger(__name__)
@@ -126,10 +127,12 @@ class RegistryClient:
         data: Union[bytes, AsyncIterator[bytes]],
         auth: Optional[Auth] = None,
     ) -> None:
-        headers = {
-            aiohttp.hdrs.CONTENT_LENGTH: str(data_length),
-            aiohttp.hdrs.CONTENT_TYPE: media_type,
-        }
+        headers: CIMultiDict[str] = CIMultiDict(
+            {
+                aiohttp.hdrs.CONTENT_LENGTH: str(data_length),
+                aiohttp.hdrs.CONTENT_TYPE: media_type,
+            }
+        )
 
         # Signed URLs include embedded credentials, so no additional
         # authentication is needed.
