@@ -46,7 +46,7 @@ mypy-protobuf = "3.6.0"
 pre-commit = "4.3.0"
 pytest = "8.4.1"
 pytest-asyncio = "1.1.0"
-pytest-cov = "6.2.1"
+pytest-cov = "6.3.0"
 types-protobuf = "6.30.2.20250822"
 grpcio-tools = "1.71.2"
 
