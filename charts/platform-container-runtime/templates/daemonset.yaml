@@ -120,15 +120,6 @@ spec:
         - name: kube-api-data
           mountPath: {{ include "platformContainerRuntime.kubeAuthMountRoot" . }}
           readOnly: true
-      {{- if .Values.securityContext.enabled }}
-      securityContext:
-        runAsUser: {{ .Values.securityContext.runAsUser }}
-        runAsGroup: {{ .Values.securityContext.runAsGroup }}
-        runAsNonRoot: {{ .Values.securityContext.runAsNonRoot }}
-        fsGroup: {{ .Values.securityContext.fsGroup }}
-        allowPrivilegeEscalation: {{ .Values.securityContext.allowPrivilegeEscalation }}
-        fsGroupChangePolicy: {{ .Values.securityContext.fsGroupChangePolicy}}
-      {{- end }}
       {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
