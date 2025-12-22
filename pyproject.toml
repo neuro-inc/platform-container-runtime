@@ -34,7 +34,7 @@ yarl = "1.22.0"
 neuro-logging = "25.10.0"
 grpcio = "1.76.0"
 protobuf = "5.29.5"
-aiodocker = "0.24.0"
+aiodocker = "0.25.0"
 docker-image-py = "0.1.13"
 
 [tool.poetry.scripts]
