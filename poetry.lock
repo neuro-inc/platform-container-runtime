@@ -1666,14 +1666,14 @@ type = ["importlib_metadata (>=7.0.2) ; python_version < \"3.10\"", "jaraco.deve
 
 [[package]]
 name = "types-protobuf"
-version = "7.34.1.20260408"
+version = "7.34.1.20260503"
 description = "Typing stubs for protobuf"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "types_protobuf-7.34.1.20260408-py3-none-any.whl", hash = "sha256:ebbcd4e27b145aef6a59bc0cb6c013b3528151c1ba5e7f7337aeee355d276a5e"},
-    {file = "types_protobuf-7.34.1.20260408.tar.gz", hash = "sha256:e2c0a0430e08c75b52671a6f0035abfdcc791aad12af16274282de1b721758ab"},
+    {file = "types_protobuf-7.34.1.20260503-py3-none-any.whl", hash = "sha256:75fd66121d56785c91828b8bf7b511f39ba847f11e682573e41847f01e9cd1de"},
+    {file = "types_protobuf-7.34.1.20260503.tar.gz", hash = "sha256:effbc819aa17e02448dde99f089c6794662d66f4b2797e922f185ffe0b24e766"},
 ]
 
 [[package]]
@@ -1873,4 +1873,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "19d6e4201fb48810f43c657c71ec747e6feb0eec2fe4b41ec1fba72647370df9"
+content-hash = "1eb31b66c9ec6068b8b21582163f8083e6600949188b6d1e066c04c082f9a489"
