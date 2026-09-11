@@ -1,6 +1,6 @@
 ARG PY_VERSION=3.13
 
-FROM python:${PY_VERSION}-slim-bullseye AS builder
+FROM python:${PY_VERSION}-slim-bookworm AS builder
 
 ENV PATH=/root/.local/bin:$PATH
 
@@ -13,7 +13,7 @@ COPY dist /tmp/dist/
 RUN pip install --user --no-cache-dir --find-links /tmp/dist platform-container-runtime \
     && rm -rf /tmp/dist
 
-FROM python:${PY_VERSION}-slim-bullseye AS runtime
+FROM python:${PY_VERSION}-slim-bookworm AS runtime
 
 LABEL org.opencontainers.image.source="https://github.com/neuro-inc/platform-container-runtime"
 
