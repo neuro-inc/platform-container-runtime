@@ -1,5 +1,5 @@
 import enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from yarl import URL
@@ -25,7 +25,7 @@ class KubeConfig:
     auth_type: KubeClientAuthType = KubeClientAuthType.NONE
     client_cert_path: Optional[str] = None
     client_key_path: Optional[str] = None
-    token: Optional[str] = None
+    token: Optional[str] = field(repr=False, default=None)
     token_path: Optional[str] = None
     token_update_interval_s: int = 300
     conn_force_close: bool = False
