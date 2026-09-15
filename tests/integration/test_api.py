@@ -546,4 +546,5 @@ class TestApi:
                     or "failure in name resolution" in error
                     or "Name or service not known" in error
                     or "server misbehaving" in error
+                    or "DNS server returned general failure" in error
                 )
