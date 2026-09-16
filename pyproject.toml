@@ -72,6 +72,9 @@ markers = ["minikube"]
 [tool.ruff]
 target-version = "py313"
 
+[tool.ruff.lint]
+extend-select = ["UP006", "UP035"]
+
 [tool.coverage.run]
 branch = true
 source = ["platform_container_runtime"]
