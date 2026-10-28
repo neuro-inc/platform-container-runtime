@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from aiodocker import Docker, DockerError
 from docker_image.reference import (
@@ -43,7 +43,7 @@ class ImageReference:
         return self.repository
 
     @classmethod
-    def parse(cls, ref_str: str) -> "ImageReference":
+    def parse(cls, ref_str: str) -> ImageReference:
         try:
             ref = _ImageReference.parse_normalized_named(ref_str)
         except _InvalidImageReference as exc:
@@ -55,8 +55,8 @@ class ImageReference:
 class RuntimeClient:
     def __init__(
         self,
-        docker_client: Optional[Docker] = None,
-        containerd_client: Optional[ContainerdClient] = None,
+        docker_client: Docker | None = None,
+        containerd_client: ContainerdClient | None = None,
     ) -> None:
         self._docker_client = docker_client
         self._containerd_client = containerd_client
@@ -97,7 +97,7 @@ class RuntimeClient:
 
     @asyncgeneratorcontextmanager
     async def push(
-        self, image: str, auth: Optional[dict[str, Any]] = None
+        self, image: str, auth: dict[str, Any] | None = None
     ) -> AsyncIterator[dict[str, Any]]:
         image_ref = ImageReference.parse(image)
 

@@ -1,6 +1,5 @@
 import enum
 from dataclasses import dataclass, field
-from typing import Optional
 
 from yarl import URL
 
@@ -20,13 +19,13 @@ class KubeClientAuthType(enum.Enum):
 @dataclass(frozen=True)
 class KubeConfig:
     url: URL
-    cert_authority_path: Optional[str] = None
-    cert_authority_data_pem: Optional[str] = None
+    cert_authority_path: str | None = None
+    cert_authority_data_pem: str | None = None
     auth_type: KubeClientAuthType = KubeClientAuthType.NONE
-    client_cert_path: Optional[str] = None
-    client_key_path: Optional[str] = None
-    token: Optional[str] = field(repr=False, default=None)
-    token_path: Optional[str] = None
+    client_cert_path: str | None = None
+    client_key_path: str | None = None
+    token: str | None = field(repr=False, default=None)
+    token_path: str | None = None
     token_update_interval_s: int = 300
     conn_force_close: bool = False
     conn_timeout_s: int = 300
@@ -40,5 +39,5 @@ class Config:
     server: ServerConfig
     node_name: str
     kube: KubeConfig
-    cri_address: Optional[str] = None
-    runtime_address: Optional[str] = None
+    cri_address: str | None = None
+    runtime_address: str | None = None

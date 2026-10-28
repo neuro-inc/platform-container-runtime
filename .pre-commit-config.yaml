@@ -10,6 +10,7 @@ repos:
   - id: check-toml
   - id: check-xml
   - id: debug-statements
+    language_version: python3.14
   - id: check-added-large-files
   - id: end-of-file-fixer
     exclude: "^github|^k8s|^containerd"
@@ -18,7 +19,7 @@ repos:
   - id: check-symlinks
     exclude: ^charts/
 - repo: https://github.com/Zac-HD/shed
-  rev: 2024.10.1
+  rev: 2025.6.1
   hooks:
   - id: shed
     args:
@@ -29,7 +30,7 @@ repos:
     - rst
     exclude: "^github|^k8s|^containerd"
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.8.6
+  rev: v0.15.22
   hooks:
   - id: ruff-format
   - id: ruff

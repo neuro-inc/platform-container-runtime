@@ -3,7 +3,7 @@ import json
 import logging
 from collections.abc import AsyncIterator, Iterable
 from contextlib import suppress
-from typing import Any, Optional, Union
+from typing import Any
 
 import aiohttp
 import aiohttp.web
@@ -56,8 +56,8 @@ class Stream:
 
     async def _proxy_ws(
         self,
-        src: Union[aiohttp.ClientWebSocketResponse, aiohttp.web.WebSocketResponse],
-        dst: Union[aiohttp.ClientWebSocketResponse, aiohttp.web.WebSocketResponse],
+        src: aiohttp.ClientWebSocketResponse | aiohttp.web.WebSocketResponse,
+        dst: aiohttp.ClientWebSocketResponse | aiohttp.web.WebSocketResponse,
     ) -> None:
         try:
             async for msg in src:
@@ -198,7 +198,7 @@ class Service:
 
     @asyncgeneratorcontextmanager
     async def push(
-        self, image: str, auth: Optional[dict[str, Any]] = None
+        self, image: str, auth: dict[str, Any] | None = None
     ) -> AsyncIterator[dict[str, Any]]:
         async with self._runtime_client.push(image, auth) as push:
             async for chunk in push:

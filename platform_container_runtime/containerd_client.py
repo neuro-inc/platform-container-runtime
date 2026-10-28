@@ -8,7 +8,7 @@ import logging
 from collections.abc import AsyncIterator, Mapping, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import grpc.aio
@@ -157,7 +157,7 @@ class Lease:
         self._lease_id = ""
 
     async def __aenter__(self) -> str:
-        expire = datetime.now(timezone.utc) + self._duration
+        expire = datetime.now(UTC) + self._duration
         resp = await self._leases_stub.Create(
             CreateRequest(labels={"containerd.io/gc.expire": expire.isoformat()}),
             metadata=Metadata(namespace=self._namespace),
@@ -166,7 +166,7 @@ class Lease:
         logger.info("Created lease %r", self._lease_id)
         return self._lease_id
 
-    async def __aexit__(self, *args: Any, **kwargs: Any) -> None:
+    async def __aexit__(self, *args: object, **kwargs: Any) -> None:
         await self._leases_stub.Delete(
             DeleteRequest(id=self._lease_id),
             metadata=Metadata(namespace=self._namespace),
@@ -989,7 +989,7 @@ class Container:
                 "diff_ids": [d.id for d in snapshot_diffs],
             },
             "author": "",
-            "created": datetime.now(timezone.utc).isoformat(),
+            "created": datetime.now(UTC).isoformat(),
         }
 
 

@@ -8,7 +8,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 import yaml
@@ -158,7 +158,7 @@ def _kube_config_cluster_payload(_kube_config_payload: dict[str, Any]) -> Any:
 @pytest.fixture(scope="session")
 def _cert_authority_data_pem(
     _kube_config_cluster_payload: dict[str, Any],
-) -> Optional[str]:
+) -> str | None:
     ca_path = _kube_config_cluster_payload["certificate-authority"]
     if ca_path:
         return Path(ca_path).read_text()
@@ -176,7 +176,7 @@ def _kube_config_user_payload(_kube_config_payload: dict[str, Any]) -> Any:
 def kube_config(
     _kube_config_cluster_payload: dict[str, Any],
     _kube_config_user_payload: dict[str, Any],
-    _cert_authority_data_pem: Optional[str],
+    _cert_authority_data_pem: str | None,
 ) -> KubeConfig:
     cluster = _kube_config_cluster_payload
     user = _kube_config_user_payload

@@ -5,7 +5,7 @@ import shlex
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from types import TracebackType
-from typing import Any, Optional, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import grpc
 import grpc.aio
@@ -32,7 +32,7 @@ class ContainerStatus:
 
 def _handle_errors(func: T) -> T:
     @functools.wraps(func)
-    async def new_func(self: "CriClient", *args: Any, **kwargs: Any) -> Any:
+    async def new_func(self: CriClient, *args: Any, **kwargs: Any) -> Any:
         try:
             if not self._cri_client:
                 raise ContainerRuntimeNotAvailableError()
@@ -52,9 +52,9 @@ def _handle_errors(func: T) -> T:
 class CriClient:
     def __init__(self, channel: grpc.aio.Channel) -> None:
         self._channel = channel
-        self._cri_client: Optional[CriClient] = None
+        self._cri_client: CriClient | None = None
 
-    async def __aenter__(self) -> "CriClient":
+    async def __aenter__(self) -> CriClient:
         try:
             cri_client_v1 = _CriClientV1(self._channel)
             await cri_client_v1.version()
@@ -69,9 +69,9 @@ class CriClient:
 
     async def __aexit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         pass
 

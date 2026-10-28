@@ -38,8 +38,10 @@ function _protobuf_generate_client {
             $PROTOBUF_DIR/gogoproto/*.proto
     )
 
-    rsync -a $TARGET_DIR/github.com/ $TARGET_DIR/github/com/
-    rm -rf "$TARGET_DIR/github.com"
+    if [ -d "$TARGET_DIR/github.com" ]; then
+        rsync -a "$TARGET_DIR/github.com/" "$TARGET_DIR/github/com/"
+        rm -rf "$TARGET_DIR/github.com"
+    fi
 
     find "$TARGET_DIR/github/com/gogo/protobuf" -type d -exec touch {}/__init__.py \;
 }
@@ -63,8 +65,10 @@ function _cri_generate_client {
             $(find "$CRI_DIR/pkg/apis/runtime" -type f -name '*.proto')
     )
 
-    rsync -a $TARGET_DIR/k8s.io/ $TARGET_DIR/k8s/io/
-    rm -rf "$TARGET_DIR/k8s.io"
+    if [ -d "$TARGET_DIR/k8s.io" ]; then
+        rsync -a "$TARGET_DIR/k8s.io/" "$TARGET_DIR/k8s/io/"
+        rm -rf "$TARGET_DIR/k8s.io"
+    fi
 
     for package in $(find $TARGET_DIR/k8s/io/cri_api/pkg/apis/runtime -type d) ; do
         touch ${package}/__init__.py
