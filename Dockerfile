@@ -34,5 +34,4 @@ ENV NP_PORT=8080
 
 EXPOSE $NP_PORT
 
-
 ENTRYPOINT [ "platform-container-runtime" ]
