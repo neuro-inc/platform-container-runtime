@@ -9,7 +9,7 @@ class TestStream:
 
     def test_parse_error_channel_v4_failure(self) -> None:
         result = Stream.parse_error_channel(
-            b'\x03{"metadata":{},"status":"Failure","message":"error","reason":"NonZeroExitCode","details":{"causes":[{"reason":"ExitCode","message":"42"}]}}'  # noqa: E501
+            b'\x03{"metadata":{},"status":"Failure","message":"error","reason":"NonZeroExitCode","details":{"causes":[{"reason":"ExitCode","message":"42"}]}}'
         )
 
         assert result == {"exit_code": 42, "message": "error"}

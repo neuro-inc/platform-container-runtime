@@ -6,7 +6,7 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 
@@ -30,7 +30,7 @@ class Metadata:
     labels: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def from_payload(cls, payload: dict[str, Any]) -> "Metadata":
+    def from_payload(cls, payload: dict[str, Any]) -> Metadata:
         return cls(name=payload["name"], labels=payload.get("labels", {}))
 
 
@@ -42,7 +42,7 @@ class Node:
     architecture: str
 
     @classmethod
-    def from_payload(cls, payload: dict[str, Any]) -> "Node":
+    def from_payload(cls, payload: dict[str, Any]) -> Node:
         return cls(
             metadata=Metadata.from_payload(payload["metadata"]),
             container_runtime_version=payload["status"]["nodeInfo"][
@@ -57,13 +57,13 @@ class KubeClient:
     def __init__(
         self,
         config: KubeConfig,
-        trace_configs: Optional[list[aiohttp.TraceConfig]] = None,
+        trace_configs: list[aiohttp.TraceConfig] | None = None,
     ) -> None:
         self._config = config
         self._token = config.token
         self._trace_configs = trace_configs
-        self._client: Optional[aiohttp.ClientSession] = None
-        self._token_updater_task: Optional[asyncio.Task[None]] = None
+        self._client: aiohttp.ClientSession | None = None
+        self._token_updater_task: asyncio.Task[None] | None = None
 
     def _create_ssl_context(self) -> bool | SSLContext:
         if self._config.url.scheme != "https":
@@ -79,15 +79,15 @@ class KubeClient:
             )
         return ssl_context
 
-    async def __aenter__(self) -> "KubeClient":
+    async def __aenter__(self) -> KubeClient:
         await self._init()
         return self
 
     async def __aexit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         await self.aclose()
 
@@ -134,9 +134,7 @@ class KubeClient:
                 await self._token_updater_task
             self._token_updater_task = None
 
-    def _create_headers(
-        self, headers: Optional[dict[str, Any]] = None
-    ) -> dict[str, Any]:
+    def _create_headers(self, headers: dict[str, Any] | None = None) -> dict[str, Any]:
         headers = dict(headers) if headers else {}
         if self._config.auth_type == KubeClientAuthType.TOKEN and self._token:
             headers["Authorization"] = "Bearer " + self._token

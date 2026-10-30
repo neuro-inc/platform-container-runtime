@@ -82,7 +82,7 @@ async def receive_tty_prompt(
 
                 ret += ansi_re.sub(b"", data[1:])
             return ret
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AssertionError(f"[Timeout] {ret!r}")
 
 
@@ -105,55 +105,59 @@ class TestApi:
     async def test_attach_non_tty_stdout(
         self, api_minikube: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
-        async with run(
-            "ubuntu:20.10",
-            'bash -c "while true; do echo hello; sleep 1; done"',
-        ) as pod:
-            async with client.ws_connect(api_minikube.attach(pod.container_id)) as ws:
-                stdout_received = False
+        async with (
+            run(
+                "ubuntu:20.10",
+                'bash -c "while true; do echo hello; sleep 1; done"',
+            ) as pod,
+            client.ws_connect(api_minikube.attach(pod.container_id)) as ws,
+        ):
+            stdout_received = False
 
-                while True:
-                    data = await ws.receive_bytes(timeout=10)
+            while True:
+                data = await ws.receive_bytes(timeout=10)
 
-                    if len(data) == 1:
-                        # empty message is sent to the lowest output channel
-                        # after connection is established
-                        assert data[0] == 1
-                        continue
+                if len(data) == 1:
+                    # empty message is sent to the lowest output channel
+                    # after connection is established
+                    assert data[0] == 1
+                    continue
 
-                    if data[0] == 1:  # stdout channel
-                        stdout_received = True
-                        assert data[1:].decode() == "hello\n"
+                if data[0] == 1:  # stdout channel
+                    stdout_received = True
+                    assert data[1:].decode() == "hello\n"
 
-                    if stdout_received:
-                        break
+                if stdout_received:
+                    break
 
     @pytest.mark.minikube
     async def test_attach_non_tty_stderr(
         self, api_minikube: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
-        async with run(
-            "ubuntu:20.10",
-            'bash -c "while true; do echo hello >&2; sleep 1; done"',
-        ) as pod:
-            async with client.ws_connect(api_minikube.attach(pod.container_id)) as ws:
-                stderr_received = False
+        async with (
+            run(
+                "ubuntu:20.10",
+                'bash -c "while true; do echo hello >&2; sleep 1; done"',
+            ) as pod,
+            client.ws_connect(api_minikube.attach(pod.container_id)) as ws,
+        ):
+            stderr_received = False
 
-                while True:
-                    data = await ws.receive_bytes(timeout=10)
+            while True:
+                data = await ws.receive_bytes(timeout=10)
 
-                    if len(data) == 1:
-                        # empty message is sent to the lowest output channel
-                        # after connection is established
-                        assert data[0] == 1
-                        continue
+                if len(data) == 1:
+                    # empty message is sent to the lowest output channel
+                    # after connection is established
+                    assert data[0] == 1
+                    continue
 
-                    if data[0] == 2:  # stderr channel
-                        stderr_received = True
-                        assert data[1:].decode() == "hello\n"
+                if data[0] == 2:  # stderr channel
+                    stderr_received = True
+                    assert data[1:].decode() == "hello\n"
 
-                    if stderr_received:
-                        break
+                if stderr_received:
+                    break
 
     @pytest.mark.minikube
     async def test_attach_tty(
@@ -187,19 +191,21 @@ class TestApi:
     async def test_attach_terminated_container(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
-        async with run(
-            "ubuntu:20.10",
-            'bash -c "exit 1"',
-            expected_status="terminated",
-        ) as pod:
-            async with client.post(api.attach(pod.container_id)) as resp:
-                assert (
-                    resp.status == HTTPBadRequest.status_code
-                    or resp.status == HTTPNotFound.status_code
-                ), await resp.text()
+        async with (
+            run(
+                "ubuntu:20.10",
+                'bash -c "exit 1"',
+                expected_status="terminated",
+            ) as pod,
+            client.post(api.attach(pod.container_id)) as resp,
+        ):
+            assert (
+                resp.status == HTTPBadRequest.status_code
+                or resp.status == HTTPNotFound.status_code
+            ), await resp.text()
 
-                if resp.status == HTTPBadRequest.status_code:
-                    assert "not running" in await resp.text()
+            if resp.status == HTTPBadRequest.status_code:
+                assert "not running" in await resp.text()
 
     async def test_attach_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
@@ -325,21 +331,21 @@ class TestApi:
     async def test_exec_terminated_container(
         self, api: ApiEndpoints, client: aiohttp.ClientSession
     ) -> None:
-        async with run(
-            "ubuntu:20.10",
-            'bash -c "exit 1"',
-            expected_status="terminated",
-        ) as pod:
-            async with client.post(
-                api.exec(pod.container_id).with_query(cmd="bash")
-            ) as resp:
-                assert (
-                    resp.status == HTTPBadRequest.status_code
-                    or resp.status == HTTPNotFound.status_code
-                ), await resp.text()
+        async with (
+            run(
+                "ubuntu:20.10",
+                'bash -c "exit 1"',
+                expected_status="terminated",
+            ) as pod,
+            client.post(api.exec(pod.container_id).with_query(cmd="bash")) as resp,
+        ):
+            assert (
+                resp.status == HTTPBadRequest.status_code
+                or resp.status == HTTPNotFound.status_code
+            ), await resp.text()
 
-                if resp.status == HTTPBadRequest.status_code:
-                    assert "not running" in await resp.text()
+            if resp.status == HTTPBadRequest.status_code:
+                assert "not running" in await resp.text()
 
     async def test_exec_unknown(
         self, api: ApiEndpoints, client: aiohttp.ClientSession

@@ -3,7 +3,7 @@ import json
 import logging
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, Optional, Union
+from typing import Any
 
 import aiohttp
 import aiohttp.hdrs
@@ -49,7 +49,7 @@ class V2Endpoints:
         else:
             self._url = URL.build(scheme="https", host=host, port=port)
 
-    def _split_server(self, server: str) -> tuple[str, Optional[int]]:
+    def _split_server(self, server: str) -> tuple[str, int | None]:
         parts = server.split(":")
         if len(parts) == 1:
             return parts[0], None
@@ -77,10 +77,10 @@ class RegistryClient:
     def __init__(self, session: aiohttp.ClientSession) -> None:
         self._session = session
 
-    def _get_auth_header(self, auth: Optional[Auth]) -> dict[str, str]:
+    def _get_auth_header(self, auth: Auth | None) -> dict[str, str]:
         return {aiohttp.hdrs.AUTHORIZATION: auth.header} if auth else {}
 
-    async def get_version(self, server: str, auth: Optional[Auth] = None) -> str:
+    async def get_version(self, server: str, auth: Auth | None = None) -> str:
         endpoints = V2Endpoints(server)
         async with self._session.get(
             endpoints.version(), headers=self._get_auth_header(auth)
@@ -91,7 +91,7 @@ class RegistryClient:
             return "v2"
 
     async def check_blob(
-        self, server: str, name: str, digest: str, auth: Optional[Auth] = None
+        self, server: str, name: str, digest: str, auth: Auth | None = None
     ) -> bool:
         endpoints = V2Endpoints(server)
         async with self._session.head(
@@ -103,7 +103,7 @@ class RegistryClient:
             return True
 
     async def start_blob_upload(
-        self, server: str, name: str, auth: Optional[Auth] = None
+        self, server: str, name: str, auth: Auth | None = None
     ) -> StartBlobUploadResult:
         endpoints = V2Endpoints(server)
         async with self._session.post(
@@ -124,8 +124,8 @@ class RegistryClient:
         media_type: str,
         digest: str,
         data_length: int,
-        data: Union[bytes, AsyncIterator[bytes]],
-        auth: Optional[Auth] = None,
+        data: bytes | AsyncIterator[bytes],
+        auth: Auth | None = None,
     ) -> None:
         headers: CIMultiDict[str] = CIMultiDict(
             {
@@ -153,7 +153,7 @@ class RegistryClient:
         ref: str,
         media_type: str,
         manifest: dict[str, Any],
-        auth: Optional[Auth] = None,
+        auth: Auth | None = None,
     ) -> None:
         endpoints = V2Endpoints(server)
         async with self._session.put(
