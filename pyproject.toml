@@ -48,7 +48,7 @@ pytest = "9.2.0"
 pytest-asyncio = "1.4.1"
 pytest-cov = "7.1.0"
 types-protobuf = "7.35.1.20260906"
-grpcio-tools = "1.85.0"
+grpcio-tools = "1.85.1"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.8"
